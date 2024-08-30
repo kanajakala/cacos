@@ -31,7 +31,8 @@ fn getFeatureMod(comptime arch: std.Target.Cpu.Arch) FeatureMod {
 
 pub fn build(b: *std.Build) void {
     const feature_mod = getFeatureMod(kernel_config.arch);
-
+    const limine = b.dependency("limine", .{});
+    //const limine_raw = b.dependency("limine_raw", .{});
     const target: std.Build.ResolvedTarget = b.resolveTargetQuery(.{
         .cpu_arch = kernel_config.arch,
         .os_tag = .freestanding,
@@ -51,7 +52,7 @@ pub fn build(b: *std.Build) void {
     });
 
     kernel.pie = true;
-
+    kernel.root_module.addImport("limine", limine.module("limine"));
     kernel.setLinkerScriptPath(b.path("kernel/linker.ld"));
 
     const kernel_step = b.step("kernel", "Build the kernel");
