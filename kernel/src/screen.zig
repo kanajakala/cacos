@@ -71,14 +71,14 @@ pub fn newLine() void {
     col = 0;
 }
 
-pub fn print(string: [:0]const u8, fg: u32, bg: u32) void {
+pub fn print(string: []const u8, fg: u32, bg: u32) void {
     for (string) |char| {
         printChar(char, fg, bg);
     }
 }
 
 pub fn printMOTD() void {
-    print("  \n .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", 0xf6aa70, 0x0);
+    print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", 0xf6aa70, 0x0);
     print("  d88P  Y88b          d88P  Y88b d88P\" \"Y88b d88P  Y88b \n", 0xf6aa70, 0x0);
     print("  888    888          888    888 888     888 Y88b.      \n", 0xf6aa70, 0x0);
     print("  888         8888b.  888        888     888  \"Y888b.   \n", 0xf6aa70, 0x0);

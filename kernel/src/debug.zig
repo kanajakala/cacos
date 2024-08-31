@@ -1,3 +1,5 @@
+const std = @import("std");
+
 pub inline fn stop() noreturn {
     while (true) {
         asm volatile ("hlt");
@@ -20,8 +22,14 @@ pub inline fn outb(port: u16, data: u8) void {
     );
 }
 
-pub inline fn print(comptime string: [:0]const u8) void {
+pub inline fn print(comptime string: []const u8) void {
     inline for (string) |char| {
         outb(0xe9, char);
     }
+}
+
+pub fn charToString(char: u8) [:0]const u8 {
+    var buf: [256]u8 = undefined;
+    const str = try std.fmt.bufPrint(&buf, "{}", .{char});
+    return str;
 }
