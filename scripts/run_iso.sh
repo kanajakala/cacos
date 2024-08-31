@@ -1,2 +1,2 @@
 echo ""
-qemu-system-x86_64 -M q35 -m 2G -cdrom cacos.iso -boot d -debugcon stdio
+qemu-system-x86_64 -M q35 -m 2G -cdrom cacos.iso -boot d -debugcon stdio -D logs -d int
