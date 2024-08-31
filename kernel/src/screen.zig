@@ -42,14 +42,31 @@ pub fn putpixel(x: usize, y: usize, color: u32) void {
 
 pub fn printChar(char: u16, fg: u32, bg: u32) void {
     //see https://wiki.osdev.org/VGA_Fonts#Decoding_of_bitmap_fonts
-    const mask = [8]u8{ 1, 2, 4, 8, 16, 32, 64, 128 };
-    const glyph_offset: usize = char * font.height;
-    if (char == '\n') {
+    var bs_override: bool = false;
+    if (char == 0) return;
+    if (char == 0x08) {
+        bs_override = true;
+        if (col - font.width > 0) {
+            col -= font.width;
+        } else if (row - font.height > 0) {
+            row -= font.height;
+            col = 0;
+        } else {
+            row = 0;
+            col = 0;
+        }
+    }
+
+    if (char == '\n' or char == 0x0d) {
         newLine();
     } else if ((col + font.width) < framebuffer.width) {
+        const mask = [8]u8{ 1, 2, 4, 8, 16, 32, 64, 128 };
+        const glyph_offset: usize = char * font.height;
         for (0..font.width) |cx| {
             for (0..font.height) |cy| {
-                if (bg == 0x000000) {
+                if (bs_override) {
+                    putpixel((font.width - cx) + col, cy + row, bg);
+                } else if (bg == 0x000000) {
                     if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel((font.width - cx) + col, cy + row, fg);
                 } else {
                     const pixel_color = if (font.data[glyph_offset + cy] & mask[cx] != 0) fg else bg;
@@ -57,7 +74,7 @@ pub fn printChar(char: u16, fg: u32, bg: u32) void {
                 }
             }
         }
-        col += font.width;
+        if (!bs_override) col += font.width;
     } else if ((row + font.height) < framebuffer.height) {
         newLine();
     } else {
