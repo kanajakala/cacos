@@ -1,14 +1,14 @@
-const debug = @import("debug.zig");
+const cpu = @import("cpu.zig");
 
 pub fn restartKeyboard() void {
-    const data = debug.inb(0x61);
-    debug.outb(0x61, data | 0x80);
-    debug.outb(0x61, data | 0x7f);
+    const data = cpu.inb(0x61);
+    cpu.outb(0x61, data | 0x80);
+    cpu.outb(0x61, data | 0x7f);
 }
 
 pub inline fn getScanCode() u8 {
     var data: u8 = undefined;
-    data = debug.inb(0x60);
+    data = cpu.inb(0x60);
     return data;
 }
 
@@ -98,6 +98,7 @@ pub inline fn map(scancode: u8) KeyEvent {
         33, 161 => .{ .code = .key_f, .state = if (scancode >= 129) .released else .pressed },
         34, 162 => .{ .code = .key_g, .state = if (scancode >= 129) .released else .pressed },
         35, 163 => .{ .code = .key_h, .state = if (scancode >= 129) .released else .pressed },
+        38, 166 => .{ .code = .key_l, .state = if (scancode >= 129) .released else .pressed },
         36, 164 => .{ .code = .key_j, .state = if (scancode >= 129) .released else .pressed },
         37, 165 => .{ .code = .key_k, .state = if (scancode >= 129) .released else .pressed },
         44, 172 => .{ .code = .key_z, .state = if (scancode >= 129) .released else .pressed },

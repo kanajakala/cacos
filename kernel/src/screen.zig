@@ -1,5 +1,5 @@
 const limine = @import("limine");
-const debug = @import("debug.zig");
+const cpu = @import("cpu.zig");
 
 //framebuffer
 pub export var framebuffer_request: limine.FramebufferRequest = .{};
@@ -52,7 +52,7 @@ pub fn manageOwerflow(offset: u8) void {
     }
 }
 
-pub fn printChar(char: u16, fg: u32, bg: u32) void {
+pub fn printChar(char: u8, fg: u32, bg: u32) void {
     switch (char) {
         0 => return,
         0x08 => handleBackspace(),
@@ -76,9 +76,9 @@ fn handleBackspace() void {
     }
 }
 
-pub fn drawCharacter(char: u16, fg: u32, bg: u32) void {
+pub fn drawCharacter(char: u8, fg: u32, bg: u32) void {
     const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
-    const glyph_offset: usize = char * font.height;
+    const glyph_offset: usize = @as(usize, char) * font.height;
     manageOwerflow(font.width);
     for (0..font.height) |cy| {
         for (0..font.width) |cx| {
@@ -123,12 +123,11 @@ pub fn printMOTD() void {
     print("   \"Y8888P\"  \"Y888888  \"Y8888P\"   \"Y88888P\"   \"Y8888P\"  \n", 0xf6aa70, 0x0);
 }
 pub fn init() void {
-    debug.print("\nscreen initialized");
+    // cpu.print("screen initialized\n");
     const maybe_framebuffer_response = framebuffer_request.response;
 
     if (maybe_framebuffer_response == null or maybe_framebuffer_response.?.framebuffers().len == 0) {
-        debug.print("framebuffer error");
-        debug.stop();
+        cpu.panic("framebuffer error");
     }
 
     const framebuffer_response = maybe_framebuffer_response.?;

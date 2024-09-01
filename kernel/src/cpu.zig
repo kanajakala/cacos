@@ -22,14 +22,23 @@ pub inline fn outb(port: u16, data: u8) void {
     );
 }
 
-pub inline fn print(comptime string: []const u8) void {
-    inline for (string) |char| {
-        outb(0xe9, char);
+pub inline fn printChar(char: u8) void {
+    outb(0xe9, char);
+}
+
+pub fn print(string: []const u8) void {
+    for (string) |char| {
+        printChar(char);
     }
 }
 
-pub fn charToString(char: u8) [:0]const u8 {
-    var buf: [256]u8 = undefined;
-    const str = try std.fmt.bufPrint(&buf, "{}", .{char});
-    return str;
+pub fn panic(string: []const u8) void {
+    for (string) |char| {
+        printChar(char);
+    }
+    stop();
+}
+
+pub fn numberToString(n: u64, buffer: []u8) []const u8 {
+    return std.fmt.bufPrint(buffer, "{x}", .{n}) catch buffer[0..0];
 }
