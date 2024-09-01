@@ -155,7 +155,7 @@ pub inline fn keyEventToChar(ke: KeyEvent) u8 {
         KeyEvent.Code.key_y => 0x79,
         KeyEvent.Code.key_z => 0x7a,
         KeyEvent.Code.spacebar => 0x20,
-        KeyEvent.Code.enter => 0x0d,
+        KeyEvent.Code.enter => 0xa,
         KeyEvent.Code.backspace => 0x08,
         else => 0,
     };

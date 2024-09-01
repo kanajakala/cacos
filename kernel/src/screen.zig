@@ -40,52 +40,70 @@ pub fn putpixel(x: usize, y: usize, color: u32) void {
     @as(*u32, @ptrCast(@alignCast(framebuffer.address + pixel_offset))).* = color;
 }
 
-pub fn printChar(char: u16, fg: u32, bg: u32) void {
-    //see https://wiki.osdev.org/VGA_Fonts#Decoding_of_bitmap_fonts
-    var bs_override: bool = false;
-    if (char == 0) return;
-    if (char == 0x08) {
-        bs_override = true;
-        if (col - font.width > 0) {
-            col -= font.width;
-        } else if (row - font.height > 0) {
-            row -= font.height;
-            col = 0;
-        } else {
-            row = 0;
-            col = 0;
-        }
-    }
-
-    if (char == '\n' or char == 0x0d) {
+pub fn manageOwerflow(offset: u8) void {
+    if (col + offset < framebuffer.width) {
+        return;
+    } else if (row + offset < framebuffer.height) {
         newLine();
-    } else if ((col + font.width) < framebuffer.width) {
-        const mask = [8]u8{ 1, 2, 4, 8, 16, 32, 64, 128 };
-        const glyph_offset: usize = char * font.height;
-        for (0..font.width) |cx| {
-            for (0..font.height) |cy| {
-                if (bs_override) {
-                    putpixel((font.width - cx) + col, cy + row, bg);
-                } else if (bg == 0x000000) {
-                    if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel((font.width - cx) + col, cy + row, fg);
-                } else {
-                    const pixel_color = if (font.data[glyph_offset + cy] & mask[cx] != 0) fg else bg;
-                    putpixel((font.width - cx) + col, cy + row, pixel_color);
-                }
-            }
-        }
-        if (!bs_override) col += font.width;
-    } else if ((row + font.height) < framebuffer.height) {
-        newLine();
+        col = 0;
     } else {
         row = 0;
         col = 0;
     }
 }
 
+pub fn printChar(char: u16, fg: u32, bg: u32) void {
+    switch (char) {
+        0 => return,
+        0x08 => handleBackspace(),
+        '\n' => newLine(),
+        else => {
+            drawCharacter(char, fg, bg);
+            col += font.width;
+        },
+    }
+}
+
+fn handleBackspace() void {
+    if (col >= font.width) {
+        col -= font.width;
+    } else if (row >= font.height) {
+        row -= font.height;
+        col = framebuffer.width - font.width;
+    } else {
+        row = 0;
+        col = 0;
+    }
+}
+
+pub fn drawCharacter(char: u16, fg: u32, bg: u32) void {
+    const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
+    const glyph_offset: usize = char * font.height;
+    manageOwerflow(font.width);
+    for (0..font.height) |cy| {
+        for (0..font.width) |cx| {
+            const pixel_color = if (font.data[glyph_offset + cy] & mask[cx] != 0) fg else bg;
+            if (bg != 0x000001 or pixel_color == fg) {
+                putpixel(cx + col, cy + row, pixel_color);
+            }
+        }
+    }
+}
+
 pub fn newLine() void {
     row += font.height;
     col = 0;
+    if (row >= framebuffer.height) {
+        row = 0;
+    }
+}
+
+pub fn drawCursor() void {
+    //draw one character to the right
+    manageOwerflow(2 * font.width);
+    //col += font.width;
+    drawCharacter('#', 0xf98a13, 0);
+    //col -= font.width;
 }
 
 pub fn print(string: []const u8, fg: u32, bg: u32) void {
