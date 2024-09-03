@@ -31,7 +31,7 @@ pub var framebuffer: *limine.Framebuffer = undefined;
 var col: usize = 0;
 var row: usize = 0;
 
-const bg = 0x6b4133;
+const bg = 0x280804;
 
 pub fn putpixel(x: usize, y: usize, color: u32) void {
     // Calculate the pixel offset using the framebuffer information we obtained above.
