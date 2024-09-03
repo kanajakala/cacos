@@ -25,7 +25,7 @@ export fn _start() callconv(.C) noreturn {
     while (true) {
         value = kb.listener();
         if (value != old_value) {
-            screen.printChar(value, 0xfffffff, 0);
+            screen.printChar(value, 0xfffffff);
             screen.drawCursor();
             old_value = value;
         }

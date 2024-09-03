@@ -31,6 +31,8 @@ pub var framebuffer: *limine.Framebuffer = undefined;
 var col: usize = 0;
 var row: usize = 0;
 
+const bg = 0x6b4133;
+
 pub fn putpixel(x: usize, y: usize, color: u32) void {
     // Calculate the pixel offset using the framebuffer information we obtained above.
     // We skip `y` scanlines (pitch is provided in bytes) and add `x * 4` to skip `x` pixels forward.
@@ -38,6 +40,17 @@ pub fn putpixel(x: usize, y: usize, color: u32) void {
 
     // Write 0xFFFFFFFF to the provided pixel offset to fill it white.
     @as(*u32, @ptrCast(@alignCast(framebuffer.address + pixel_offset))).* = color;
+}
+
+pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
+    //check for owerflow else cut the overflowing part
+    const dw = if (x + w < framebuffer.width) w + x else w - ((x + w) - framebuffer.width) + x;
+    const dh = if (y + h < framebuffer.height) h + y else h - ((y + h) - framebuffer.height) + y;
+    for (0..dw) |dx| {
+        for (0..dh) |dy| {
+            putpixel(dx, dy, color);
+        }
+    }
 }
 
 pub fn manageOwerflow(offset: u8) void {
@@ -52,19 +65,20 @@ pub fn manageOwerflow(offset: u8) void {
     }
 }
 
-pub fn printChar(char: u8, fg: u32, bg: u32) void {
+pub fn printChar(char: u8, fg: u32) void {
     switch (char) {
         0 => return,
         0x08 => handleBackspace(),
         '\n' => newLine(),
         else => {
-            drawCharacter(char, fg, bg);
+            drawCharacter(char, fg);
             col += font.width;
         },
     }
 }
 
 fn handleBackspace() void {
+    drawCharacter(0, bg);
     if (col >= font.width) {
         col -= font.width;
     } else if (row >= font.height) {
@@ -76,7 +90,7 @@ fn handleBackspace() void {
     }
 }
 
-pub fn drawCharacter(char: u8, fg: u32, bg: u32) void {
+pub fn drawCharacter(char: u8, fg: u32) void {
     const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
     const glyph_offset: usize = @as(usize, char) * font.height;
     manageOwerflow(font.width);
@@ -102,25 +116,26 @@ pub fn drawCursor() void {
     //draw one character to the right
     manageOwerflow(2 * font.width);
     //col += font.width;
-    drawCharacter('#', 0xf98a13, 0);
+    drawCharacter('#', 0xf98a13);
     //col -= font.width;
 }
 
-pub fn print(string: []const u8, fg: u32, bg: u32) void {
+pub fn print(string: []const u8, fg: u32) void {
     for (string) |char| {
-        printChar(char, fg, bg);
+        printChar(char, fg);
     }
 }
 
 pub fn printMOTD() void {
-    print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", 0xf6aa70, 0x0);
-    print("  d88P  Y88b          d88P  Y88b d88P\" \"Y88b d88P  Y88b \n", 0xf6aa70, 0x0);
-    print("  888    888          888    888 888     888 Y88b.      \n", 0xf6aa70, 0x0);
-    print("  888         8888b.  888        888     888  \"Y888b.   \n", 0xf6aa70, 0x0);
-    print("  888            \"88b 888        888     888     \"Y88b. \n", 0xf6aa70, 0x0);
-    print("  888    888 .d888888 888    888 888     888       \"888 \n", 0xf6aa70, 0x0);
-    print("  Y88b  d88P 888  888 Y88b  d88P Y88b. .d88P Y88b  d88P \n", 0xf6aa70, 0x0);
-    print("   \"Y8888P\"  \"Y888888  \"Y8888P\"   \"Y88888P\"   \"Y8888P\"  \n", 0xf6aa70, 0x0);
+    drawRect(0, 0, framebuffer.width, framebuffer.height, bg);
+    print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", 0xf6aa70);
+    print("  d88P  Y88b          d88P  Y88b d88P\" \"Y88b d88P  Y88b \n", 0xf6aa70);
+    print("  888    888          888    888 888     888 Y88b.      \n", 0xf6aa70);
+    print("  888         8888b.  888        888     888  \"Y888b.   \n", 0xf6aa70);
+    print("  888            \"88b 888        888     888     \"Y88b. \n", 0xf6aa70);
+    print("  888    888 .d888888 888    888 888     888       \"888 \n", 0xf6aa70);
+    print("  Y88b  d88P 888  888 Y88b  d88P Y88b. .d88P Y88b  d88P \n", 0xf6aa70);
+    print("   \"Y8888P\"  \"Y888888  \"Y8888P\"   \"Y88888P\"   \"Y8888P\"  \n", 0xf6aa70);
 }
 pub fn init() void {
     // cpu.print("screen initialized\n");

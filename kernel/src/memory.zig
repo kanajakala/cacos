@@ -32,13 +32,13 @@ fn hhinit() void {
 pub fn printMem() void {
     var buffer: [20]u8 = undefined;
     const length = cpu.numberToString(memory_region.len, &buffer);
-    screen.print("\nlength of memory: ", 0xeeeeee, 0);
+    screen.print("\nlength of memory: ", 0xeeeeee);
     cpu.print("length of memory: ");
 
-    screen.print(length, 0xffaa32, 0);
+    screen.print(length, 0xffaa32);
     cpu.print(length);
 
-    screen.printChar('\n', 0xff0000, 0);
+    screen.printChar('\n', 0xff0000);
     cpu.printChar('\n');
 }
 
