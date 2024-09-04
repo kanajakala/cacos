@@ -69,7 +69,10 @@ pub fn printChar(char: u8, fg: u32) void {
     switch (char) {
         0 => return,
         0x08 => handleBackspace(),
-        '\n' => newLine(),
+        '\n' => {
+            drawCharacter(0, bg);
+            newLine();
+        },
         else => {
             drawCharacter(char, fg);
             col += font.width;
@@ -105,9 +108,10 @@ pub fn drawCharacter(char: u8, fg: u32) void {
 }
 
 pub fn newLine() void {
-    row += font.height;
     col = 0;
-    if (row >= framebuffer.height) {
+    if (row <= framebuffer.height) {
+        row += font.height;
+    } else {
         row = 0;
     }
 }

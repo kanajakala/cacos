@@ -2,6 +2,7 @@ const limine = @import("limine");
 const fmt = @import("std").fmt;
 const cpu = @import("cpu.zig");
 const screen = @import("screen.zig");
+const pages = @import("pages.zig");
 
 // code taken from https://github.com/yhyadev/yos
 export var memory_map_request: limine.MemoryMapRequest = .{};
@@ -29,17 +30,33 @@ fn hhinit() void {
     hhdm_offset = hhdm_response.offset;
 }
 
+pub fn testMem() void {
+    var buffer: [20]u8 = undefined;
+    const virtual_mem_start = pages.alloc(&pages.pageTable) catch 0;
+    screen.print("\nAttempting allocation of 1 page at ", 0xeeeeee);
+    screen.print(cpu.numberToStringHex(virtual_mem_start, &buffer), 0xff0000);
+    screen.print("  \n-> Writing value FF on whole page", 0x00ff00);
+    for (0..pages.page_size) |j| {
+        memory_region[virtual_mem_start + j] = 0xff;
+    }
+    screen.print("  \n-> reading word 0: ", 0x00ff00);
+    screen.print(cpu.numberToStringHex(memory_region[virtual_mem_start], &buffer), 0xff0000);
+    screen.print("  \n-> reading word 8000 (page size): ", 0x00ff00);
+    screen.print(cpu.numberToStringHex(memory_region[virtual_mem_start + pages.page_size - 1], &buffer), 0xff0000);
+    screen.newLine();
+}
+
 pub fn printMem() void {
     var buffer: [20]u8 = undefined;
-    const length = cpu.numberToString(memory_region.len, &buffer);
+    const length = cpu.numberToStringHex(memory_region.len, &buffer);
     screen.print("\nlength of memory: ", 0xeeeeee);
-    cpu.print("length of memory: ");
-
     screen.print(length, 0xffaa32);
-    cpu.print(length);
-
-    screen.printChar('\n', 0xff0000);
-    cpu.printChar('\n');
+    const number_of_pages = cpu.numberToStringDec(pages.number_of_pages, &buffer);
+    screen.print("\nnumber of pages: ", 0xeeeeee);
+    screen.print(number_of_pages, 0xffaa32);
+    const page_size = cpu.numberToStringDec(pages.page_size, &buffer);
+    screen.print("\npage size: ", 0xeeeeee);
+    screen.print(page_size, 0xffaa32);
 }
 
 pub fn init() void {
@@ -66,4 +83,5 @@ pub fn init() void {
     }
 
     memory_region = best_memory_region.?;
+    pages.init();
 }

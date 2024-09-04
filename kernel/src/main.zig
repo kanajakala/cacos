@@ -17,6 +17,7 @@ export fn _start() callconv(.C) noreturn {
     screen.printMOTD();
 
     mem.printMem();
+    mem.testMem();
 
     kb.restartKeyboard();
 

@@ -39,6 +39,9 @@ pub fn panic(string: []const u8) void {
     stop();
 }
 
-pub fn numberToString(n: u64, buffer: []u8) []const u8 {
-    return std.fmt.bufPrint(buffer, "{x}", .{n}) catch buffer[0..0];
+pub fn numberToStringHex(n: u64, buffer: []u8) []const u8 {
+    return std.fmt.bufPrint(buffer, "{X}", .{n}) catch buffer[0..0];
+}
+pub fn numberToStringDec(n: u64, buffer: []u8) []const u8 {
+    return std.fmt.bufPrint(buffer, "{d}", .{n}) catch buffer[0..0];
 }
