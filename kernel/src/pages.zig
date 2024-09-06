@@ -1,26 +1,26 @@
 const cpu = @import("cpu.zig");
 const mem = @import("memory.zig");
 
-pub export var page_size: usize = undefined;
-pub export var number_of_pages: usize = undefined;
+pub export const page_size: usize = 8000;
+pub export const number_of_pages: usize = 100_000;
 
-pub export var pageTable: [100_000]bool = .{false} ** 100_000;
+pub export var pageTable: [number_of_pages]bool = .{false} ** number_of_pages;
 
-const pagesErrors = error{
+pub const errors = error{
     outOfPages,
 };
 
-pub fn alloc(pt: *[100_000]bool) !usize {
+pub const Page = packed struct {
+    start: usize,
+    end: usize,
+};
+
+pub fn alloc(pt: *[number_of_pages]bool) !Page {
     for (pt, 0..number_of_pages) |page, i| {
         if (!page) {
             pt[i] = true;
-            return i * page_size;
+            return Page{ .start = i * page_size, .end = i * page_size + page_size };
         }
     }
-    return pagesErrors.outOfPages;
-}
-
-pub fn init() void {
-    page_size = 8000;
-    number_of_pages = 100_000;
+    return errors.outOfPages;
 }

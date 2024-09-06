@@ -32,17 +32,22 @@ fn hhinit() void {
 
 pub fn testMem() void {
     var buffer: [20]u8 = undefined;
-    const virtual_mem_start = pages.alloc(&pages.pageTable) catch 0;
+    const mem: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
+        switch (err) {
+            pages.errors.outOfPages => screen.print("Error: out of pages", 0xff0000),
+        }
+        return;
+    };
     screen.print("\nAttempting allocation of 1 page at ", 0xeeeeee);
-    screen.print(cpu.numberToStringHex(virtual_mem_start, &buffer), 0xff0000);
+    screen.print(cpu.numberToStringHex(mem.start, &buffer), 0xff0000);
     screen.print("  \n-> Writing value FF on whole page", 0x00ff00);
-    for (0..pages.page_size) |j| {
-        memory_region[virtual_mem_start + j] = 0xff;
+    for (mem.start..mem.end) |j| {
+        memory_region[mem.start + j] = 0xff;
     }
     screen.print("  \n-> reading word 0: ", 0x00ff00);
-    screen.print(cpu.numberToStringHex(memory_region[virtual_mem_start], &buffer), 0xff0000);
+    screen.print(cpu.numberToStringHex(memory_region[mem.start], &buffer), 0xff0000);
     screen.print("  \n-> reading word 8000 (page size): ", 0x00ff00);
-    screen.print(cpu.numberToStringHex(memory_region[virtual_mem_start + pages.page_size - 1], &buffer), 0xff0000);
+    screen.print(cpu.numberToStringHex(memory_region[mem.end], &buffer), 0xff0000);
     screen.newLine();
 }
 
@@ -57,6 +62,7 @@ pub fn printMem() void {
     const page_size = cpu.numberToStringDec(pages.page_size, &buffer);
     screen.print("\npage size: ", 0xeeeeee);
     screen.print(page_size, 0xffaa32);
+    screen.newLine();
 }
 
 pub fn init() void {
@@ -83,5 +89,5 @@ pub fn init() void {
     }
 
     memory_region = best_memory_region.?;
-    pages.init();
+    //pages.init();
 }
