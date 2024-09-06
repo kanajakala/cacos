@@ -1,11 +1,11 @@
 const std = @import("std");
 const screen = @import("screen.zig");
-const cpu = @import("cpu.zig");
+const debug = @import("debug.zig");
 const kb = @import("keyboard.zig");
 const mem = @import("memory.zig");
 
 export fn _start() callconv(.C) noreturn {
-    cpu.print("CaCOS loaded sucessfully\n");
+    debug.print("CaCOS loaded sucessfully\n");
 
     //initialize screen
     screen.init();
@@ -16,9 +16,9 @@ export fn _start() callconv(.C) noreturn {
     //print MOTD
     screen.printMOTD();
 
-    mem.printMem();
-    mem.testMem(0xff);
-    mem.testMem(0xbb);
+    debug.printMem();
+    debug.testMem(0xff);
+    debug.testMem(0xbb);
 
     kb.restartKeyboard();
 

@@ -1,5 +1,6 @@
 const limine = @import("limine");
 const cpu = @import("cpu.zig");
+const debug = @import("debug.zig");
 
 //framebuffer
 pub export var framebuffer_request: limine.FramebufferRequest = .{};
@@ -146,7 +147,7 @@ pub fn init() void {
     const maybe_framebuffer_response = framebuffer_request.response;
 
     if (maybe_framebuffer_response == null or maybe_framebuffer_response.?.framebuffers().len == 0) {
-        cpu.panic("framebuffer error");
+        debug.panic("framebuffer error");
     }
 
     const framebuffer_response = maybe_framebuffer_response.?;
