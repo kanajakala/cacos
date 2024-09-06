@@ -3,6 +3,7 @@ const cpu = @import("cpu.zig");
 const mem = @import("memory.zig");
 const pages = @import("pages.zig");
 const screen = @import("screen.zig");
+const stream = @import("stream.zig");
 
 pub inline fn printChar(char: u8) void {
     cpu.outb(0xe9, char);
@@ -53,7 +54,7 @@ pub fn testMem(value: u8) void {
     screen.print(numberToStringHex(mem.memory_region[memory.start], &buffer), 0xff0000);
     screen.print("\n -> reading word 8000 (page size): ", 0x00ff00);
     screen.print(numberToStringHex(mem.memory_region[memory.end - 1], &buffer), 0xff0000);
-    screen.print("\n -> freeing memoryory\n", 0xfb342);
+    screen.print("\n -> freeing memory\n", 0xfb342);
     pages.free(memory, &pages.pageTable);
 }
 
@@ -69,4 +70,37 @@ pub fn printMem() void {
     screen.print("\npage size: ", 0xeeeeee);
     screen.print(page_size, 0xffaa32);
     screen.newLine();
+}
+
+pub fn arrayStartsWith(arr: []const u8, str: []const u8) bool {
+    if (arr.len < str.len) return false;
+    return std.mem.eql(u8, arr[0..str.len], str);
+}
+
+pub fn printArray(arr: []const u8) void {
+    for (arr) |i| {
+        if (i != 0) {
+            printChar(i);
+        }
+    }
+}
+
+//NOT TESTED
+pub fn concat(str1: []const u8, str2: []const u8) []const u8 {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+    const result = std.fmt.allocPrint(allocator, "{s} {s}!", .{ str1, str2 }) catch "R";
+    defer allocator.free(result);
+    return result;
+}
+
+pub fn stdinToString(in: [stream.stream_size]u8) []const u8 {
+    var out: []const u8 = "";
+    for (in) |i| {
+        if (i != 0 and i != 0xa) {
+            out = concat(out, i);
+        }
+    }
+    return out;
 }

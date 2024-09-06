@@ -29,10 +29,13 @@ var framebuffers: []*limine.Framebuffer = undefined;
 pub var framebuffer: *limine.Framebuffer = undefined;
 
 //variables to help with character placement
-var col: usize = 0;
-var row: usize = 0;
+pub var col: usize = 0;
+pub var row: usize = 0;
 
-const bg = 0x280804;
+pub const bg = 0x280804;
+pub const text = 0xdddddd;
+pub const primary = 0x8ddddc;
+pub const accent = 0xf6aa70;
 
 pub fn putpixel(x: usize, y: usize, color: u32) void {
     // Calculate the pixel offset using the framebuffer information we obtained above.

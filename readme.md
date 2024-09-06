@@ -4,7 +4,7 @@
 ![Picure of the OS](./screenshots/1.png)
 
 ### Features ?
- You can get the length of the memory, type characters and even delete them
+ You can do basic memory manipulation, type characters and even delete them
  
 ### Dependecies
  To run this project you will need zig 13, a linker and Qemu

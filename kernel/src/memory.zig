@@ -31,7 +31,6 @@ fn hhinit() void {
 }
 
 pub fn init() void {
-    debug.print("Loading memory\n");
     const maybe_memory_map_response = memory_map_request.response;
 
     if (maybe_memory_map_response == null) {
