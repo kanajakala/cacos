@@ -19,15 +19,16 @@ pub fn alloc(pt: *[number_of_pages]bool) !Page {
     for (pt, 0..number_of_pages) |page, i| {
         if (!page) {
             pt[i] = true;
-            var buffer: [20]u8 = undefined;
-            cpu.print("Allocation start: ");
-            cpu.print(cpu.numberToStringHex(i * page_size, &buffer));
-            cpu.printChar('\n');
-            cpu.print("Allocation end: ");
-            cpu.print(cpu.numberToStringHex(i * page_size + page_size, &buffer));
-            cpu.printChar('\n');
             return Page{ .start = i * page_size, .end = i * page_size + page_size };
         }
     }
     return errors.outOfPages;
+}
+
+pub fn free(page: Page, pt: *[number_of_pages]bool) void {
+    if (page.start == 0) {
+        pt[0] = false;
+    } else {
+        pt[page.start / page_size] = false;
+    }
 }

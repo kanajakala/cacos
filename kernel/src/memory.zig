@@ -54,8 +54,9 @@ pub fn testMem(value: u8) void {
     screen.print("\n -> reading word 0: ", 0x00ff00);
     screen.print(cpu.numberToStringHex(memory_region[mem.start], &buffer), 0xff0000);
     screen.print("\n -> reading word 8000 (page size): ", 0x00ff00);
-    screen.print(cpu.numberToStringHex(memory_region[mem.end], &buffer), 0xff0000);
-    screen.newLine();
+    screen.print(cpu.numberToStringHex(memory_region[mem.end - 1], &buffer), 0xff0000);
+    screen.print("\n -> freeing memory\n", 0xfb342);
+    pages.free(mem, &pages.pageTable);
 }
 
 pub fn printMem() void {
