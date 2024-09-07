@@ -32,6 +32,9 @@ pub var framebuffer: *limine.Framebuffer = undefined;
 pub var col: usize = 0;
 pub var row: usize = 0;
 
+pub var height: usize = undefined;
+pub var width: usize = undefined;
+
 pub const bg = 0x280804;
 pub const text = 0xdddddd;
 pub const primary = 0x8ddddc;
@@ -48,8 +51,8 @@ pub fn putpixel(x: usize, y: usize, color: u32) void {
 
 pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
     //check for owerflow else cut the overflowing part
-    const dw = if (x + w < framebuffer.width) w + x else w - ((x + w) - framebuffer.width) + x;
-    const dh = if (y + h < framebuffer.height) h + y else h - ((y + h) - framebuffer.height) + y;
+    const dw = if (x + w < width) w + x else w - ((x + w) - width) + x;
+    const dh = if (y + h < height) h + y else h - ((y + h) - height) + y;
     for (0..dw) |dx| {
         for (0..dh) |dy| {
             putpixel(dx, dy, color);
@@ -58,9 +61,9 @@ pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
 }
 
 pub fn manageOwerflow(offset: u8) void {
-    if (col + offset < framebuffer.width) {
+    if (col + offset < width) {
         return;
-    } else if (row + offset < framebuffer.height) {
+    } else if (row + offset < height) {
         newLine();
         col = 0;
     } else {
@@ -90,7 +93,7 @@ fn handleBackspace() void {
         col -= font.width;
     } else if (row >= font.height) {
         row -= font.height;
-        col = framebuffer.width - font.width;
+        col = width - font.width;
     } else {
         row = 0;
         col = 0;
@@ -113,7 +116,7 @@ pub fn drawCharacter(char: u8, fg: u32) void {
 
 pub fn newLine() void {
     col = 0;
-    if (row <= framebuffer.height) {
+    if (row <= height) {
         row += font.height;
     } else {
         row = 0;
@@ -134,8 +137,19 @@ pub fn print(string: []const u8, fg: u32) void {
     }
 }
 
+pub fn clear() void {
+    drawRect(0, 0, width, height, bg);
+    col = 0;
+    row = 0;
+}
+
+pub fn gotoLastLine() void {
+    col = 0;
+    row = height - 2 * font.height;
+}
+
 pub fn printMOTD() void {
-    drawRect(0, 0, framebuffer.width, framebuffer.height, bg);
+    clear();
     print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", 0xf6aa70);
     print("  d88P  Y88b          d88P  Y88b d88P\" \"Y88b d88P  Y88b \n", 0xf6aa70);
     print("  888    888          888    888 888     888 Y88b.      \n", 0xf6aa70);
@@ -145,6 +159,7 @@ pub fn printMOTD() void {
     print("  Y88b  d88P 888  888 Y88b  d88P Y88b. .d88P Y88b  d88P \n", 0xf6aa70);
     print("   \"Y8888P\"  \"Y888888  \"Y8888P\"   \"Y88888P\"   \"Y8888P\"  \n", 0xf6aa70);
 }
+
 pub fn init() void {
     // cpu.print("screen initialized\n");
     const maybe_framebuffer_response = framebuffer_request.response;
@@ -157,4 +172,6 @@ pub fn init() void {
 
     framebuffers = framebuffer_response.framebuffers();
     framebuffer = framebuffers[0];
+    height = framebuffer.height;
+    width = framebuffer.width;
 }
