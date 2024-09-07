@@ -31,14 +31,27 @@ pub fn numberToStringDec(n: u64, buffer: []u8) []const u8 {
 
 pub fn testMem(value: u8) void {
     var buffer: [20]u8 = undefined;
-    const memory: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
+    var memory: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
         switch (err) {
-            pages.errors.outOfPages => screen.print("Error: out of pages", 0xff0000),
+            pages.errors.outOfPages => screen.print("Error: out of pages", screen.errorc),
         }
         return;
     };
-    screen.print("\nAttempting allocation of 1 page at ", 0xeeeeee);
-    screen.print(numberToStringHex(memory.start, &buffer), 0xeeeeee);
+    var temp: pages.Page = undefined;
+    for (0..value) |i| {
+        _ = i;
+        temp = pages.alloc(&pages.pageTable) catch |err| { //on errors
+            switch (err) {
+                pages.errors.outOfPages => screen.print("Error: out of pages", screen.errorc),
+            }
+            return;
+        };
+    }
+    memory.end = temp.end;
+    screen.print("\nAttempting allocation of ", screen.text);
+    screen.print(numberToStringDec(value, &buffer), screen.errorc);
+    screen.print(" pages at ", screen.text);
+    screen.print(numberToStringHex(memory.start, &buffer), screen.text);
 
     screen.print("\n -> Writing value ", 0x888888);
     screen.print(numberToStringHex(value, &buffer), 0x888888);
@@ -49,26 +62,32 @@ pub fn testMem(value: u8) void {
         iterations = j;
     }
     screen.print("\n -> words written: ", 0x0fbbff);
-    screen.print(numberToStringDec(iterations, &buffer), 0xff0000);
+    screen.print(numberToStringDec(iterations, &buffer), screen.errorc);
     screen.print("\n -> reading word 0: ", 0x00ff00);
-    screen.print(numberToStringHex(mem.memory_region[memory.start], &buffer), 0xff0000);
-    screen.print("\n -> reading word 8000 (page size): ", 0x00ff00);
-    screen.print(numberToStringHex(mem.memory_region[memory.end - 1], &buffer), 0xff0000);
+    screen.print(numberToStringHex(mem.memory_region[memory.start], &buffer), screen.errorc);
+    screen.print("\n -> reading last word: ", 0x00ff00);
+    screen.print(numberToStringHex(mem.memory_region[memory.end - 1], &buffer), screen.errorc);
     //screen.print("\n -> freeing memory\n", 0xfb342);
     //pages.free(memory, &pages.pageTable);
 }
 
 pub fn printMem() void {
     var buffer: [20]u8 = undefined;
-    const length = numberToStringHex(mem.memory_region.len, &buffer);
-    screen.print("\nlength of memory: ", 0xeeeeee);
-    screen.print(length, 0xffaa32);
+    const length = numberToStringDec(mem.memory_region.len / 1_000_000, &buffer);
+    screen.print("\nsize of memory: ", screen.text);
+    screen.print(length, screen.errorc);
     const number_of_pages = numberToStringDec(pages.number_of_pages, &buffer);
-    screen.print("\nnumber of pages: ", 0xeeeeee);
-    screen.print(number_of_pages, 0xffaa32);
+    screen.print("\nnumber of pages: ", screen.text);
+    screen.print(number_of_pages, screen.errorc);
     const page_size = numberToStringDec(pages.page_size, &buffer);
-    screen.print("\npage size: ", 0xeeeeee);
-    screen.print(page_size, 0xffaa32);
+    screen.print("\npage size: ", screen.text);
+    screen.print(page_size, screen.errorc);
+    const free_pages = numberToStringDec(pages.getFreePages(&pages.pageTable), &buffer);
+    screen.print("\nnumber of free pages: ", screen.text);
+    screen.print(free_pages, screen.errorc);
+    const free_mem = numberToStringDec(pages.getFreePages(&pages.pageTable) * pages.page_size / 1_000_000, &buffer);
+    screen.print("\nfree memory: ", screen.text);
+    screen.print(free_mem, screen.errorc);
     screen.newLine();
 }
 

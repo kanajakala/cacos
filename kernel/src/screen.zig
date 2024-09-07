@@ -73,17 +73,13 @@ pub fn manageOwerflow(offset: u8) void {
     }
 }
 
-pub fn printChar(char: u16, fg: u32) void {
+pub fn printChar(char: u8, fg: u32) void {
     switch (char) {
         0 => return,
         0x08 => handleBackspace(),
         '\n' => {
             drawCharacter(0, bg);
             newLine();
-        },
-        '█' => {
-            drawCharacter(0xdb, fg);
-            col += font.width;
         },
         else => {
             drawCharacter(char, fg);
@@ -105,7 +101,7 @@ fn handleBackspace() void {
     }
 }
 
-pub fn drawCharacter(char: u16, fg: u32) void {
+pub fn drawCharacter(char: u8, fg: u32) void {
     const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
     const glyph_offset: usize = @as(usize, char) * font.height;
     manageOwerflow(font.width);

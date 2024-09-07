@@ -25,7 +25,7 @@ pub fn alloc(pt: *[number_of_pages]bool) !Page {
     return errors.outOfPages;
 }
 
-pub fn getFreeMem(pt: *[number_of_pages]bool) usize {
+pub fn getFreePages(pt: *[number_of_pages]bool) usize {
     var tot: usize = 0;
     for (pt) |page| {
         if (!page) {

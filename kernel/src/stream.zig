@@ -22,7 +22,6 @@ fn handleBackSpace() void {
     }
     screen.printChar(0x8, screen.text);
 }
-
 pub fn init(in: *[stream_size]u8) noreturn {
     var value: u8 = undefined;
     var old_value: u8 = undefined;
@@ -40,8 +39,33 @@ pub fn init(in: *[stream_size]u8) noreturn {
                     screen.printChar(value, screen.text);
                 },
             }
-            old_value = value;
             screen.drawCursor();
         }
+        old_value = value;
     }
 }
+
+//Better version but much slower
+
+//pub fn init(in: *[stream_size]u8) noreturn {
+//    var state: kb.KeyEvent.State = .released;
+//    index = 0;
+//    while (true) {
+//        const event = kb.map(kb.getScanCode());
+//        if (event.state == .pressed and state == .released) {
+//            const value: u8 = kb.keyEventToChar(event);
+//            if (index >= stream_size) index = 0;
+//            switch (value) {
+//                0xa => handleLineFeed(),
+//                0x8 => handleBackSpace(),
+//                else => {
+//                    in[index] = value;
+//                    index += 1;
+//                    screen.printChar(value, screen.text);
+//                },
+//            }
+//            screen.drawCursor();
+//        }
+//        state = event.state;
+//    }
+//}
