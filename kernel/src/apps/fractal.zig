@@ -2,6 +2,10 @@ const screen = @import("../screen.zig");
 const debug = @import("../debug.zig");
 
 pub fn draw(precision: u8) void {
+    if (precision == 0) {
+        screen.print("\nplease provide a precision", screen.errorc);
+        return;
+    }
     screen.drawRect(0, 0, screen.width, screen.height, 0);
     screen.gotoLastLine();
     for (0..screen.height) |y| {

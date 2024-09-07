@@ -17,11 +17,13 @@ pub fn execute_command() void {
     } else if (debug.arrayStartsWith(&stream.stdin, "memory")) {
         debug.printMem();
     } else if (debug.arrayStartsWith(&stream.stdin, "test memory")) {
-        debug.testMem(@truncate(stream.stdin[12]));
+        debug.testMem(debug.charToInt(stream.stdin[12]));
     } else if (debug.arrayStartsWith(&stream.stdin, "fractal")) {
-        fractal.draw(@truncate(stream.stdin[8] - '0'));
+        fractal.draw(debug.charToInt(stream.stdin[8]));
     } else if (debug.arrayStartsWith(&stream.stdin, "clear")) {
         screen.clear();
+    } else if (debug.arrayStartsWith(&stream.stdin, "motd")) {
+        screen.printMOTD();
     } else {
         screen.print("\nNot a valid command", out_color);
     }

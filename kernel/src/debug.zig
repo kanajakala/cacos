@@ -85,6 +85,13 @@ pub fn printArray(arr: []const u8) void {
     }
 }
 
+pub fn charToInt(char: u8) u8 {
+    if (char >= 30) {
+        return char - '0';
+    }
+    return 0;
+}
+
 //NOT TESTED
 pub fn concat(str1: []const u8, str2: []const u8) []const u8 {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);

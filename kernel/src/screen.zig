@@ -37,6 +37,7 @@ pub var width: usize = undefined;
 
 pub const bg = 0x280804;
 pub const text = 0xdddddd;
+pub const errorc = 0xff0000;
 pub const primary = 0x8ddddc;
 pub const accent = 0xf6aa70;
 
