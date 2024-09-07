@@ -73,13 +73,17 @@ pub fn manageOwerflow(offset: u8) void {
     }
 }
 
-pub fn printChar(char: u8, fg: u32) void {
+pub fn printChar(char: u16, fg: u32) void {
     switch (char) {
         0 => return,
         0x08 => handleBackspace(),
         '\n' => {
             drawCharacter(0, bg);
             newLine();
+        },
+        '█' => {
+            drawCharacter(0xdb, fg);
+            col += font.width;
         },
         else => {
             drawCharacter(char, fg);
@@ -101,7 +105,7 @@ fn handleBackspace() void {
     }
 }
 
-pub fn drawCharacter(char: u8, fg: u32) void {
+pub fn drawCharacter(char: u16, fg: u32) void {
     const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
     const glyph_offset: usize = @as(usize, char) * font.height;
     manageOwerflow(font.width);
@@ -151,14 +155,14 @@ pub fn gotoLastLine() void {
 
 pub fn printMOTD() void {
     clear();
-    print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", 0xf6aa70);
-    print("  d88P  Y88b          d88P  Y88b d88P\" \"Y88b d88P  Y88b \n", 0xf6aa70);
-    print("  888    888          888    888 888     888 Y88b.      \n", 0xf6aa70);
-    print("  888         8888b.  888        888     888  \"Y888b.   \n", 0xf6aa70);
-    print("  888            \"88b 888        888     888     \"Y88b. \n", 0xf6aa70);
-    print("  888    888 .d888888 888    888 888     888       \"888 \n", 0xf6aa70);
-    print("  Y88b  d88P 888  888 Y88b  d88P Y88b. .d88P Y88b  d88P \n", 0xf6aa70);
-    print("   \"Y8888P\"  \"Y888888  \"Y8888P\"   \"Y88888P\"   \"Y8888P\"  \n", 0xf6aa70);
+    print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", accent);
+    print("  d88P  Y88b          d88P  Y88b d88P\" \"Y88b d88P  Y88b \n", accent);
+    print("  888    888          888    888 888     888 Y88b.      \n", accent);
+    print("  888         8888b.  888        888     888  \"Y888b.   \n", accent);
+    print("  888            \"88b 888        888     888     \"Y88b. \n", accent);
+    print("  888    888 .d888888 888    888 888     888       \"888 \n", accent);
+    print("  Y88b  d88P 888  888 Y88b  d88P Y88b. .d88P Y88b  d88P \n", accent);
+    print("   \"Y8888P\"  \"Y888888  \"Y8888P\"   \"Y88888P\"   \"Y8888P\"  \n", accent);
 }
 
 pub fn init() void {

@@ -2,7 +2,7 @@ const cpu = @import("cpu.zig");
 const mem = @import("memory.zig");
 
 pub export const page_size: usize = 8000;
-pub export const number_of_pages: usize = 100_000;
+pub export const number_of_pages: usize = 200_000;
 
 pub export var pageTable: [number_of_pages]bool = .{false} ** number_of_pages;
 
@@ -23,6 +23,16 @@ pub fn alloc(pt: *[number_of_pages]bool) !Page {
         }
     }
     return errors.outOfPages;
+}
+
+pub fn getFreeMem(pt: *[number_of_pages]bool) usize {
+    var tot: usize = 0;
+    for (pt) |page| {
+        if (!page) {
+            tot += 1;
+        }
+    }
+    return tot;
 }
 
 pub fn free(page: Page, pt: *[number_of_pages]bool) void {

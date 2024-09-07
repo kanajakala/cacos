@@ -4,6 +4,7 @@ const std = @import("std");
 const stream = @import("stream.zig");
 
 const fractal = @import("apps/fractal.zig");
+const cacfetch = @import("apps/cacfetch.zig");
 
 const out_color = screen.text;
 
@@ -24,6 +25,8 @@ pub fn execute_command() void {
         screen.clear();
     } else if (debug.arrayStartsWith(&stream.stdin, "motd")) {
         screen.printMOTD();
+    } else if (debug.arrayStartsWith(&stream.stdin, "cacfetch")) {
+        cacfetch.run();
     } else {
         screen.print("\nNot a valid command", out_color);
     }
