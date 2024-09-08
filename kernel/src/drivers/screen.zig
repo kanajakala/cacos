@@ -1,6 +1,6 @@
 const limine = @import("limine");
-const cpu = @import("cpu.zig");
-const debug = @import("debug.zig");
+const cpu = @import("../cpu/cpu.zig");
+const debug = @import("../cpu/debug.zig");
 
 //framebuffer
 pub export var framebuffer_request: limine.FramebufferRequest = .{};

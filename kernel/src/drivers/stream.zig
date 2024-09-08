@@ -1,8 +1,8 @@
-const kb = @import("keyboard.zig");
-const screen = @import("screen.zig");
-const debug = @import("debug.zig");
 const std = @import("std");
+const kb = @import("keyboard.zig");
+const scr = @import("screen.zig");
 const console = @import("console.zig");
+const debug = @import("../cpu/debug.zig");
 
 pub const stream_size = 10_000;
 pub export var stdin: [stream_size]u8 = .{0} ** stream_size;
@@ -12,15 +12,15 @@ fn handleLineFeed() void {
     index = 0;
     console.execute_command();
     stdin = .{0} ** stream_size;
-    screen.newLine();
-    screen.print("> ", screen.primary);
+    scr.newLine();
+    scr.print("> ", scr.primary);
 }
 fn handleBackSpace() void {
     stdin[index] = 0;
     if (index > 0) {
         index -= 1;
     }
-    screen.printChar(0x8, screen.text);
+    scr.printChar(0x8, scr.text);
 }
 pub fn init(in: *[stream_size]u8) noreturn {
     var value: u8 = undefined;
@@ -36,10 +36,10 @@ pub fn init(in: *[stream_size]u8) noreturn {
                 else => {
                     in[index] = value;
                     index += 1;
-                    screen.printChar(value, screen.text);
+                    scr.printChar(value, scr.text);
                 },
             }
-            screen.drawCursor();
+            scr.drawCursor();
         }
         old_value = value;
     }
@@ -61,10 +61,10 @@ pub fn init(in: *[stream_size]u8) noreturn {
 //                else => {
 //                    in[index] = value;
 //                    index += 1;
-//                    screen.printChar(value, screen.text);
+//                    scr.printChar(value, scr.text);
 //                },
 //            }
-//            screen.drawCursor();
+//            scr.drawCursor();
 //        }
 //        state = event.state;
 //    }

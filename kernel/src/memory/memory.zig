@@ -1,8 +1,8 @@
 const limine = @import("limine");
 const fmt = @import("std").fmt;
-const debug = @import("debug.zig");
-const screen = @import("screen.zig");
 const pages = @import("pages.zig");
+const debug = @import("../cpu/debug.zig");
+const scr = @import("../drivers/screen.zig");
 
 // code taken from https://github.com/yhyadev/yos
 export var memory_map_request: limine.MemoryMapRequest = .{};

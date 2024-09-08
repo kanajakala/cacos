@@ -1,5 +1,5 @@
-const cpu = @import("cpu.zig");
 const mem = @import("memory.zig");
+const cpu = @import("../cpu/cpu.zig");
 
 pub export const page_size: usize = 8000;
 pub export const number_of_pages: usize = 200_000;

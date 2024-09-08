@@ -1,15 +1,15 @@
-const screen = @import("screen.zig");
-const debug = @import("debug.zig");
 const std = @import("std");
+const scr = @import("screen.zig");
 const stream = @import("stream.zig");
 
-const fractal = @import("apps/fractal.zig");
-const cacfetch = @import("apps/cacfetch.zig");
+const debug = @import("../cpu/debug.zig");
+const fractal = @import("../apps/fractal.zig");
+const cacfetch = @import("../apps/cacfetch.zig");
 
-const out_color = screen.text;
+const out_color = scr.text;
 
 fn info() void {
-    screen.print("\nCaCOS developped by kanjakala", out_color);
+    scr.print("\nCaCOS developped by kanjakala", out_color);
 }
 
 pub fn execute_command() void {
@@ -22,12 +22,12 @@ pub fn execute_command() void {
     } else if (debug.arrayStartsWith(&stream.stdin, "fractal")) {
         fractal.draw(debug.charToInt(stream.stdin[8]));
     } else if (debug.arrayStartsWith(&stream.stdin, "clear")) {
-        screen.clear();
+        scr.clear();
     } else if (debug.arrayStartsWith(&stream.stdin, "motd")) {
-        screen.printMOTD();
+        scr.printMOTD();
     } else if (debug.arrayStartsWith(&stream.stdin, "cacfetch")) {
         cacfetch.run();
     } else {
-        screen.print("\nNot a valid command", out_color);
+        scr.print("\nNot a valid command", out_color);
     }
 }

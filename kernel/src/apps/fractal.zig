@@ -1,17 +1,17 @@
-const screen = @import("../screen.zig");
-const debug = @import("../debug.zig");
+const scr = @import("../drivers/screen.zig");
+const debug = @import("../cpu/debug.zig");
 
 pub fn draw(precision: u8) void {
     if (precision == 0) {
-        screen.print("\nplease provide a precision", screen.errorc);
+        scr.print("\nplease provide a precision", scr.errorc);
         return;
     }
-    screen.drawRect(0, 0, screen.width, screen.height, 0);
-    screen.gotoLastLine();
-    for (0..screen.height) |y| {
-        for (0..screen.width) |x| {
-            const cx: f32 = @as(f32, @floatFromInt(x)) - @as(f32, @floatFromInt(screen.width)) / 2.0;
-            const cy: f32 = @as(f32, @floatFromInt(y)) - @as(f32, @floatFromInt(screen.height)) / 2.0;
+    scr.drawRect(0, 0, scr.width, scr.height, 0);
+    scr.gotoLastLine();
+    for (0..scr.height) |y| {
+        for (0..scr.width) |x| {
+            const cx: f32 = @as(f32, @floatFromInt(x)) - @as(f32, @floatFromInt(scr.width)) / 2.0;
+            const cy: f32 = @as(f32, @floatFromInt(y)) - @as(f32, @floatFromInt(scr.height)) / 2.0;
             const dx: f32 = cx / 400.0 - 0.8;
             const dy: f32 = cy / 400.0;
 
@@ -22,7 +22,7 @@ pub fn draw(precision: u8) void {
                 b = 2 * (a * b) + dy;
                 a = d;
                 if (d > 200) {
-                    screen.putpixel(x, y, @truncate(t * 12));
+                    scr.putpixel(x, y, @truncate(t * 12));
                 }
             }
         }

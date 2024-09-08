@@ -1,4 +1,4 @@
-const cpu = @import("cpu.zig");
+const cpu = @import("../cpu/cpu.zig");
 
 pub fn restartKeyboard() void {
     const data = cpu.inb(0x61);
