@@ -1,11 +1,18 @@
+//taken from https://github.com/Tatskaari/zigzag/blob/main/kernel/src/arch/x86/idt.zig
 const cpu = @import("cpu.zig");
-const scr = @import("../drivers/screen.zig");
-const debug = @import("../cpu/debug.zig");
+const screen = @import("../drivers/screen.zig");
 
-var idt: [256]entry = undefined;
+/// Interrupt Descriptor Table Register: used to tell the CPU about the location and legnth of the IDTEntry array below
+const IDTR = packed struct(u80) {
+    limit: u16,
+    base: u64,
+};
 
-//an entry in the Interrupt Desciptor Table
-const entry = packed struct {
+/// Interrupt Descriptor Table: the actual table that contains all the interrupt vectors to handle IRQs
+var idt: [256]IDTEntry = undefined;
+
+/// IDTEntry is an entry in the interrupt descriptor table
+const IDTEntry = packed struct {
     isr_low: u16, // first 16 bits of the function pointer
     kernel_cs: u16, // The code segment for the kernel. This should be whatever you set it to when you set this in the GDT.
     ist: u8 = 0, // Legacy nonense. Set this to 0.
@@ -15,27 +22,25 @@ const entry = packed struct {
     reserved: u32 = 0,
 };
 
-//get the Code Segment (??)
-//taken from https://github.com/yhyadev/yos/blob/master/src/kernel/arch/x86_64/cpu.zig
-pub inline fn getCS() u16 {
-    return asm volatile ("mov %cs, %[result]"
-        : [result] "={rax}" (-> u16),
-    );
-}
-
-//most of the code taken from https://github.com/Tatskaari/zigzag/blob/main/notes/x86/interrupts/IDT%20-%20interrupt%20descriptor%20table.md
 pub fn setDescriptor(vector: usize, isrPtr: usize, dpl: u8) void {
-    var IDTentry = &idt[vector];
+    var entry = &idt[vector];
 
-    IDTentry.isr_low = @truncate(isrPtr & 0xFFFF);
-    IDTentry.isr_mid = @truncate((isrPtr >> 16) & 0xFFFF);
-    IDTentry.isr_high = @truncate(isrPtr >> 32);
+    entry.isr_low = @truncate(isrPtr & 0xFFFF);
+    entry.isr_mid = @truncate((isrPtr >> 16) & 0xFFFF);
+    entry.isr_high = @truncate(isrPtr >> 32);
     //your code selector may be different!
-    IDTentry.kernel_cs = getCS();
+    entry.kernel_cs = cpu.getCS();
     //trap gate + present + DPL
-    IDTentry.flags = 0b1110 | ((dpl & 0b11) << 5) | (1 << 7);
+    entry.flags = 0b1110 | ((dpl & 0b11) << 5) | (1 << 7);
     //ist disabled
-    IDTentry.ist = 0;
+    entry.ist = 0;
+}
+// Represents the function signature of an interupt
+const Interrupt = *const fn (*cpu.Context) callconv(.C) void;
+
+pub fn load() void {
+    const idtr = IDTR{ .base = @intFromPtr(&idt[0]), .limit = (@sizeOf(@TypeOf(idt))) - 1 };
+    cpu.lidt(@bitCast(idtr));
 }
 
 pub const InterruptStackFrame = extern struct {
@@ -46,34 +51,15 @@ pub const InterruptStackFrame = extern struct {
     stack_segment: u32,
 };
 
-pub fn load() void {
-    const IDTR = packed struct(u80) {
-        address: u64,
-        size: u16,
-    };
-
-    const idtr = IDTR{ .address = @intFromPtr(&idt[0]), .size = (@sizeOf(@TypeOf(idt))) - 1 };
-
-    asm volatile ("lidt (%[idtr])"
-        :
-        : [idtr] "{rax}" (idtr),
-    );
+export fn divErrISR(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    screen.print("Div by zero!", screen.errorc);
+}
+export fn testISR(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    screen.print("Interrupted!", screen.primary);
 }
 
 pub fn init() void {
-    scr.print("Loading IDT\n", scr.text);
     setDescriptor(0, @intFromPtr(&divErrISR), 0);
-    setDescriptor(0x10, @intFromPtr(&customInterupt), 0);
-    load();
-    scr.print("Loaded IDT", scr.text);
-    //test the custom interrupt
+    setDescriptor(0x10, @intFromPtr(&testISR), 0);
     //asm volatile ("int $0x10");
-}
-
-fn divErrISR(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    scr.print("Div by zero!", scr.errorc);
-}
-
-fn customInterupt(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    debug.print("Interrupted!");
 }

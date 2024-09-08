@@ -1,4 +1,5 @@
 const idt = @import("cpu/idt.zig");
+const gdt = @import("cpu/gdt.zig");
 const debug = @import("cpu/debug.zig");
 
 const stream = @import("drivers/stream.zig");
@@ -19,6 +20,7 @@ export fn _start() callconv(.C) noreturn {
     //print MOTD
     scr.printMOTD();
 
+    gdt.init();
     idt.init();
     //keyboard handling
     kb.restartKeyboard();
