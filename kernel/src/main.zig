@@ -9,8 +9,10 @@ const scr = @import("drivers/screen.zig");
 const kb = @import("drivers/keyboard.zig");
 
 export fn _start() callconv(.C) noreturn {
-    debug.print("CaCOS loaded sucessfully\n");
+    debug.print("Starting CaCOS loading\n");
 
+    gdt.init();
+    //idt.init();
     //initialize scr
     scr.init();
 
@@ -20,9 +22,8 @@ export fn _start() callconv(.C) noreturn {
     //print MOTD
     scr.printMOTD();
 
-    gdt.init();
-    idt.init();
     //keyboard handling
     kb.restartKeyboard();
     stream.init(&stream.stdin);
+    debug.print("Loaded Cacos!\n");
 }

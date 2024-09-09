@@ -61,7 +61,7 @@ const user_data = SegmentDescriptor{
     },
 };
 
-const GDT = [5]SegmentDescriptor{
+pub const GDT = [5]SegmentDescriptor{
     null_segment, // null selector
     kernel_code,
     kernel_data,
@@ -76,15 +76,14 @@ pub const user_cs = (3 * @sizeOf(SegmentDescriptor)) | 3;
 pub const user_ds = (4 * @sizeOf(SegmentDescriptor)) | 3;
 
 const Gdtr = packed struct(u80) {
-    limit: u16,
-    base: u64,
+    offset: u64,
+    size: u16,
 };
 
 pub noinline fn flushGdt() void {
     // Loads the data selectors, then does a dummy far return to the next instruction, setting the code selector
-    // breaks the linker for some reason
     asm volatile (
-        \\ mov $0x10, %ax
+        \\ mov $0x30, %ax
         \\ mov %ax, %ds
         \\ mov %ax, %es
         \\ mov %ax, %fs
@@ -100,10 +99,9 @@ pub noinline fn flushGdt() void {
 
 pub fn init() void {
     const gdtr = Gdtr{
-        .base = @intFromPtr(&GDT[0]),
-        .limit = @sizeOf(@TypeOf(GDT)) - 1,
+        .offset = @intFromPtr(&GDT[0]),
+        .size = @sizeOf(@TypeOf(GDT)) - 1,
     };
     cpu.lgdt(@bitCast(gdtr));
-    //causes problem with linker
-    //flushGdt();
+    flushGdt();
 }

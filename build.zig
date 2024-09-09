@@ -49,9 +49,10 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = kernel_optimize,
         .code_model = .kernel,
+        .pic = true,
     });
 
-    kernel.pie = true;
+    kernel.pie = false;
     kernel.root_module.addImport("limine", limine.module("limine"));
     kernel.setLinkerScriptPath(b.path("kernel/linker.ld"));
 

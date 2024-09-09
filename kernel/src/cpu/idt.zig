@@ -3,16 +3,11 @@ const cpu = @import("cpu.zig");
 const screen = @import("../drivers/screen.zig");
 
 /// Interrupt Descriptor Table Register: used to tell the CPU about the location and legnth of the IDTEntry array below
-const IDTR = packed struct(u80) {
-    limit: u16,
-    base: u64,
-};
-
 /// Interrupt Descriptor Table: the actual table that contains all the interrupt vectors to handle IRQs
 var idt: [256]IDTEntry = undefined;
 
 /// IDTEntry is an entry in the interrupt descriptor table
-const IDTEntry = packed struct {
+const IDTEntry = packed struct(u128) {
     isr_low: u16, // first 16 bits of the function pointer
     kernel_cs: u16, // The code segment for the kernel. This should be whatever you set it to when you set this in the GDT.
     ist: u8 = 0, // Legacy nonense. Set this to 0.
@@ -38,8 +33,14 @@ pub fn setDescriptor(vector: usize, isrPtr: usize, dpl: u8) void {
 // Represents the function signature of an interupt
 const Interrupt = *const fn (*cpu.Context) callconv(.C) void;
 
+// Structure pointing to the IDT
+const IDTR = packed struct(u80) {
+    offset: u64,
+    size: u16,
+};
+
 pub fn load() void {
-    const idtr = IDTR{ .base = @intFromPtr(&idt[0]), .limit = (@sizeOf(@TypeOf(idt))) - 1 };
+    const idtr = IDTR{ .offset = @intFromPtr(&idt[0]), .size = (@sizeOf(@TypeOf(idt))) - 1 };
     cpu.lidt(@bitCast(idtr));
 }
 

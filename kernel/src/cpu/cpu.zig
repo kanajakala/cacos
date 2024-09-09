@@ -57,6 +57,7 @@ pub inline fn getCS() u16 {
 }
 
 pub inline fn lgdt(gdtr: u80) void {
+    //Load GDT and flush
     asm volatile ("lgdt %[p]"
         :
         : [p] "*p" (&gdtr),
@@ -64,8 +65,8 @@ pub inline fn lgdt(gdtr: u80) void {
 }
 
 pub inline fn lidt(idtr: u80) void {
-    asm volatile ("lidt (%[p])"
+    asm volatile ("lidt %[p]"
         :
-        : [p] "p" (&idtr),
+        : [p] "*p" (&idtr),
     );
 }
