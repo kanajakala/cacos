@@ -12,15 +12,11 @@ export fn _start() callconv(.C) noreturn {
     debug.print("Starting CaCOS loading\n");
 
     scr.init();
+    scr.printMOTD();
+
     gdt.init();
     idt.init();
-    //initialize scr
-
-    //init memory
     mem.init();
-
-    //print MOTD
-    scr.printMOTD();
 
     //keyboard handling
     kb.restartKeyboard();
