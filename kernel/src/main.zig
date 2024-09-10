@@ -11,10 +11,10 @@ const kb = @import("drivers/keyboard.zig");
 export fn _start() callconv(.C) noreturn {
     debug.print("Starting CaCOS loading\n");
 
-    gdt.init();
-    //idt.init();
-    //initialize scr
     scr.init();
+    gdt.init();
+    idt.init();
+    //initialize scr
 
     //init memory
     mem.init();

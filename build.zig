@@ -52,7 +52,7 @@ pub fn build(b: *std.Build) void {
         .pic = true,
     });
 
-    kernel.pie = false;
+    //kernel.pie = false;
     kernel.root_module.addImport("limine", limine.module("limine"));
     kernel.setLinkerScriptPath(b.path("kernel/linker.ld"));
 

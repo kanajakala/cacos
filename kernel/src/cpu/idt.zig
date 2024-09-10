@@ -62,5 +62,5 @@ export fn testISR(_: *InterruptStackFrame) callconv(.Interrupt) void {
 pub fn init() void {
     setDescriptor(0, @intFromPtr(&divErrISR), 0);
     setDescriptor(0x10, @intFromPtr(&testISR), 0);
-    //asm volatile ("int $0x10");
+    asm volatile ("int $0x10");
 }

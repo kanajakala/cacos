@@ -1,6 +1,7 @@
 const cpu = @import("cpu.zig");
 
 //taken from: https://github.com/Tatskaari/zigzag/blob/main/kernel/src/arch/x86/gdt.zig
+
 const SegmentDescriptor = packed struct(u64) {
     limit_lo: u16 = 0,
     base_address_lo: u16 = 0,
@@ -14,7 +15,7 @@ const SegmentDescriptor = packed struct(u64) {
     base_address_ext: u8 = 0,
 
     const Access = packed struct(u8) {
-        accessed: bool = true, //modified by the cpu
+        accessed: bool = true,
         read_write: bool = true, // If set, code segments are readable, data segments are writable
         grow_down_or_conforming: bool = false, // If set, the segment grows down for data, or for code, sets if it's conforming
         is_code: bool,
@@ -61,7 +62,7 @@ const user_data = SegmentDescriptor{
     },
 };
 
-pub const GDT = [5]SegmentDescriptor{
+const GDT = [5]SegmentDescriptor{
     null_segment, // null selector
     kernel_code,
     kernel_data,
@@ -76,14 +77,14 @@ pub const user_cs = (3 * @sizeOf(SegmentDescriptor)) | 3;
 pub const user_ds = (4 * @sizeOf(SegmentDescriptor)) | 3;
 
 const Gdtr = packed struct(u80) {
-    offset: u64,
-    size: u16,
+    limit: u16,
+    base: u64,
 };
 
 pub noinline fn flushGdt() void {
     // Loads the data selectors, then does a dummy far return to the next instruction, setting the code selector
     asm volatile (
-        \\ mov $0x30, %ax
+        \\ mov $0x10, %ax
         \\ mov %ax, %ds
         \\ mov %ax, %es
         \\ mov %ax, %fs
@@ -99,8 +100,8 @@ pub noinline fn flushGdt() void {
 
 pub fn init() void {
     const gdtr = Gdtr{
-        .offset = @intFromPtr(&GDT[0]),
-        .size = @sizeOf(@TypeOf(GDT)) - 1,
+        .base = @intFromPtr(&GDT[0]),
+        .limit = @sizeOf(@TypeOf(GDT)) - 1,
     };
     cpu.lgdt(@bitCast(gdtr));
     flushGdt();
