@@ -6,12 +6,14 @@ const debug = @import("../cpu/debug.zig");
 
 pub const stream_size = 10_000;
 pub export var stdin: [stream_size]u8 = .{0} ** stream_size;
+pub export var stdout: [stream_size]u8 = .{0} ** stream_size;
 pub export var index: usize = undefined;
 
 fn handleLineFeed() void {
     index = 0;
     console.execute_command();
     stdin = .{0} ** stream_size;
+    stdout = .{0} ** stream_size;
     scr.newLine();
     scr.print("> ", scr.primary);
 }
@@ -22,10 +24,13 @@ fn handleBackSpace() void {
     }
     scr.printChar(0x8, scr.text);
 }
+
 pub fn init(in: *[stream_size]u8) noreturn {
     var value: u8 = undefined;
     var old_value: u8 = undefined;
     index = 0;
+    scr.newLine();
+    scr.print("> ", scr.primary);
     while (true) {
         value = kb.listener();
         if (value != old_value and value != 0) {
@@ -44,28 +49,3 @@ pub fn init(in: *[stream_size]u8) noreturn {
         old_value = value;
     }
 }
-
-//Better version but much slower
-
-//pub fn init(in: *[stream_size]u8) noreturn {
-//    var state: kb.KeyEvent.State = .released;
-//    index = 0;
-//    while (true) {
-//        const event = kb.map(kb.getScanCode());
-//        if (event.state == .pressed and state == .released) {
-//            const value: u8 = kb.keyEventToChar(event);
-//            if (index >= stream_size) index = 0;
-//            switch (value) {
-//                0xa => handleLineFeed(),
-//                0x8 => handleBackSpace(),
-//                else => {
-//                    in[index] = value;
-//                    index += 1;
-//                    scr.printChar(value, scr.text);
-//                },
-//            }
-//            scr.drawCursor();
-//        }
-//        state = event.state;
-//    }
-//}

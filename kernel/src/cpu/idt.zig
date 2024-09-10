@@ -32,8 +32,6 @@ pub fn setDescriptor(vector: usize, isrPtr: usize, dpl: u8) void {
     //ist disabled
     entry.zero = 0;
 }
-// Represents the function signature of an interupt
-const Interrupt = *const fn (*cpu.Context) callconv(.C) void;
 
 pub fn load() void {
     const idtr = IDTR{ .offset = @intFromPtr(&idt[0]), .size = (@sizeOf(@TypeOf(idt))) - 1 };

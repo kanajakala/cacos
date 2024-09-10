@@ -96,10 +96,18 @@ pub fn arrayStartsWith(arr: []const u8, str: []const u8) bool {
     return std.mem.eql(u8, arr[0..str.len], str);
 }
 
-pub fn printArray(arr: []const u8) void {
+pub fn printArrayDB(arr: []const u8) void {
     for (arr) |i| {
         if (i != 0) {
             printChar(i);
+        }
+    }
+}
+
+pub fn printArray(arr: []const u8, color: u32) void {
+    for (arr) |i| {
+        if (i != 0) {
+            scr.printChar(i, color);
         }
     }
 }
