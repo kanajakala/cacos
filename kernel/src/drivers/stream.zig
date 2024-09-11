@@ -18,6 +18,7 @@ fn handleLineFeed() void {
     scr.newLine();
     scr.print("> ", scr.primary);
 }
+
 fn handleBackSpace() void {
     stdin[index] = 0;
     if (index > 0) {
@@ -26,7 +27,7 @@ fn handleBackSpace() void {
     scr.printChar(0x8, scr.text);
 }
 
-pub fn init(in: *[stream_size]u8) noreturn {
+pub fn init() noreturn {
     var value: u8 = undefined;
     var old_value: u8 = undefined;
     index = 0;
@@ -40,7 +41,7 @@ pub fn init(in: *[stream_size]u8) noreturn {
                 0xa => handleLineFeed(),
                 0x8 => handleBackSpace(),
                 else => {
-                    in[index] = value;
+                    stdin[index] = value;
                     index += 1;
                     scr.printChar(value, scr.text);
                 },

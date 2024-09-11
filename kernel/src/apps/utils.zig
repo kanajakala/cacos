@@ -8,7 +8,8 @@ const pages = @import("../memory/pages.zig");
 const debug = @import("../cpu/debug.zig");
 
 pub fn info() void {
-    console.print("CaCOS\nDevelopped by kanajakala");
+    console.print("CaCOS: Coherent and Cohesive OS");
+    console.print("developped by kanajakala");
 }
 
 pub fn echo() void {
@@ -59,12 +60,6 @@ pub fn testMem(value: u64) void {
     }
     scr.print("\n -> words written: ", 0x0fbbff);
     scr.print(debug.numberToStringDec(iterations, &buffer), scr.errorc);
-    scr.print("\n -> reading word 0: ", 0x00ff00);
-    scr.print(debug.numberToStringHex(mem.memory_region[memory.start], &buffer), scr.errorc);
-    scr.print("\n -> reading last word: ", 0x00ff00);
-    scr.print(debug.numberToStringHex(mem.memory_region[memory.end - 1], &buffer), scr.errorc);
-    //scr.print("\n -> freeing memory\n", 0xfb342);
-    //pages.free(memory, &pages.pageTable);
 }
 
 pub fn printMem() void {

@@ -21,6 +21,6 @@ export fn _start() callconv(.C) noreturn {
 
     //keyboard handling
     kb.restartKeyboard();
-    stream.init(&stream.stdin);
+    stream.init();
     debug.print("Loaded Cacos!\n");
 }
