@@ -7,6 +7,7 @@ const debug = @import("../cpu/debug.zig");
 pub const stream_size = 10_000;
 pub export var stdin: [stream_size]u8 = .{0} ** stream_size;
 pub export var stdout: [stream_size]u8 = .{0} ** stream_size;
+pub export var stderr: [stream_size]u8 = .{0} ** stream_size;
 pub export var index: usize = undefined;
 
 fn handleLineFeed() void {

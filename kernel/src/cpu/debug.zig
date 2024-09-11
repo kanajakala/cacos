@@ -3,6 +3,7 @@ const cpu = @import("cpu.zig");
 const mem = @import("../memory/memory.zig");
 const pages = @import("../memory/pages.zig");
 const scr = @import("../drivers/screen.zig");
+const console = @import("../drivers/console.zig");
 const stream = @import("../drivers/stream.zig");
 
 pub inline fn printChar(char: u8) void {
@@ -29,66 +30,13 @@ pub fn numberToStringDec(n: u64, buffer: []u8) []const u8 {
     return std.fmt.bufPrint(buffer, "{d}", .{n}) catch buffer[0..0];
 }
 
-pub fn testMem(value: u8) void {
-    var buffer: [20]u8 = undefined;
-    var memory: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
-        switch (err) {
-            pages.errors.outOfPages => scr.print("Error: out of pages", scr.errorc),
-        }
-        return;
-    };
-    var temp: pages.Page = undefined;
-    for (0..value) |i| {
-        _ = i;
-        temp = pages.alloc(&pages.pageTable) catch |err| { //on errors
-            switch (err) {
-                pages.errors.outOfPages => scr.print("Error: out of pages", scr.errorc),
-            }
-            return;
-        };
+pub fn stringToNumber(str: []const u8) u64 {
+    var tot: u64 = 0;
+    for (0..str.len) |i| {
+        if (str[str.len - i - 1] < '0' or str[i] > '9') return 1;
+        tot += (str[str.len - i - 1] - '0') * std.math.pow(u64, 10, i);
     }
-    memory.end = temp.end;
-    scr.print("\nAttempting allocation of ", scr.text);
-    scr.print(numberToStringDec(value, &buffer), scr.errorc);
-    scr.print(" pages at ", scr.text);
-    scr.print(numberToStringHex(memory.start, &buffer), scr.text);
-
-    scr.print("\n -> Writing value ", 0x888888);
-    scr.print(numberToStringHex(value, &buffer), 0x888888);
-
-    var iterations: usize = 0;
-    for (0..memory.end - memory.start) |j| {
-        mem.memory_region[memory.start + j] = value;
-        iterations = j;
-    }
-    scr.print("\n -> words written: ", 0x0fbbff);
-    scr.print(numberToStringDec(iterations, &buffer), scr.errorc);
-    scr.print("\n -> reading word 0: ", 0x00ff00);
-    scr.print(numberToStringHex(mem.memory_region[memory.start], &buffer), scr.errorc);
-    scr.print("\n -> reading last word: ", 0x00ff00);
-    scr.print(numberToStringHex(mem.memory_region[memory.end - 1], &buffer), scr.errorc);
-    //scr.print("\n -> freeing memory\n", 0xfb342);
-    //pages.free(memory, &pages.pageTable);
-}
-
-pub fn printMem() void {
-    var buffer: [20]u8 = undefined;
-    const length = numberToStringDec(mem.memory_region.len / 1_000_000, &buffer);
-    scr.print("\nsize of memory: ", scr.text);
-    scr.print(length, scr.errorc);
-    const number_of_pages = numberToStringDec(pages.number_of_pages, &buffer);
-    scr.print("\nnumber of pages: ", scr.text);
-    scr.print(number_of_pages, scr.errorc);
-    const page_size = numberToStringDec(pages.page_size, &buffer);
-    scr.print("\npage size: ", scr.text);
-    scr.print(page_size, scr.errorc);
-    const free_pages = numberToStringDec(pages.getFreePages(&pages.pageTable), &buffer);
-    scr.print("\nnumber of free pages: ", scr.text);
-    scr.print(free_pages, scr.errorc);
-    const free_mem = numberToStringDec(pages.getFreePages(&pages.pageTable) * pages.page_size / 1_000_000, &buffer);
-    scr.print("\nfree memory: ", scr.text);
-    scr.print(free_mem, scr.errorc);
-    scr.newLine();
+    return tot;
 }
 
 pub fn arrayStartsWith(arr: []const u8, str: []const u8) bool {
@@ -115,6 +63,33 @@ pub fn printArray(arr: []const u8, color: u32) void {
 pub fn charToInt(char: u8) u8 {
     if (char >= 30) {
         return char - '0';
+    }
+    return 0;
+}
+
+pub fn firstWordOfArray(arr: []const u8) []const u8 {
+    for (arr, 0..arr.len) |element, i| {
+        if (element == ' ' or element == 0) {
+            return arr[0..i];
+        }
+    }
+    return "No first word";
+}
+
+//Find the number of index n in an array,
+//the number must be darr[i]imited by spaces
+pub fn numberInArray(arr: []const u8) u64 {
+    var index1: usize = 0;
+    var index2: usize = 0;
+    for (0..arr.len - 2) |i| {
+        //if the current char is a space and the next one is a digit
+        if (arr[i] == ' ' and arr[i + 1] >= '0' and arr[i + 1] <= '9') index1 = i + 1;
+        //if the current char is a digit and the next one is a space we know the
+        //number has ended
+        if ((arr[i + 1] == ' ' or arr[i + 1] == 0) and arr[i] >= '0' and arr[i] <= '9') {
+            index2 = i + 1;
+            return stringToNumber(arr[index1..index2]);
+        }
     }
     return 0;
 }

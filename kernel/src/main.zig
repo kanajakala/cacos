@@ -7,6 +7,7 @@ const mem = @import("memory/memory.zig");
 
 const scr = @import("drivers/screen.zig");
 const kb = @import("drivers/keyboard.zig");
+const console = @import("drivers/console.zig");
 
 export fn _start() callconv(.C) noreturn {
     debug.print("Starting CaCOS loading\n");

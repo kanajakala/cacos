@@ -1,7 +1,8 @@
 const scr = @import("../drivers/screen.zig");
+const console = @import("../drivers/console.zig");
 const debug = @import("../cpu/debug.zig");
 
-pub fn draw(precision: u8) void {
+pub fn draw(precision: u64) void {
     if (precision == 0) {
         scr.print("\nplease provide a precision", scr.errorc);
         return;

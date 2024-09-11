@@ -5,48 +5,55 @@ const stream = @import("stream.zig");
 const cpu = @import("../cpu/cpu.zig");
 const debug = @import("../cpu/debug.zig");
 
+const utils = @import("../apps/utils.zig");
 const fractal = @import("../apps/fractal.zig");
 const cacfetch = @import("../apps/cacfetch.zig");
 
 const out_color = scr.text;
 
-fn info() void {
-    scr.print("\nCaCOS developped by kanjakala", out_color);
-}
-
-fn echo(in: *[stream.stream_size]u8, out: *[stream.stream_size]u8) void {
-    const offset = "echo ".len;
-    //Copy stdin to stdout
-    for (offset..stream.stream_size) |i| {
-        out[i] = in[i];
-    }
-    //print array
+pub fn print(str: []const u8) void {
     scr.newLine();
-    debug.printArray(out[offset..], scr.primary);
+    for (str, 0..str.len) |char, i| {
+        if (char != 0) {
+            stream.stdout[i] = char;
+            scr.printChar(char, out_color);
+        }
+    }
+}
+pub fn printErr(str: []const u8) void {
+    scr.newLine();
+    for (str, 0..str.len) |char, i| {
+        if (char != 0) {
+            stream.stderr[i] = char;
+            scr.printChar(char, scr.errorc);
+        }
+    }
+}
+fn hashStr(str: []const u8) u32 {
+    var hash: u32 = 2166136261;
+    for (str) |c| {
+        hash = (hash ^ c) *% 16777619;
+    }
+    return hash;
 }
 
 pub fn execute_command() void {
-    if (debug.arrayStartsWith(&stream.stdin, "info")) {
-        info();
-    } else if (debug.arrayStartsWith(&stream.stdin, "memory")) {
-        debug.printMem();
-    } else if (debug.arrayStartsWith(&stream.stdin, "test memory")) {
-        debug.testMem(debug.charToInt(stream.stdin[12]));
-    } else if (debug.arrayStartsWith(&stream.stdin, "fractal")) {
-        fractal.draw(debug.charToInt(stream.stdin[8]));
-    } else if (debug.arrayStartsWith(&stream.stdin, "clear")) {
-        scr.clear();
-    } else if (debug.arrayStartsWith(&stream.stdin, "motd")) {
-        scr.printMOTD();
-    } else if (debug.arrayStartsWith(&stream.stdin, "cacfetch")) {
-        cacfetch.run();
-    } else if (debug.arrayStartsWith(&stream.stdin, "stop")) {
-        debug.print("Stopping");
-        scr.print("Stopping", scr.primary);
-        cpu.stop();
-    } else if (debug.arrayStartsWith(&stream.stdin, "echo")) {
-        echo(&stream.stdin, &stream.stdout);
-    } else {
-        scr.print("\nNot a valid command", out_color);
+    const hash = hashStr(debug.firstWordOfArray(&stream.stdin));
+    const parameter: u64 = debug.numberInArray(&stream.stdin);
+    switch (hash) {
+        hashStr("info") => utils.info(),
+        hashStr("memory") => utils.printMem(),
+        hashStr("testmemory") => utils.testMem(parameter),
+        hashStr("fractal") => fractal.draw(parameter),
+        hashStr("clear") => scr.clear(),
+        hashStr("motd") => scr.printMOTD(),
+        hashStr("cacfetch") => cacfetch.run(),
+        hashStr("stop") => {
+            debug.print("Stopping");
+            scr.print("Stopping", scr.primary);
+            cpu.stop();
+        },
+        hashStr("echo") => utils.echo(),
+        else => printErr("Unknown Command"),
     }
 }
