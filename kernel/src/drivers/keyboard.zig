@@ -1,5 +1,7 @@
 const cpu = @import("../cpu/cpu.zig");
 
+pub var shifted: bool = false;
+
 pub fn restartKeyboard() void {
     const data = cpu.inb(0x61);
     cpu.outb(0x61, data | 0x80);
@@ -56,6 +58,7 @@ pub const KeyEvent = packed struct {
         key_z,
 
         enter,
+        shift,
         tab,
         backspace,
         escape,
@@ -108,8 +111,10 @@ pub inline fn map(scancode: u8) KeyEvent {
         48, 176 => .{ .code = .key_b, .state = if (scancode >= 129) .released else .pressed },
         49, 177 => .{ .code = .key_n, .state = if (scancode >= 129) .released else .pressed },
         50, 178 => .{ .code = .key_m, .state = if (scancode >= 129) .released else .pressed },
+
         28, 156 => .{ .code = .enter, .state = if (scancode >= 129) .released else .pressed },
-        15, 143 => .{ .code = .tab, .state = if (scancode >= 129) .released else .pressed },
+        42, 170 => .{ .code = .shift, .state = if (scancode >= 129) .released else .pressed },
+        //15, 143 => .{ .code = .tab, .state = if (scancode >= 129) .released else .pressed },
         14, 142 => .{ .code = .backspace, .state = if (scancode >= 129) .released else .pressed },
         1, 129 => .{ .code = .escape, .state = if (scancode >= 129) .released else .pressed },
         57, 185 => .{ .code = .spacebar, .state = if (scancode >= 129) .released else .pressed },
@@ -118,54 +123,101 @@ pub inline fn map(scancode: u8) KeyEvent {
 }
 
 pub inline fn keyEventToChar(ke: KeyEvent) u8 {
-    return switch (ke.code) {
-        KeyEvent.Code.key_1 => 0x31,
-        KeyEvent.Code.key_2 => 0x32,
-        KeyEvent.Code.key_3 => 0x33,
-        KeyEvent.Code.key_4 => 0x34,
-        KeyEvent.Code.key_5 => 0x35,
-        KeyEvent.Code.key_6 => 0x36,
-        KeyEvent.Code.key_7 => 0x37,
-        KeyEvent.Code.key_8 => 0x38,
-        KeyEvent.Code.key_9 => 0x39,
-        KeyEvent.Code.key_0 => 0x30,
-        KeyEvent.Code.key_a => 0x61,
-        KeyEvent.Code.key_b => 0x62,
-        KeyEvent.Code.key_c => 0x63,
-        KeyEvent.Code.key_d => 0x64,
-        KeyEvent.Code.key_e => 0x65,
-        KeyEvent.Code.key_f => 0x66,
-        KeyEvent.Code.key_g => 0x67,
-        KeyEvent.Code.key_h => 0x68,
-        KeyEvent.Code.key_i => 0x69,
-        KeyEvent.Code.key_j => 0x6A,
-        KeyEvent.Code.key_k => 0x6B,
-        KeyEvent.Code.key_l => 0x6C,
-        KeyEvent.Code.key_m => 0x6D,
-        KeyEvent.Code.key_n => 0x6E,
-        KeyEvent.Code.key_o => 0x6F,
-        KeyEvent.Code.key_p => 0x70,
-        KeyEvent.Code.key_q => 0x71,
-        KeyEvent.Code.key_r => 0x72,
-        KeyEvent.Code.key_s => 0x73,
-        KeyEvent.Code.key_t => 0x74,
-        KeyEvent.Code.key_u => 0x75,
-        KeyEvent.Code.key_v => 0x76,
-        KeyEvent.Code.key_w => 0x77,
-        KeyEvent.Code.key_x => 0x78,
-        KeyEvent.Code.key_y => 0x79,
-        KeyEvent.Code.key_z => 0x7a,
-        KeyEvent.Code.spacebar => 0x20,
-        KeyEvent.Code.enter => 0xa,
-        KeyEvent.Code.backspace => 0x08,
-        else => 0,
-    };
+    //normal keymap:
+    if (!shifted) {
+        return switch (ke.code) {
+            KeyEvent.Code.key_1 => '1',
+            KeyEvent.Code.key_2 => '2',
+            KeyEvent.Code.key_3 => '3',
+            KeyEvent.Code.key_4 => '4',
+            KeyEvent.Code.key_5 => '5',
+            KeyEvent.Code.key_6 => '6',
+            KeyEvent.Code.key_7 => '7',
+            KeyEvent.Code.key_8 => '8',
+            KeyEvent.Code.key_9 => '9',
+            KeyEvent.Code.key_0 => '0',
+            KeyEvent.Code.key_a => 'a',
+            KeyEvent.Code.key_b => 'b',
+            KeyEvent.Code.key_c => 'c',
+            KeyEvent.Code.key_d => 'd',
+            KeyEvent.Code.key_e => 'e',
+            KeyEvent.Code.key_f => 'f',
+            KeyEvent.Code.key_g => 'g',
+            KeyEvent.Code.key_h => 'h',
+            KeyEvent.Code.key_i => 'i',
+            KeyEvent.Code.key_j => 'j',
+            KeyEvent.Code.key_k => 'k',
+            KeyEvent.Code.key_l => 'l',
+            KeyEvent.Code.key_m => 'm',
+            KeyEvent.Code.key_n => 'n',
+            KeyEvent.Code.key_o => 'o',
+            KeyEvent.Code.key_p => 'p',
+            KeyEvent.Code.key_q => 'q',
+            KeyEvent.Code.key_r => 'r',
+            KeyEvent.Code.key_s => 's',
+            KeyEvent.Code.key_t => 't',
+            KeyEvent.Code.key_u => 'u',
+            KeyEvent.Code.key_v => 'v',
+            KeyEvent.Code.key_w => 'w',
+            KeyEvent.Code.key_x => 'x',
+            KeyEvent.Code.key_y => 'y',
+            KeyEvent.Code.key_z => 'z',
+
+            KeyEvent.Code.spacebar => 0x20,
+            KeyEvent.Code.enter => 0xa,
+            KeyEvent.Code.backspace => 0x08,
+            else => 0,
+        };
+    } else {
+        return switch (ke.code) {
+            KeyEvent.Code.key_1 => '!',
+            KeyEvent.Code.key_2 => '@',
+            KeyEvent.Code.key_3 => '#',
+            KeyEvent.Code.key_4 => '$',
+            KeyEvent.Code.key_5 => '%',
+            KeyEvent.Code.key_6 => '^',
+            KeyEvent.Code.key_7 => '&',
+            KeyEvent.Code.key_8 => '*',
+            KeyEvent.Code.key_9 => '(',
+            KeyEvent.Code.key_0 => ')',
+            KeyEvent.Code.key_a => 'A',
+            KeyEvent.Code.key_b => 'B',
+            KeyEvent.Code.key_c => 'C',
+            KeyEvent.Code.key_d => 'D',
+            KeyEvent.Code.key_e => 'E',
+            KeyEvent.Code.key_f => 'F',
+            KeyEvent.Code.key_g => 'G',
+            KeyEvent.Code.key_h => 'H',
+            KeyEvent.Code.key_i => 'I',
+            KeyEvent.Code.key_j => 'J',
+            KeyEvent.Code.key_k => 'K',
+            KeyEvent.Code.key_l => 'L',
+            KeyEvent.Code.key_m => 'M',
+            KeyEvent.Code.key_n => 'N',
+            KeyEvent.Code.key_o => 'O',
+            KeyEvent.Code.key_p => 'P',
+            KeyEvent.Code.key_q => 'Q',
+            KeyEvent.Code.key_r => 'R',
+            KeyEvent.Code.key_s => 'S',
+            KeyEvent.Code.key_t => 'T',
+            KeyEvent.Code.key_u => 'U',
+            KeyEvent.Code.key_v => 'V',
+            KeyEvent.Code.key_w => 'W',
+            KeyEvent.Code.key_x => 'X',
+            KeyEvent.Code.key_y => 'Y',
+            KeyEvent.Code.key_z => 'Z',
+            else => 0,
+        };
+    }
 }
 
 pub inline fn listener() u8 {
-    if (getScanCode() > 130) return 0;
-    const value: u8 = keyEventToChar(map(getScanCode()));
-    if (map(getScanCode()).state == KeyEvent.State.pressed) {
+    const key: KeyEvent = map(getScanCode());
+    const value: u8 = keyEventToChar(key);
+
+    if (key.state == KeyEvent.State.pressed and key.code == KeyEvent.Code.shift) shifted = true;
+    if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.shift) shifted = false;
+    if (key.state == KeyEvent.State.pressed) {
         return value;
     } else {
         return 0;
