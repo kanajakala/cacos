@@ -1,18 +1,34 @@
 const cpu = @import("../cpu/cpu.zig");
+const debug = @import("../cpu/debug.zig");
+const idt = @import("../cpu/idt.zig");
+const pic = @import("../cpu/pic.zig");
 
-pub var shifted: bool = false;
+const stream = @import("../drivers/stream.zig");
 
-pub fn restartKeyboard() void {
-    const data = cpu.inb(0x61);
-    cpu.outb(0x61, data | 0x80);
-    cpu.outb(0x61, data | 0x7f);
+const command_port = 0x64;
+const data_port = 0x60;
+
+const disable_first_port = 0xAD;
+const enable_first_port = disable_first_port + 0x01;
+const disable_second_port = 0xA7;
+const enable_second_port = disable_second_port + 0x01;
+
+/// Disable the communication of the PS/2 Keyboard
+pub fn enable() void {
+    cpu.outb(command_port, enable_first_port);
+    cpu.outb(command_port, enable_second_port);
 }
 
-pub inline fn getScanCode() u8 {
-    var data: u8 = undefined;
-    data = cpu.inb(0x60);
-    return data;
+/// Disable the communication of the PS/2 Keyboard
+pub fn disable() void {
+    cpu.outb(command_port, disable_first_port);
+    cpu.outb(command_port, disable_second_port);
 }
+
+//pub inline fn getScanCode() u8 {
+//    var data: u8 = undefined;
+//    return data;
+//}
 
 pub const KeyEvent = packed struct {
     code: Code,
@@ -211,15 +227,29 @@ pub inline fn keyEventToChar(ke: KeyEvent) u8 {
     }
 }
 
-pub inline fn listener() u8 {
-    const key: KeyEvent = map(getScanCode());
-    const value: u8 = keyEventToChar(key);
+pub var shifted: bool = false;
 
+fn interrupt(_: *idt.InterruptStackFrame) callconv(.C) void {
+    //Interrupts must end at some point
+    defer pic.primary.endInterrupt();
+    //We get the key from the key input port and convert it to a keyEvent
+    const key = map(cpu.inb(0x60));
+    var buffer: [100]u8 = undefined;
+    //shift handling
     if (key.state == KeyEvent.State.pressed and key.code == KeyEvent.Code.shift) shifted = true;
     if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.shift) shifted = false;
-    if (key.state == KeyEvent.State.pressed) {
-        return value;
-    } else {
-        return 0;
-    } //if key is PRESSED
+
+    stream.handleKey(key);
+    debug.print("interrupted: kb value: ");
+    debug.print(debug.numberToStringHex(keyEventToChar(key), &buffer));
+}
+
+pub fn init() void {
+    disable();
+
+    //set the function used to handle keypresses
+    idt.handle(1, interrupt);
+
+    enable();
+    asm volatile ("int $33");
 }

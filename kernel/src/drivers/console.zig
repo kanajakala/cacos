@@ -1,6 +1,7 @@
 const std = @import("std");
 const scr = @import("screen.zig");
 const stream = @import("stream.zig");
+const kb = @import("keyboard.zig");
 
 const cpu = @import("../cpu/cpu.zig");
 const debug = @import("../cpu/debug.zig");
@@ -56,4 +57,10 @@ pub fn execute_command() void {
         hashStr("echo") => utils.echo(),
         else => printErr("Unknown Command"),
     }
+}
+
+pub fn init() void {
+    kb.init();
+    scr.newLine();
+    scr.print(" >", scr.primary);
 }

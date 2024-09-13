@@ -54,3 +54,10 @@ pub fn wait() void {
     // hardware.
     outb(0x80, 0);
 }
+
+///wait for interrupt
+pub inline fn hang() noreturn {
+    while (true) {
+        asm volatile ("hlt");
+    }
+}

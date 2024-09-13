@@ -27,27 +27,20 @@ fn handleBackSpace() void {
     scr.printChar(0x8, scr.text);
 }
 
-pub fn init() noreturn {
-    var value: u8 = undefined;
-    var old_value: u8 = undefined;
+pub fn handleKey(key: kb.KeyEvent) void {
     index = 0;
-    scr.newLine();
-    scr.print("> ", scr.primary);
-    while (true) {
-        value = kb.listener();
-        if (value != old_value and value != 0) {
-            if (index >= stream_size) index = 0;
-            switch (value) {
-                0xa => handleLineFeed(),
-                0x8 => handleBackSpace(),
-                else => {
-                    stdin[index] = value;
-                    index += 1;
-                    scr.printChar(value, scr.text);
-                },
-            }
-            scr.drawCursor();
+    const value = kb.keyEventToChar(key);
+    if (value != 0) {
+        if (index >= stream_size) index = 0;
+        switch (value) {
+            0xa => handleLineFeed(),
+            0x8 => handleBackSpace(),
+            else => {
+                stdin[index] = value;
+                index += 1;
+                scr.printChar(value, scr.text);
+            },
         }
-        old_value = value;
+        scr.drawCursor();
     }
 }

@@ -11,6 +11,7 @@ pub inline fn printChar(char: u8) void {
 }
 
 pub fn print(string: []const u8) void {
+    printChar('\n');
     for (string) |char| {
         printChar(char);
     }

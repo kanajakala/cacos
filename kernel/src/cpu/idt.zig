@@ -1,6 +1,7 @@
 //taken from https://github.com/Tatskaari/zigzag/blob/main/kernel/src/arch/x86/idt.zig
 const cpu = @import("cpu.zig");
 const pic = @import("pic.zig");
+const gdt = @import("gdt.zig");
 const screen = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
 
@@ -16,8 +17,9 @@ const IDTEntry = packed struct(u128) {
 };
 
 var idt: [256]IDTEntry = undefined;
+
 // Structure pointing to the IDT
-const IDTR = packed struct(u80) {
+const IDTPTR = packed struct(u80) {
     size: u16,
     offset: u64,
 };
@@ -37,8 +39,8 @@ pub fn setDescriptor(vector: usize, isrPtr: usize, dpl: u8) void {
 }
 
 pub fn load() void {
-    const idtr = IDTR{ .offset = @intFromPtr(&idt[0]), .size = (@sizeOf(@TypeOf(idt))) - 1 };
-    cpu.lidt(@bitCast(idtr));
+    const idtptr = IDTPTR{ .offset = @intFromPtr(&idt[0]), .size = (@sizeOf(@TypeOf(idt))) - 1 };
+    cpu.lidt(@bitCast(idtptr));
 }
 
 pub const InterruptStackFrame = extern struct {
@@ -49,14 +51,90 @@ pub const InterruptStackFrame = extern struct {
     stack_segment: u32,
 };
 
-export fn divErrISR(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    screen.print("[ERROR]: Div by zero!", screen.errorc);
+/// Offset by the amount of traps in the Interrupt Descriptor Table
+pub inline fn offset(irq: u8) u8 {
+    return irq + 32;
+}
+
+/// Handle specific interrupt request (the interrupt number is offsetted by `offset` function)
+/// taken from https://github.com/yhyadev/yos/blob/master/src/kernel/arch/x86_64/cpu.zig
+pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callconv(.C) void) void {
+    const lambda = struct {
+        pub fn interruptRequestEntry() callconv(.Naked) void {
+            // Save the context on stack to be restored later
+            asm volatile (
+                \\push %rbp
+                \\push %rax
+                \\push %rbx
+                \\push %rcx
+                \\push %rdx
+                \\push %rdi
+                \\push %rsi
+                \\push %r8
+                \\push %r9
+                \\push %r10
+                \\push %r11
+                \\push %r12
+                \\push %r13
+                \\push %r14
+                \\push %r15
+                \\mov %ds, %rax
+                \\push %rax
+                \\mov %es, %rax
+                \\push %rax
+                \\mov $0x10, %ax
+                \\mov %ax, %ds
+                \\mov %ax, %es
+                \\cld
+            );
+
+            // Allow the handler to modify the context by passing a pointer to it
+            asm volatile (
+                \\mov %rsp, %rdi
+            );
+
+            // Now call the handler using the function pointer we have, this is possible with
+            // the derefrence operator in AT&T assembly syntax
+            asm volatile (
+                \\call *%[handler]
+                :
+                : [handler] "{rax}" (handler),
+            );
+
+            // Restore the context (which is potentially modified)
+            asm volatile (
+                \\pop %rax
+                \\mov %rax, %es
+                \\pop %rax
+                \\mov %rax, %ds
+                \\pop %r15
+                \\pop %r14
+                \\pop %r13
+                \\pop %r12
+                \\pop %r11
+                \\pop %r10
+                \\pop %r9
+                \\pop %r8
+                \\pop %rsi
+                \\pop %rdi
+                \\pop %rdx
+                \\pop %rcx
+                \\pop %rbx
+                \\pop %rax
+                \\pop %rbp
+                \\iretq
+            );
+        }
+    };
+    // We add the function to the idt
+    // we also need to offset by 32 because those are reserved for exceptions
+    setDescriptor(irq + 32, @intFromPtr(&lambda.interruptRequestEntry), 0);
 }
 
 pub fn init() void {
     load();
     //set descriptors for various errors
-    setDescriptor(0, @intFromPtr(&divErrISR), 0);
+    setDescriptor(0, @intFromPtr(&handleDivisionError), 0);
     setDescriptor(1, @intFromPtr(&handleDivisionError), 0);
     setDescriptor(2, @intFromPtr(&handleDebug), 0);
     setDescriptor(3, @intFromPtr(&handleBreakpoint), 0);
@@ -83,6 +161,9 @@ pub fn init() void {
     //initialize the PIC
     pic.primary.init(0x20);
     pic.secondary.init(0x28);
+    pic.primary.disableAll();
+    pic.secondary.disableAll();
+    pic.primary.enable(pic.cascade_irq);
 }
 
 fn handleDivisionError(_: *InterruptStackFrame) callconv(.Interrupt) void {
