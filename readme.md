@@ -5,7 +5,22 @@
 
 ### Features ?
  You can do basic memory manipulation, type characters and even delete them
- 
+
+### TODO:
+ □ Not done, ▧ in progress, ■ done,
+
+ ■ Startup
+ ■ IDT & GDT
+ ■ Screen
+ ■ Keyboard
+ ■ Basic memory allocator
+ ▧ stdin & out
+ □ interrupt based kb driver
+ □ timer
+ □ Optimized memory allocator
+ □ Filesystem
+ □ GUI
+
 ### Dependecies
  To run this project you will need zig 13, a linker and Qemu
  
