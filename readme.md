@@ -18,8 +18,10 @@
  ⬜ Screen  
  ⬜ Keyboard  
  ⬜ Basic memory allocator  
- 🟨stdin & out  
- 🟧 integrate build system into build.zi
+ 🟨 stdin & out  
+ 🟧 kernel error handling
+ 🟧 APIC and IOAPIC
+ 🟧 integrate build system into build.zig
  🟧 interrupt based kb driver  
  🟧 timer  
  🟧 Optimized memory allocator  
