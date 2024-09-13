@@ -4,7 +4,7 @@ pub inline fn stop() noreturn {
     }
 }
 
-//print to the console
+///Get value at port
 pub inline fn inb(port: u16) u8 {
     return asm volatile ("inb %[port], %[result]"
         : [result] "={al}" (-> u8),
@@ -12,6 +12,7 @@ pub inline fn inb(port: u16) u8 {
     );
 }
 
+///output value at port
 pub inline fn outb(port: u16, data: u8) void {
     asm volatile ("outb %[data], %[port]"
         :
@@ -20,12 +21,14 @@ pub inline fn outb(port: u16, data: u8) void {
     );
 }
 
+///Get Code Segment
 pub inline fn getCS() u16 {
     return asm volatile ("mov %cs, %[result]"
         : [result] "=r" (-> u16),
     );
 }
 
+///Load Global Descriptor Table
 pub inline fn lgdt(gdtr: u80) void {
     //Load GDT
     asm volatile (
@@ -35,9 +38,19 @@ pub inline fn lgdt(gdtr: u80) void {
     );
 }
 
+///load the Interrupt Descriptor Table
 pub inline fn lidt(idtr: u80) void {
     asm volatile ("lidt %[p]"
         :
         : [p] "*p" (&idtr),
     );
+}
+
+/// Perform a short I/O delay.
+pub fn wait() void {
+    // port 0x80 was wired to a hex display in the past and
+    // is now mostly unused. Writing garbage data to port 0x80
+    // allegedly takes long enough to make everything work on most
+    // hardware.
+    outb(0x80, 0);
 }

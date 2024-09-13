@@ -20,7 +20,7 @@
  ⬜ Basic memory allocator  
  🟨 stdin & out  
  🟧 kernel error handling
- 🟧 APIC and IOAPIC
+ 🟧 PIC  
  🟧 integrate build system into build.zig
  🟧 interrupt based kb driver  
  🟧 timer  
