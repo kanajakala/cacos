@@ -40,25 +40,29 @@ pub fn stringToNumber(str: []const u8) u64 {
     return tot;
 }
 
-pub fn arrayStartsWith(arr: []const u8, str: []const u8) bool {
+pub fn arrayStartsWith(arr: []u8, str: []const u8) bool {
     if (arr.len < str.len) return false;
     return std.mem.eql(u8, arr[0..str.len], str);
 }
 
-pub fn printArrayDB(arr: []const u8) void {
+pub fn sum(arr: []u8) usize {
+    var out: usize = 0;
     for (arr) |i| {
-        if (i != 0) {
-            printChar(i);
-        }
+        out += i;
     }
+    return out;
 }
 
-pub fn printArray(arr: []const u8, color: u32) void {
+pub fn printArray(arr: []u8) void {
+    print(".{ ");
     for (arr) |i| {
         if (i != 0) {
-            scr.printChar(i, color);
+            printChar(' ');
+            printChar(i);
+            printChar(',');
         }
     }
+    printChar('}');
 }
 
 pub fn charToInt(char: u8) u8 {
@@ -68,7 +72,7 @@ pub fn charToInt(char: u8) u8 {
     return 0;
 }
 
-pub fn firstWordOfArray(arr: []const u8) []const u8 {
+pub fn firstWordOfArray(arr: []u8) []const u8 {
     for (arr, 0..arr.len) |element, i| {
         if (element == ' ' or element == 0) {
             return arr[0..i];
@@ -79,7 +83,7 @@ pub fn firstWordOfArray(arr: []const u8) []const u8 {
 
 //Find the number of index n in an array,
 //the number must be darr[i]imited by spaces
-pub fn numberInArray(arr: []const u8) u64 {
+pub fn numberInArray(arr: []u8) u64 {
     var index1: usize = 0;
     var index2: usize = 0;
     for (0..arr.len - 2) |i| {

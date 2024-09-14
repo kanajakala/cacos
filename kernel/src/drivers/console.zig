@@ -43,15 +43,15 @@ pub fn execute_command() void {
     const parameter: u64 = debug.numberInArray(&stream.stdin);
     switch (hash) {
         hashStr("info") => utils.info(),
-        hashStr("memory") => utils.printMem(),
-        hashStr("testmemory") => utils.testMem(parameter),
+        hashStr("meminfo") => utils.printMem(),
+        hashStr("testmem") => utils.testMem(parameter),
         hashStr("fractal") => fractal.draw(parameter),
         hashStr("clear") => scr.clear(),
         hashStr("motd") => scr.printMOTD(),
         hashStr("cacfetch") => cacfetch.run(),
         hashStr("stop") => {
             debug.print("Stopping");
-            scr.print("Stopping", scr.primary);
+            print("Stopping");
             cpu.stop();
         },
         hashStr("echo") => utils.echo(),
@@ -61,6 +61,5 @@ pub fn execute_command() void {
 
 pub fn init() void {
     kb.init();
-    scr.newLine();
-    scr.print(" >", scr.primary);
+    stream.newLine();
 }

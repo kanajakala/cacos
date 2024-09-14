@@ -1,6 +1,7 @@
 const limine = @import("limine");
 const cpu = @import("../cpu/cpu.zig");
 const debug = @import("../cpu/debug.zig");
+const stream = @import("../drivers/stream.zig");
 
 //framebuffer
 pub export var framebuffer_request: limine.FramebufferRequest = .{};
@@ -88,16 +89,11 @@ pub fn printChar(char: u8, fg: u32) void {
     }
 }
 
-fn handleBackspace() void {
+pub fn handleBackspace() void {
     drawCharacter(0, bg);
-    if (col >= font.width) {
+    //we can go back one char if we don't erase the prefix
+    if (col >= (stream.prefix.len + 1) * font.width) {
         col -= font.width;
-    } else if (row >= font.height) {
-        row -= font.height;
-        col = width - font.width;
-    } else {
-        row = 0;
-        col = 0;
     }
 }
 
