@@ -41,11 +41,12 @@ fn hashStr(str: []const u8) u32 {
 pub fn execute_command() void {
     const hash = hashStr(debug.firstWordOfArray(&stream.stdin));
     const parameter: u64 = debug.numberInArray(&stream.stdin);
+    _ = parameter;
     switch (hash) {
         hashStr("info") => utils.info(),
         hashStr("meminfo") => utils.printMem(),
-        hashStr("testmem") => utils.testMem(parameter),
-        hashStr("fractal") => fractal.draw(parameter),
+        hashStr("testmem") => utils.testMemRun(),
+        hashStr("fractal") => fractal.run(),
         hashStr("clear") => scr.clear(),
         hashStr("motd") => scr.printMOTD(),
         hashStr("cacfetch") => cacfetch.run(),

@@ -22,8 +22,8 @@ export fn _start() callconv(.C) noreturn {
 
     console.init();
 
+    debug.print("Loaded Cacos!");
     scheduler.init();
 
-    debug.print("Loaded Cacos!");
     cpu.hang();
 }

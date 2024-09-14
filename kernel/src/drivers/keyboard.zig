@@ -86,6 +86,7 @@ pub const KeyEvent = packed struct {
 
         enter,
         shift,
+        control,
         tab,
         backspace,
         escape,
@@ -152,6 +153,7 @@ pub inline fn map(scancode: u8) KeyEvent {
 
         28, 156 => .{ .code = .enter, .state = if (scancode >= 129) .released else .pressed },
         42, 170 => .{ .code = .shift, .state = if (scancode >= 129) .released else .pressed },
+        29, 157 => .{ .code = .control, .state = if (scancode >= 129) .released else .pressed },
         //15, 143 => .{ .code = .tab, .state = if (scancode >= 129) .released else .pressed },
         14, 142 => .{ .code = .backspace, .state = if (scancode >= 129) .released else .pressed },
         1, 129 => .{ .code = .escape, .state = if (scancode >= 129) .released else .pressed },
@@ -276,6 +278,7 @@ pub inline fn keyEventToChar(ke: KeyEvent) u8 {
 }
 
 pub var shifted: bool = false;
+pub var control: bool = false;
 
 fn interrupt(_: *idt.InterruptStackFrame) callconv(.C) void {
     //Interrupts must end at some point
@@ -285,6 +288,9 @@ fn interrupt(_: *idt.InterruptStackFrame) callconv(.C) void {
     //shift handling
     if (key.state == KeyEvent.State.pressed and key.code == KeyEvent.Code.shift) shifted = true;
     if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.shift) shifted = false;
+    //control handling
+    if (key.state == KeyEvent.State.pressed and key.code == KeyEvent.Code.control) control = true;
+    if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.control) control = false;
 
     stream.handleKey(key);
 }

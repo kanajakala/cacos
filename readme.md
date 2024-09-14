@@ -21,11 +21,12 @@
  ⬜ PIC  
  ⬜ interrupt based kb driver  
  ⬜ stdin & out  
- 🟧 Scrolling
- 🟧 App interrupt
- 🟧 kernel error handling
- 🟧 integrate build system into build.zig
+ 🟧 Scrolling  
+ 🟨 App interrupt  
+ 🟧 kernel error handling  
+ 🟧 integrate build system into build.zig  
  🟧 timer  
+ 🟨 Scheduler  
  🟧 Optimized memory allocator  
  🟧 Filesystem  
  🟧 GUI  

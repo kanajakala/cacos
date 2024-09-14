@@ -6,6 +6,7 @@ const mem = @import("../memory/memory.zig");
 const pages = @import("../memory/pages.zig");
 
 const debug = @import("../cpu/debug.zig");
+const scheduler = @import("../cpu/scheduler.zig");
 
 pub fn info() void {
     console.print("CaCOS: Coherent and Cohesive OS");
@@ -17,7 +18,8 @@ pub fn echo() void {
     console.print(stream.stdin[offset..]);
 }
 
-pub fn testMem(value: u64) void {
+pub fn testMem() void {
+    const value = 50_000;
     if (value == 0) {
         console.printErr("Value can't be zero");
         return;
@@ -32,18 +34,6 @@ pub fn testMem(value: u64) void {
         return;
     };
 
-    var temp: pages.Page = undefined;
-    for (0..value) |i| {
-        _ = i;
-        temp = pages.alloc(&pages.pageTable) catch |err| { //on errors
-            switch (err) {
-                pages.errors.outOfPages => console.printErr("Error: out of pages"),
-            }
-            return;
-        };
-    }
-
-    memory.end = temp.end;
     scr.print("\nAttempting allocation of ", scr.text);
     scr.print(debug.numberToStringDec(value, &buffer), scr.errorc);
     scr.print(" pages at ", scr.text);
@@ -53,13 +43,35 @@ pub fn testMem(value: u64) void {
     scr.print("\n -> Writing value ", 0x888888);
     scr.print(debug.numberToStringHex(value_to_write, &buffer), 0x888888);
 
+    //allocating the pages
+    var temp: pages.Page = undefined;
+    for (0..value) |i| {
+        if (scheduler.running[20]) {
+            _ = i;
+            temp = pages.alloc(&pages.pageTable) catch |err| { //on errors
+                switch (err) {
+                    pages.errors.outOfPages => console.printErr("Error: out of pages"),
+                }
+                return;
+            };
+        } else return;
+    }
+    memory.end = temp.end;
+
+    //writing the value
     var iterations: usize = 0;
     for (0..memory.end - memory.start) |j| {
-        mem.memory_region[memory.start + j] = value_to_write;
-        iterations = j;
+        if (scheduler.running[20]) {
+            mem.memory_region[memory.start + j] = value_to_write;
+            iterations = j;
+        }
     }
     scr.print("\n -> words written: ", 0x0fbbff);
     scr.print(debug.numberToStringDec(iterations, &buffer), scr.errorc);
+}
+pub fn testMemRun() void {
+    const app = scheduler.Process{ .id = 20, .function = &testMem };
+    scheduler.append(app);
 }
 
 pub fn printMem() void {

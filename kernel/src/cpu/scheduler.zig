@@ -1,56 +1,49 @@
 const debug = @import("debug.zig");
 
-const Process = packed struct {
+pub const Process = struct {
     id: u32,
     function: *const fn () void,
 
     pub fn remove(self: *Process) void {
-        self.* = undefined;
+        stop(self.id);
+    }
+    pub fn run(self: *const Process) void {
+        self.function();
+        //after the function is run we deinitialize it
+        @constCast(self).remove();
     }
 };
 
-var processes: [256]Process = .{Process{ .id = 0, .function = undefined }} ** 256;
+//empy process
+const empty: Process = Process{ .id = 0, .function = undefined };
+//list of all processes to be run
+pub var processes: [256]Process = .{empty} ** 256;
+//State of all processes (true means that the process is running)
+pub var running: [256]bool = .{false} ** 256;
 
-fn testFunc() void {
-    debug.print("Called function");
+pub fn append(proc: Process) void {
+    if (proc.id == 0) return debug.panic("Process 0 is reserved");
+    if (proc.id >= 255) return debug.panic("id can't be bigger than 255");
+
+    processes[proc.id] = proc;
+    running[proc.id] = true;
 }
 
-fn append(proc: Process) void {
-    //We put the process at the first free spot
-    for (processes, 0..) |process, i| {
-        if (process.id == 0) {
-            processes[i] = proc;
-            return;
-        }
-    }
-    return debug.panic("No more space for free processes");
+pub fn stop(id: usize) void {
+    if (id >= 255) return debug.panic("id can't be bigger than 255");
+    processes[id] = empty;
+    running[id] = false;
 }
-
-pub fn remove(proc: Process) void {
-    for (processes) |process| {
-        if (process.id == proc.id) {
-            process.remove;
-        }
+pub fn stopAll() void {
+    for (0..processes.len - 1) |i| {
+        stop(i);
     }
-}
-
-pub fn run(id: u32, func: *const fn () void) void {
-    if (id == 0) {
-        return debug.panic("Process 0 is reserved");
-    }
-    //check if process already exists
-    for (processes) |process| {
-        if (process.id == id) {
-            return debug.panic("process already exists");
-        }
-    }
-
-    append(Process{ .id = id, .function = func });
 }
 
 pub fn init() void {
-    run(12, &testFunc);
-    for (processes) |process| {
-        if (process.id != 0) process.function();
+    while (true) {
+        for (processes) |process| {
+            if (process.id != 0) process.run();
+        }
     }
 }

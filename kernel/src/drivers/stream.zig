@@ -3,6 +3,8 @@ const kb = @import("keyboard.zig");
 const scr = @import("screen.zig");
 const console = @import("console.zig");
 const debug = @import("../cpu/debug.zig");
+const scheduler = @import("../cpu/scheduler.zig");
+const cpu = @import("../cpu/cpu.zig");
 
 pub const stream_size = 10_000;
 pub export var stdin: [stream_size]u8 = .{0} ** stream_size;
@@ -50,16 +52,29 @@ fn handleBackSpace() void {
 
 pub fn handleKey(key: kb.KeyEvent) void {
     const value = kb.keyEventToChar(key);
+    const codes = kb.KeyEvent.Code;
     if (key.state == kb.KeyEvent.State.pressed and value != 0) {
+        //overflow check
         if (index >= stream_size) index = 0;
-        switch (value) {
-            0xa => handleLineFeed(),
-            0x8 => handleBackSpace(),
-            else => {
-                stdin[index] = value;
-                index += 1;
-                scr.printChar(value, scr.text);
-            },
+
+        //Shortcut handling
+        if (kb.control) {
+            switch (key.code) {
+                codes.key_l => scr.clear(),
+                codes.key_c => scheduler.stopAll(),
+                else => return,
+            }
+        } else {
+            //regular key handling
+            switch (key.code) {
+                codes.enter => handleLineFeed(),
+                codes.backspace => handleBackSpace(),
+                else => {
+                    stdin[index] = value;
+                    index += 1;
+                    scr.printChar(value, scr.text);
+                },
+            }
         }
         scr.drawCursor();
     }
