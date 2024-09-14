@@ -18,11 +18,11 @@
  ⬜ Screen  
  ⬜ Keyboard  
  ⬜ Basic memory allocator  
- 🟨 stdin & out  
+ ⬜ PIC  
+ ⬜ interrupt based kb driver  
+ ⬜ stdin & out  
  🟧 kernel error handling
- 🟧 PIC  
  🟧 integrate build system into build.zig
- 🟧 interrupt based kb driver  
  🟧 timer  
  🟧 Optimized memory allocator  
  🟧 Filesystem  
