@@ -21,12 +21,15 @@
  ⬜ PIC  
  ⬜ interrupt based kb driver  
  ⬜ stdin & out  
+ 🟧 Scrolling
+ 🟧 App interrupt
  🟧 kernel error handling
  🟧 integrate build system into build.zig
  🟧 timer  
  🟧 Optimized memory allocator  
  🟧 Filesystem  
  🟧 GUI  
+ 🟧 Raytracer  
 
 ### Dependecies
 

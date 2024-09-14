@@ -4,11 +4,12 @@ const debug = @import("../cpu/debug.zig");
 
 pub fn draw(precision: u64) void {
     if (precision == 0) {
-        scr.print("\nplease provide a precision", scr.errorc);
+        console.printErr("please provide a precision");
         return;
     }
     scr.drawRect(0, 0, scr.width, scr.height, 0);
-    scr.gotoLastLine();
+    scr.gotoFirstLine();
+    scr.print("Press any key to interrupt\n", 0xaaffff);
     for (0..scr.height) |y| {
         for (0..scr.width) |x| {
             const cx: f32 = @as(f32, @floatFromInt(x)) - @as(f32, @floatFromInt(scr.width)) / 2.0;

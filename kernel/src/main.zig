@@ -2,6 +2,7 @@ const cpu = @import("cpu/cpu.zig");
 const idt = @import("cpu/idt.zig");
 const gdt = @import("cpu/gdt.zig");
 const debug = @import("cpu/debug.zig");
+const scheduler = @import("cpu/scheduler.zig");
 
 const mem = @import("memory/memory.zig");
 
@@ -20,7 +21,9 @@ export fn _start() callconv(.C) noreturn {
     mem.init();
 
     console.init();
+
+    scheduler.init();
+
     debug.print("Loaded Cacos!");
     cpu.hang();
-    asm volatile ("int $33");
 }

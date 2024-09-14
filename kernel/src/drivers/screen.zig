@@ -145,6 +145,11 @@ pub fn gotoLastLine() void {
     row = height - 2 * font.height;
 }
 
+pub fn gotoFirstLine() void {
+    col = 0;
+    row = 0;
+}
+
 pub fn printMOTD() void {
     clear();
     print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  \n", accent);
