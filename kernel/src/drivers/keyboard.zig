@@ -73,6 +73,17 @@ pub const KeyEvent = packed struct {
         key_y,
         key_z,
 
+        minus,
+        plus,
+        bracket_right,
+        bracket_left,
+        semicolon,
+        quote,
+        anti_slash,
+        slash,
+        comma,
+        period,
+
         enter,
         shift,
         tab,
@@ -128,6 +139,17 @@ pub inline fn map(scancode: u8) KeyEvent {
         49, 177 => .{ .code = .key_n, .state = if (scancode >= 129) .released else .pressed },
         50, 178 => .{ .code = .key_m, .state = if (scancode >= 129) .released else .pressed },
 
+        12, 140 => .{ .code = .minus, .state = if (scancode >= 129) .released else .pressed },
+        13, 141 => .{ .code = .plus, .state = if (scancode >= 129) .released else .pressed },
+        26, 154 => .{ .code = .bracket_right, .state = if (scancode >= 129) .released else .pressed },
+        27, 155 => .{ .code = .bracket_left, .state = if (scancode >= 129) .released else .pressed },
+        39, 167 => .{ .code = .semicolon, .state = if (scancode >= 129) .released else .pressed },
+        40, 168 => .{ .code = .quote, .state = if (scancode >= 129) .released else .pressed },
+        43, 171 => .{ .code = .anti_slash, .state = if (scancode >= 129) .released else .pressed },
+        51, 179 => .{ .code = .comma, .state = if (scancode >= 129) .released else .pressed },
+        52, 180 => .{ .code = .period, .state = if (scancode >= 129) .released else .pressed },
+        53, 183 => .{ .code = .slash, .state = if (scancode >= 129) .released else .pressed },
+
         28, 156 => .{ .code = .enter, .state = if (scancode >= 129) .released else .pressed },
         42, 170 => .{ .code = .shift, .state = if (scancode >= 129) .released else .pressed },
         //15, 143 => .{ .code = .tab, .state = if (scancode >= 129) .released else .pressed },
@@ -179,6 +201,17 @@ pub inline fn keyEventToChar(ke: KeyEvent) u8 {
             KeyEvent.Code.key_y => 'y',
             KeyEvent.Code.key_z => 'z',
 
+            KeyEvent.Code.minus => '-',
+            KeyEvent.Code.plus => '=',
+            KeyEvent.Code.bracket_right => '[',
+            KeyEvent.Code.bracket_left => ']',
+            KeyEvent.Code.semicolon => ';',
+            KeyEvent.Code.quote => '\'',
+            KeyEvent.Code.anti_slash => '\\',
+            KeyEvent.Code.slash => '/',
+            KeyEvent.Code.comma => ',',
+            KeyEvent.Code.period => '.',
+
             KeyEvent.Code.spacebar => 0x20,
             KeyEvent.Code.enter => 0xa,
             KeyEvent.Code.backspace => 0x08,
@@ -222,6 +255,21 @@ pub inline fn keyEventToChar(ke: KeyEvent) u8 {
             KeyEvent.Code.key_x => 'X',
             KeyEvent.Code.key_y => 'Y',
             KeyEvent.Code.key_z => 'Z',
+
+            KeyEvent.Code.minus => '_',
+            KeyEvent.Code.plus => '+',
+            KeyEvent.Code.bracket_right => '{',
+            KeyEvent.Code.bracket_left => '}',
+            KeyEvent.Code.semicolon => ':',
+            KeyEvent.Code.quote => '\"',
+            KeyEvent.Code.anti_slash => '|',
+            KeyEvent.Code.slash => '?',
+            KeyEvent.Code.comma => '>',
+            KeyEvent.Code.period => '<',
+
+            KeyEvent.Code.spacebar => 0x20,
+            KeyEvent.Code.enter => 0xa,
+            KeyEvent.Code.backspace => 0x08,
             else => 0,
         };
     }
@@ -234,18 +282,19 @@ fn interrupt(_: *idt.InterruptStackFrame) callconv(.C) void {
     defer pic.primary.endInterrupt();
     //We get the key from the key input port and convert it to a keyEvent
     const key = map(cpu.inb(0x60));
-    var buffer: [100]u8 = undefined;
     //shift handling
     if (key.state == KeyEvent.State.pressed and key.code == KeyEvent.Code.shift) shifted = true;
     if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.shift) shifted = false;
 
     stream.handleKey(key);
-    debug.print("interrupted: kb value: ");
-    debug.print(debug.numberToStringHex(keyEventToChar(key), &buffer));
 }
 
 pub fn init() void {
+    //diable keyboard to prevent weird things from happening
     disable();
+
+    //enable the keyboard interrupt in the pic
+    pic.primary.enable(1);
 
     //set the function used to handle keypresses
     idt.handle(1, interrupt);

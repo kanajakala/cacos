@@ -30,7 +30,7 @@ fn handleBackSpace() void {
 pub fn handleKey(key: kb.KeyEvent) void {
     index = 0;
     const value = kb.keyEventToChar(key);
-    if (value != 0) {
+    if (key.state == kb.KeyEvent.State.pressed and value != 0) {
         if (index >= stream_size) index = 0;
         switch (value) {
             0xa => handleLineFeed(),

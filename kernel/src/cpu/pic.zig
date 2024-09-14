@@ -79,6 +79,9 @@ pub fn init(pic: PIC, vector_offset: u8) void {
 
     cpu.outb(pic.mask, sequence[3]);
     cpu.wait();
+
+    //enable external interrupts
+    asm volatile ("sti");
 }
 
 pub fn endInterrupt(pic: PIC) void {
