@@ -21,7 +21,7 @@
  ⬜ PIC  
  ⬜ interrupt based kb driver  
  ⬜ stdin & out  
- 🟧 Scrolling  
+ ⬜ Scrolling  
  🟨 App interrupt  
  🟧 kernel error handling  
  🟧 integrate build system into build.zig  

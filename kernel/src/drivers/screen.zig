@@ -39,7 +39,7 @@ pub var width: usize = undefined;
 pub const bg = 0x280804;
 pub const text = 0xdddddd;
 pub const errorc = 0xff0000;
-pub const primary = 0x8ddddc;
+pub const primary = 0x8dfdcc;
 pub const accent = 0xf6aa70;
 
 pub fn putpixel(x: usize, y: usize, color: u32) void {
@@ -53,24 +53,42 @@ pub fn putpixel(x: usize, y: usize, color: u32) void {
 
 pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
     //check for owerflow else cut the overflowing part
-    const dw = if (x + w < width) w + x else w - ((x + w) - width) + x;
-    const dh = if (y + h < height) h + y else h - ((y + h) - height) + y;
-    for (0..dw) |dx| {
-        for (0..dh) |dy| {
-            putpixel(dx, dy, color);
+    //const dw = if (x + w < width) w + x else w - ((x + w) - width) + x;
+    //const dh = if (y + h < height) h + y else h - ((y + h) - height) + y;
+    for (0..w) |dx| {
+        for (0..h) |dy| {
+            putpixel(x + dx, y + dy, color);
         }
     }
+}
+
+fn copyLine(source: usize, dest: usize) void {
+    for (0..width) |i| {
+        const source_offset = source * framebuffer.pitch + i * 4;
+        const dest_offset = dest * framebuffer.pitch + i * 4;
+
+        // Write 0xFFFFFFFF to the provided pixel offset to fill it white.
+        @as(*u32, @ptrCast(@alignCast(framebuffer.address + dest_offset))).* = @as(*u32, @ptrCast(@alignCast(framebuffer.address + source_offset))).*;
+    }
+}
+
+///scroll by 1 lines
+pub fn scroll() void {
+    for (font.height..height) |i| {
+        copyLine(i, i - font.height);
+    }
+    gotoLastLine();
+    clearLastLine();
 }
 
 pub fn manageOwerflow(offset: u8) void {
     if (col + offset < width) {
         return;
-    } else if (row + offset < height) {
+    } else if (row + font.height <= height) {
         newLine();
         col = 0;
     } else {
-        row = 0;
-        col = 0;
+        scroll();
     }
 }
 
@@ -113,10 +131,10 @@ pub fn drawCharacter(char: u8, fg: u32) void {
 
 pub fn newLine() void {
     col = 0;
-    if (row <= height) {
+    if (row + 2 * font.height <= height) {
         row += font.height;
     } else {
-        row = 0;
+        scroll();
     }
 }
 
@@ -142,12 +160,16 @@ pub fn clear() void {
 
 pub fn gotoLastLine() void {
     col = 0;
-    row = height - 2 * font.height;
+    row = height - font.height;
 }
 
 pub fn gotoFirstLine() void {
     col = 0;
     row = 0;
+}
+
+pub fn clearLastLine() void {
+    drawRect(0, height - font.height, width, font.height, bg);
 }
 
 pub fn printMOTD() void {
