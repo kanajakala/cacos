@@ -5,7 +5,7 @@ const debug = @import("../cpu/debug.zig");
 const scheduler = @import("../cpu/scheduler.zig");
 
 pub fn draw() void {
-    const precision = 200;
+    const precision = 100;
     if (precision == 0) {
         console.printErr("please provide a precision");
         return;

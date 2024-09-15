@@ -16,10 +16,22 @@ const Font = struct {
     height: u8,
 };
 
+const PBM = struct {
+    ///A bitmap used to display images
+    data: []const u8,
+    width: usize,
+    height: usize,
+};
+
 const font: Font = .{
-    .data = @embedFile("font/vga8x16.bin"),
+    .data = @embedFile("assets/vga8x16.bin"),
     .width = 8,
     .height = 16,
+};
+
+const imgErrs = error{
+    invalidFormat,
+    unsupportedFormat,
 };
 
 const ScreenErrors = error{
@@ -81,6 +93,65 @@ pub fn scroll() void {
     clearLastLine();
 }
 
+pub fn createImagefromFile(file: []const u8) !PBM {
+    if (file[0] == 'P') { // P is the magic number indiacting a bitmap
+        var buffer: [30]u8 = undefined;
+        switch (file[1]) {
+            //4 indicates the PBM format
+            '4' => {
+                //The height is the first number on the 2nd line
+                //the first line contains 3 chars (magic number and line feed)
+                const im_height = debug.numberInArray(@constCast(file[3..]));
+
+                debug.print("Height of the image: ");
+                debug.print(debug.numberToStringDec(im_height, &buffer));
+
+                //we need to offset by the length of the height string to read the width
+                const w_offset = 7; //debug.numberToStringDec(im_height, &buffer).len + 4;
+
+                //TODO actually get  the real value this is currently bad
+                const im_width = im_height; //debug.numberInArray(@constCast(file[w_offset..]));
+                debug.print("Width of the image: ");
+                debug.print(debug.numberToStringDec(im_width, &buffer));
+
+                const data_offset = w_offset + debug.numberToStringDec(im_width, &buffer).len + 3;
+                const data = file[data_offset..];
+                return PBM{ .data = data, .height = im_height, .width = im_width };
+            },
+            else => return imgErrs.unsupportedFormat,
+        }
+    } else return imgErrs.invalidFormat;
+}
+
+pub fn drawPBM(x: usize, y: usize, img: PBM) void {
+    const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
+    for (0..img.data.len) |d| {
+        //data is defined in bytes but we need to access individual bits
+        for (0..8) |i| {
+            if (img.data[d] & mask[i] == 0) {
+                const pixel_x = x + @mod((d * 8 + i), img.width);
+                const pixel_y = y + (d * 8 + i) / img.width;
+                putpixel(pixel_x, pixel_y, 0xffffff);
+            }
+        }
+    }
+}
+
+pub fn drawCharacter(char: u8, fg: u32) void {
+    const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
+    const glyph_offset: usize = @as(usize, char) * font.height;
+    manageOwerflow(font.width);
+    for (0..font.height) |cy| {
+        for (0..font.width) |cx| {
+            if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel(cx + col, cy + row, fg);
+        }
+    }
+}
+
+pub fn clearChar() void {
+    drawRect(col, row, font.width, font.height, bg);
+}
+
 pub fn manageOwerflow(offset: u8) void {
     if (col + offset < width) {
         return;
@@ -108,24 +179,10 @@ pub fn printChar(char: u8, fg: u32) void {
 }
 
 pub fn handleBackspace() void {
-    drawCharacter(0, bg);
+    clearChar();
     //we can go back one char if we don't erase the prefix
     if (col >= (stream.prefix.len + 1) * font.width) {
         col -= font.width;
-    }
-}
-
-pub fn drawCharacter(char: u8, fg: u32) void {
-    const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
-    const glyph_offset: usize = @as(usize, char) * font.height;
-    manageOwerflow(font.width);
-    for (0..font.height) |cy| {
-        for (0..font.width) |cx| {
-            const pixel_color = if (font.data[glyph_offset + cy] & mask[cx] != 0) fg else bg;
-            if (bg != 0x000001 or pixel_color == fg) {
-                putpixel(cx + col, cy + row, pixel_color);
-            }
-        }
     }
 }
 
@@ -142,6 +199,7 @@ pub fn drawCursor() void {
     //draw one character to the right
     manageOwerflow(2 * font.width);
     //col += font.width;
+    clearChar();
     drawCharacter('#', 0xf98a13);
     //col -= font.width;
 }
@@ -198,4 +256,6 @@ pub fn init() void {
     framebuffer = framebuffers[0];
     height = framebuffer.height;
     width = framebuffer.width;
+    const img = createImagefromFile(@embedFile("assets/caclogo.pbm")) catch PBM{ .data = "cac", .height = 0, .width = 0 };
+    drawPBM(12, 12, img);
 }

@@ -72,6 +72,7 @@ pub fn handleKey(key: kb.KeyEvent) void {
                 else => {
                     stdin[index] = value;
                     index += 1;
+                    scr.clearChar();
                     scr.printChar(value, scr.text);
                 },
             }

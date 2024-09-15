@@ -81,14 +81,17 @@ pub fn firstWordOfArray(arr: []u8) []const u8 {
     return "No first word";
 }
 
-//Find the number of index n in an array,
-//the number must be darr[i]imited by spaces
+//Find the first number in an array,
+//the number must be delimited by spaces
 pub fn numberInArray(arr: []u8) u64 {
     var index1: usize = 0;
     var index2: usize = 0;
     for (0..arr.len - 2) |i| {
         //if the current char is a space and the next one is a digit
-        if (arr[i] == ' ' and arr[i + 1] >= '0' and arr[i + 1] <= '9') index1 = i + 1;
+        if (arr[i] == ' ' and arr[i + 1] >= '0' and arr[i + 1] <= '9') {
+            index1 = i + 1;
+            printChar(arr[i + 1]);
+        }
         //if the current char is a digit and the next one is a space we know the
         //number has ended
         if ((arr[i + 1] == ' ' or arr[i + 1] == 0) and arr[i] >= '0' and arr[i] <= '9') {
