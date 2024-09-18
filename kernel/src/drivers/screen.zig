@@ -100,48 +100,53 @@ pub fn scroll() void {
 }
 
 pub fn createImagefromFile(file: []const u8) !Image {
-    if (file[0] == 'P') { // P is the magic number indiacting a bitmap
-        var buffer: [30]u8 = undefined;
+    //If the magic number is invalid we return an errro
+    if (file[0] != 'P') return imgErrs.invalidFormat;
 
-        var img_type: Img_Type = undefined;
-        //The height is the first number on the 2nd line
-        //the first line contains 3 chars (magic number and line feed)
-        const im_height = debug.numberInArray(@constCast(file[3..]));
+    //required to transform numbers to strings
+    var buffer: [30]u8 = undefined;
 
-        debug.print("Height of the image: ");
-        debug.print(debug.numberToStringDec(im_height, &buffer));
+    //the type of the file: 4 => Portable Bitmap Format  6 => Portable Pixmap (colors)
+    var img_type: Img_Type = undefined;
 
-        //we need to offset by the length of the height string to read the width
-        //const w_offset = 7; //debug.numberToStringDec(im_height, &buffer).len + 4;
+    //The height is the first number after a whitespace
+    //the first line contains 3 chars (magic number and line feed)
+    const im_height = debug.numberInArray(@constCast(file[3..]));
 
-        //TODO actually get  the real value this is currently bad
-        const im_width = im_height; //debug.numberInArray(@constCast(file[w_offset..]));
-        debug.print("Width of the image: ");
-        debug.print(debug.numberToStringDec(im_width, &buffer));
+    //debug.print("Height of the image: ");
+    debug.print(debug.numberToStringDec(im_height, &buffer));
 
-        const data_offset = 16; //w_offset + debug.numberToStringDec(im_width, &buffer).len + 9;
-        const data = file[data_offset..];
+    //we need to offset by the length of the height string to read the width
+    //const w_offset = debug.numberToStringDec(im_height, &buffer).len + 4;
 
-        switch (file[1]) {
-            //4 indicates the PBM format
-            '4' => {
-                img_type = Img_Type.pbm;
+    //TODO actually get  the real value this is currently bad
+    const im_width = im_height; //debug.numberInArray(@constCast(file[w_offset..]));
+    //debug.print("Width of the image: ");
+    //debug.print(debug.numberToStringDec(im_width, &buffer));
 
-                return Image{ .img_type = img_type, .data = data, .height = im_height, .width = im_width };
-            },
-            '6' => {
-                img_type = Img_Type.ppm;
-                return Image{ .img_type = img_type, .data = data, .height = im_height, .width = im_width };
-            },
+    const data_offset = 15; //w_offset + debug.numberToStringDec(im_width, &buffer).len + 9;
+    const data = file[data_offset..];
 
-            else => return imgErrs.unsupportedFormat,
-        }
-    } else return imgErrs.invalidFormat;
+    switch (file[1]) {
+        //4 indicates the PBM format
+        '4' => {
+            img_type = Img_Type.pbm;
+
+            return Image{ .img_type = img_type, .data = data, .height = im_height, .width = im_width };
+        },
+        '6' => {
+            img_type = Img_Type.ppm;
+            return Image{ .img_type = img_type, .data = data, .height = im_height, .width = im_width };
+        },
+
+        else => return imgErrs.unsupportedFormat,
+    }
 }
 
 pub fn drawImage(x: usize, y: usize, img: Image) void {
     switch (img.img_type) {
         Img_Type.pbm => {
+            //TODO: fix this
             const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
             for (0..img.data.len) |d| {
                 //data is defined in bytes but we need to access individual bits
@@ -157,9 +162,10 @@ pub fn drawImage(x: usize, y: usize, img: Image) void {
         Img_Type.ppm => {
             var imx: usize = 0;
             var imy: usize = 0;
-            for (0..img.data.len - 3) |d| {
+            var d: usize = 0;
+            while (d <= img.data.len - 3) : (d += 3) {
                 //check for overflows
-                if (imx + 3 >= img.width * 3) {
+                if (imx + 1 > img.width) {
                     imx = 0;
                     imy += 1;
                 }
@@ -169,10 +175,11 @@ pub fn drawImage(x: usize, y: usize, img: Image) void {
                 //eg we read red: 0xff but the hex for red is 0xff0000 and to more bytes for some reason
                 const red = @as(u24, img.data[d]) << 16;
                 const green = @as(u24, img.data[d + 1]) << 8;
-                const blue = @as(u24, img.data[d + 3]);
-                const color: u24 = red + green + blue;
-                putpixel(x + imx / 3, y + imy / 3, color);
-                imx += 3;
+                const blue = @as(u24, img.data[d + 2]);
+                const color: u32 = (red + green + blue);
+                //we consider pure black as transparent for esthetical reasons
+                if (color != 0) putpixel(x + imx, y + imy, color);
+                imx += 1;
             }
         },
     }
@@ -298,5 +305,6 @@ pub fn init() void {
     height = framebuffer.height;
     width = framebuffer.width;
     const img = createImagefromFile(@embedFile("assets/caclogo.ppm")) catch Image{ .img_type = Img_Type.ppm, .data = "cac", .height = 0, .width = 0 };
+
     drawImage(12, 12, img);
 }
