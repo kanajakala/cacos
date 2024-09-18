@@ -104,7 +104,7 @@ pub fn createImagefromFile(file: []const u8) !Image {
     if (file[0] != 'P') return imgErrs.invalidFormat;
 
     //required to transform numbers to strings
-    var buffer: [30]u8 = undefined;
+    //var buffer: [30]u8 = undefined;
 
     //the type of the file: 4 => Portable Bitmap Format  6 => Portable Pixmap (colors)
     var img_type: Img_Type = undefined;
@@ -114,7 +114,7 @@ pub fn createImagefromFile(file: []const u8) !Image {
     const im_height = debug.numberInArray(@constCast(file[3..]));
 
     //debug.print("Height of the image: ");
-    debug.print(debug.numberToStringDec(im_height, &buffer));
+    //debug.print(debug.numberToStringDec(im_height, &buffer));
 
     //we need to offset by the length of the height string to read the width
     //const w_offset = debug.numberToStringDec(im_height, &buffer).len + 4;
@@ -183,6 +183,13 @@ pub fn drawImage(x: usize, y: usize, img: Image) void {
             }
         },
     }
+}
+
+pub fn printImage(img: Image) void {
+    drawImage(col, row, img);
+    //set cursor position after the image
+    col = 0;
+    row += img.height;
 }
 
 pub fn drawCharacter(char: u8, fg: u32) void {
@@ -290,6 +297,12 @@ pub fn printMOTD() void {
     print("   \"Y8888P\"  \"Y888888  \"Y8888P\"   \"Y88888P\"   \"Y8888P\"  \n", accent);
 }
 
+pub fn printLogo() void {
+    const img = createImagefromFile(@embedFile("assets/caclogo.ppm")) catch Image{ .img_type = Img_Type.ppm, .data = "cac", .height = 0, .width = 0 };
+
+    printImage(img);
+}
+
 pub fn init() void {
     // cpu.print("screen initialized\n");
     const maybe_framebuffer_response = framebuffer_request.response;
@@ -304,7 +317,4 @@ pub fn init() void {
     framebuffer = framebuffers[0];
     height = framebuffer.height;
     width = framebuffer.width;
-    const img = createImagefromFile(@embedFile("assets/caclogo.ppm")) catch Image{ .img_type = Img_Type.ppm, .data = "cac", .height = 0, .width = 0 };
-
-    drawImage(12, 12, img);
 }

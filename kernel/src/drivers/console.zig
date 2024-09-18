@@ -51,6 +51,7 @@ pub fn execute_command() void {
         hashStr("motd") => scr.printMOTD(),
         hashStr("cacfetch") => cacfetch.run(),
         hashStr("test") => print("Working fine"),
+        hashStr("logo") => scr.printLogo(),
         hashStr("stop") => {
             debug.print("Stopping");
             print("Stopping");

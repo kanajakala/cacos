@@ -14,7 +14,7 @@ export fn _start() callconv(.C) noreturn {
     debug.print("Started CaCOS loading");
 
     scr.init();
-    //scr.printMOTD();
+    scr.printMOTD();
 
     gdt.init();
     idt.init();
