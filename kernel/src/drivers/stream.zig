@@ -25,12 +25,9 @@ fn flush() void {
 }
 
 fn handleLineFeed() void {
-    //print new line and flush the streams when done handling
-    defer newLine();
-    defer flush();
 
     //we need to delete the cursor on the old line before jumping to the new one
-    scr.handleBackspace();
+    scr.clearChar();
 
     index = 0;
 
@@ -39,7 +36,11 @@ fn handleLineFeed() void {
         return;
     }
     //else we execute the command
-    console.execute_command();
+    _ = console.execute_command();
+
+    //print new line and flush the streams when done handling
+    newLine();
+    flush();
 }
 
 fn handleBackSpace() void {

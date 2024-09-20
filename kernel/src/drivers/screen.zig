@@ -29,7 +29,7 @@ const Image = struct {
     height: usize,
 };
 
-const font: Font = .{
+pub const font: Font = .{
     .data = @embedFile("assets/vga8x16.bin"),
     .width = 8,
     .height = 16,

@@ -4,18 +4,21 @@ const console = @import("../drivers/console.zig");
 const debug = @import("../cpu/debug.zig");
 const scheduler = @import("../cpu/scheduler.zig");
 
-pub fn draw() void {
-    const precision = 100;
+var precision: usize = undefined;
+var id: usize = undefined;
+
+pub fn run() void {
     if (precision == 0) {
         console.printErr("please provide a precision");
         return;
     }
     scr.drawRect(0, 0, scr.width, scr.height, 0);
     scr.gotoFirstLine();
-    scr.print("Press any key to interrupt\n", 0xaaffff);
+    const message: []const u8 = "Press Ctrl + c to interrupt\n";
+    scr.print(message, 0xaaffff);
     for (0..scr.height) |y| {
         for (0..scr.width) |x| {
-            if (scheduler.running[34]) {
+            if (scheduler.running[id] and (x > message.len * scr.font.width or y > scr.font.height)) {
                 const cx: f32 = @as(f32, @floatFromInt(x)) - @as(f32, @floatFromInt(scr.width)) / 2.0;
                 const cy: f32 = @as(f32, @floatFromInt(y)) - @as(f32, @floatFromInt(scr.height)) / 2.0;
                 const dx: f32 = cx / 400.0 - 0.8;
@@ -36,7 +39,9 @@ pub fn draw() void {
     }
 }
 
-pub fn run() void {
-    const app = scheduler.Process{ .id = 34, .function = &draw };
+pub fn start(parameter: usize) void {
+    precision = parameter;
+    id = scheduler.findFree();
+    const app = scheduler.Process{ .id = id, .function = &run };
     scheduler.append(app);
 }

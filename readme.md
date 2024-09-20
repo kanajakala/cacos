@@ -22,7 +22,8 @@
  ⬜ interrupt based kb driver  
  ⬜ stdin & out  
  ⬜ Scrolling  
- 🟨 App interrupt  
+ ⬜ Displaying PBM images
+ ⬜ App interrupt  
  🟧 kernel error handling  
  🟧 integrate build system into build.zig  
  🟧 timer  

@@ -1,7 +1,7 @@
 const debug = @import("debug.zig");
 
 pub const Process = struct {
-    id: u32,
+    id: usize,
     function: *const fn () void,
 
     pub fn remove(self: *Process) void {
@@ -29,6 +29,14 @@ pub fn append(proc: Process) void {
     running[proc.id] = true;
 }
 
+pub fn findFree() usize {
+    for (1..running.len - 1) |i| {
+        if (!running[i]) return i;
+    }
+    debug.panic("All process space is used");
+    return 0;
+}
+
 pub fn stop(id: usize) void {
     if (id >= 255) return debug.panic("id can't be bigger than 255");
     processes[id] = empty;
@@ -41,6 +49,8 @@ pub fn stopAll() void {
 }
 
 pub fn init() void {
+    //The Kernel is process 0 and is always running
+    running[0] = true;
     while (true) {
         for (processes) |process| {
             if (process.id != 0) process.run();

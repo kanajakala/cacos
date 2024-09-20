@@ -10,12 +10,49 @@ const scheduler = @import("../cpu/scheduler.zig");
 
 pub fn info() void {
     console.print("CaCOS: Coherent and Cohesive OS");
-    console.print("developped by kanajakala");
+    console.print("developed by kanajakala");
 }
 
 pub fn echo() void {
     const offset = "echo ".len;
     console.print(stream.stdin[offset..]);
+}
+
+pub fn help() void {
+    //simple help menu to explain commands
+    scr.newLine();
+    scr.print("info", scr.primary);
+    scr.print(" -> Prints info about the system\n", scr.text);
+
+    scr.print("meminfo", scr.primary);
+    scr.print(" -> Prints info about the memory\n", scr.text);
+
+    scr.print("testmem <number of pages>", scr.primary);
+    scr.print(" -> Test the allocation of n paages\n", scr.text);
+
+    scr.print("fractal <precision>", scr.primary);
+    scr.print(" -> Displays a fractal with n iterations\n", scr.text);
+
+    scr.print("clear", scr.primary);
+    scr.print(" -> Clears the screen\n", scr.text);
+
+    scr.print("motd", scr.primary);
+    scr.print(" -> Prints the CaCOS ASCII logo\n", scr.text);
+
+    scr.print("cacfetch", scr.primary);
+    scr.print(" -> Prints detailled info about the system\n", scr.text);
+
+    scr.print("test", scr.primary);
+    scr.print(" -> Just a command to see if the CLI is working\n", scr.text);
+
+    scr.print("logo", scr.primary);
+    scr.print(" -> Displays the systems logo (image)\n", scr.text);
+
+    scr.print("stop", scr.primary);
+    scr.print(" -> Stops the system\n", scr.text);
+
+    scr.print("echo [text]", scr.primary);
+    scr.print(" -> prints the provided text to stdout\n", scr.text);
 }
 
 pub fn testMem() void {
