@@ -178,7 +178,7 @@ pub fn drawImage(x: usize, y: usize, img: Image) void {
                 const blue = @as(u24, img.data[d + 2]);
                 const color: u32 = (red + green + blue);
                 //we consider pure black as transparent for esthetical reasons
-                if (color != 0) putpixel(x + imx, y + imy, color);
+                if (color >= 0x11111) putpixel(x + imx, y + imy, color);
                 imx += 1;
             }
         },

@@ -29,7 +29,7 @@ pub fn append(proc: Process) void {
     running[proc.id] = true;
 }
 
-pub fn findFree() usize {
+pub fn getFree() usize {
     for (1..running.len - 1) |i| {
         if (!running[i]) return i;
     }

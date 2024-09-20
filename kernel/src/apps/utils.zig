@@ -55,8 +55,9 @@ pub fn help() void {
     scr.print(" -> prints the provided text to stdout\n", scr.text);
 }
 
+var value: usize = undefined;
+var id: usize = undefined;
 pub fn testMem() void {
-    const value = 50_000;
     if (value == 0) {
         console.printErr("Value can't be zero");
         return;
@@ -76,14 +77,10 @@ pub fn testMem() void {
     scr.print(" pages at ", scr.text);
     scr.print(debug.numberToStringHex(memory.start, &buffer), scr.text);
 
-    const value_to_write: u8 = @truncate(value);
-    scr.print("\n -> Writing value ", 0x888888);
-    scr.print(debug.numberToStringHex(value_to_write, &buffer), 0x888888);
-
     //allocating the pages
     var temp: pages.Page = undefined;
     for (0..value) |i| {
-        if (scheduler.running[20]) {
+        if (scheduler.running[id]) {
             _ = i;
             temp = pages.alloc(&pages.pageTable) catch |err| { //on errors
                 switch (err) {
@@ -95,19 +92,26 @@ pub fn testMem() void {
     }
     memory.end = temp.end;
 
+    const value_to_write: u8 = @truncate(value);
+    scr.print("\n -> Writing value ", 0x888888);
+    scr.print(debug.numberToStringHex(value_to_write, &buffer), 0x888888);
+
     //writing the value
     var iterations: usize = 0;
     for (0..memory.end - memory.start) |j| {
-        if (scheduler.running[20]) {
+        if (scheduler.running[id]) {
             mem.memory_region[memory.start + j] = value_to_write;
             iterations = j;
         }
     }
     scr.print("\n -> words written: ", 0x0fbbff);
     scr.print(debug.numberToStringDec(iterations, &buffer), scr.errorc);
+    stream.newLine();
 }
-pub fn testMemRun() void {
-    const app = scheduler.Process{ .id = 20, .function = &testMem };
+pub fn testMemStart(parameter: usize) void {
+    value = parameter;
+    id = scheduler.getFree();
+    const app = scheduler.Process{ .id = id, .function = &testMem };
     scheduler.append(app);
 }
 

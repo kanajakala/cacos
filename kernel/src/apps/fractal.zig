@@ -41,7 +41,7 @@ pub fn run() void {
 
 pub fn start(parameter: usize) void {
     precision = parameter;
-    id = scheduler.findFree();
+    id = scheduler.getFree();
     const app = scheduler.Process{ .id = id, .function = &run };
     scheduler.append(app);
 }

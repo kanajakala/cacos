@@ -44,7 +44,7 @@ pub fn execute_command() void {
     switch (hash) {
         hashStr("info") => utils.info(),
         hashStr("meminfo") => utils.printMem(),
-        hashStr("testmem") => utils.testMemRun(),
+        hashStr("testmem") => utils.testMemStart(parameter),
         hashStr("fractal") => fractal.start(parameter),
         hashStr("clear") => scr.clear(),
         hashStr("motd") => scr.printMOTD(),
