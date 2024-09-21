@@ -9,6 +9,7 @@ const debug = @import("../cpu/debug.zig");
 const utils = @import("../apps/utils.zig");
 const fractal = @import("../apps/fractal.zig");
 const cacfetch = @import("../apps/cacfetch.zig");
+const snake = @import("../apps/snake.zig");
 
 const out_color = scr.text;
 
@@ -53,6 +54,7 @@ pub fn execute_command() void {
         hashStr("logo") => scr.printLogo(),
         hashStr("echo") => utils.echo(),
         hashStr("help") => utils.help(),
+        hashStr("snake") => snake.start(),
         hashStr("stop") => {
             debug.print("Stopping");
             print("Stopping");

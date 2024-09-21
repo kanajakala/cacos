@@ -13,13 +13,15 @@ pub export var stderr: [stream_size]u8 = .{0} ** stream_size;
 pub var index: usize = 0;
 
 pub const prefix: []const u8 = " > ";
+pub var captured: bool = false;
 
 pub fn newLine() void {
     scr.newLine();
     scr.print(prefix, scr.primary);
 }
 
-fn flush() void {
+pub fn flush() void {
+    index = 0;
     stdin = .{0} ** stream_size;
     stdout = .{0} ** stream_size;
 }
@@ -32,8 +34,6 @@ fn handleLineFeed() void {
 
     //we need to delete the cursor on the old line before jumping to the new one
     scr.clearChar();
-
-    index = 0;
 
     //if array is empty we do nothing
     if (debug.sum(&stdin) == 0) {
@@ -62,7 +62,10 @@ pub fn handleKey(key: kb.KeyEvent) void {
         if (kb.control) {
             switch (key.code) {
                 codes.key_l => scr.clear(),
-                codes.key_c => scheduler.stopAll(),
+                codes.key_c => {
+                    scheduler.stopAll();
+                    captured = false;
+                },
                 else => return,
             }
         } else {
@@ -73,8 +76,10 @@ pub fn handleKey(key: kb.KeyEvent) void {
                 else => {
                     stdin[index] = value;
                     index += 1;
-                    scr.clearChar();
-                    scr.printChar(value, scr.text);
+                    if (!captured) {
+                        scr.clearChar();
+                        scr.printChar(value, scr.text);
+                    }
                 },
             }
         }
