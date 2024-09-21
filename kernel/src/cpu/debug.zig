@@ -65,6 +65,25 @@ pub fn printArray(arr: []u8) void {
     printChar('}');
 }
 
+pub fn printMem(arr: []u8) void {
+    print("< ");
+    for (arr) |i| {
+        printChar(' ');
+        printChar('0' + i);
+        printChar(',');
+    }
+    printChar(' ');
+    printChar('>');
+}
+
+pub fn shiftMem(page: pages.Page, direction: usize, comptime clip: usize) void {
+    var temp: [clip]u8 = undefined;
+    @memcpy(&temp, mem.memory_region[page.start .. page.start + clip]);
+    for (temp, page.start..page.start + clip) |word, i| {
+        mem.memory_region[i + direction] = word;
+    }
+}
+
 pub fn charToInt(char: u8) u8 {
     if (char >= 30) {
         return char - '0';

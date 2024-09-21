@@ -5,9 +5,13 @@ const stream = @import("../drivers/stream.zig");
 const debug = @import("../cpu/debug.zig");
 const scheduler = @import("../cpu/scheduler.zig");
 
+const pages = @import("../memory/pages.zig");
+const memory = @import("../memory/memory.zig");
+
 var id: usize = undefined;
 
 fn run() void {
+    const mem = memory.memory_region;
     //draw the background
     const bg = 0xeaaa56;
     scr.drawRect(0, 0, scr.width, scr.height, bg);
@@ -17,9 +21,20 @@ fn run() void {
     const snake_color = 0x14591d;
 
     //game variables
-    var x: usize = 0;
-    var y: usize = 0;
-    //var snake = [_]bool{true,true,true};
+    //head coordinates in Cells (snake size)
+    //that means that x = 2 means coordinate x = 2 * snake_size on the screen
+    var x: u8 = 0;
+    var y: u8 = 0;
+    const length: usize = 3;
+    const snake: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
+        switch (err) {
+            pages.errors.outOfPages => console.printErr("Error: out of pages"),
+        }
+        return;
+    };
+
+    //when we are done we must free the memory
+    defer pages.free(snake, &pages.pageTable);
 
     const Directions = enum {
         up,
@@ -32,7 +47,7 @@ fn run() void {
 
     stream.captured = true;
 
-    const slower: usize = 30_000_000;
+    const slower: usize = 10_000_000;
     var slow: usize = slower;
 
     while (scheduler.running[id]) {
@@ -45,14 +60,22 @@ fn run() void {
                 'l' => direction = Directions.right,
                 else => {},
             }
-            debug.printChar(stream.stdin[1]);
             switch (direction) {
-                Directions.up => y -= snake_size,
-                Directions.right => x += snake_size,
-                Directions.down => y += snake_size,
-                Directions.left => x -= snake_size,
+                Directions.up => y -= 1,
+                Directions.right => x += 1,
+                Directions.down => y += 1,
+                Directions.left => x -= 1,
             }
-            scr.drawRect(x, y, snake_size, snake_size, snake_color);
+
+            debug.shiftMem(snake, 2, length * 2 - 1);
+            mem[snake.start] = x;
+            mem[snake.start + 1] = y;
+
+            //draw the head
+            scr.drawRect(mem[snake.start] * snake_size, mem[snake.start + 1] * snake_size, snake_size, snake_size, snake_color);
+            //clear the tail
+            scr.drawRect(mem[snake.start + length - 1] * snake_size, mem[snake.start + length] * snake_size, snake_size, snake_size, bg);
+
             slow = slower;
         } else slow -= 1;
     }
