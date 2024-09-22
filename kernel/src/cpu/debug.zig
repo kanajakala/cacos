@@ -11,7 +11,6 @@ pub inline fn printChar(char: u8) void {
 }
 
 pub fn print(string: []const u8) void {
-    printChar('\n');
     for (string) |char| {
         printChar(char);
     }
@@ -67,13 +66,13 @@ pub fn printArray(arr: []u8) void {
 
 pub fn printMem(arr: []u8) void {
     print("< ");
+    var buffer: [2]u8 = undefined;
     for (arr) |i| {
         printChar(' ');
-        printChar('0' + i);
+        print(numberToStringHex(i, &buffer));
         printChar(',');
     }
-    printChar(' ');
-    printChar('>');
+    print(" >\n");
 }
 
 pub fn shiftMem(page: pages.Page, direction: usize, comptime clip: usize) void {
@@ -82,6 +81,15 @@ pub fn shiftMem(page: pages.Page, direction: usize, comptime clip: usize) void {
     for (temp, page.start..page.start + clip) |word, i| {
         mem.memory_region[i + direction] = word;
     }
+}
+
+pub fn elementInArray(comptime T: type, element: T, arr: []T, skip: usize) bool {
+    var i: usize = 0;
+    while (i < arr.len / skip - skip) : (i += skip) {
+        if (arr[i] == element) {
+            return true;
+        }
+    } else return false;
 }
 
 pub fn charToInt(char: u8) u8 {

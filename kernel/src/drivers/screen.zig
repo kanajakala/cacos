@@ -73,6 +73,7 @@ pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
     //check for owerflow else cut the overflowing part
     //const dw = if (x + w < width) w + x else w - ((x + w) - width) + x;
     //const dh = if (y + h < height) h + y else h - ((y + h) - height) + y;
+    if (x + w > width or y + h > height) debug.panic("Rectangle overflow");
     for (0..w) |dx| {
         for (0..h) |dy| {
             putpixel(x + dx, y + dy, color);
@@ -265,6 +266,11 @@ pub fn print(string: []const u8, fg: u32) void {
     }
 }
 
+pub fn printCenter(string: []const u8, fg: u32) void {
+    col = (width / 2) - (string.len / 2) * font.width;
+    print(string, fg);
+}
+
 pub fn clear() void {
     drawRect(0, 0, width, height, bg);
     col = 0;
@@ -274,6 +280,10 @@ pub fn clear() void {
 pub fn gotoLastLine() void {
     col = 0;
     row = height - font.height;
+}
+
+pub fn gotoCenter() void {
+    row = height / 2;
 }
 
 pub fn gotoFirstLine() void {

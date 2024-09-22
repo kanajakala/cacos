@@ -42,3 +42,9 @@ pub fn free(page: Page, pt: *[number_of_pages]bool) void {
         pt[page.start / page_size] = false;
     }
 }
+
+pub fn clearPage(page: Page) void {
+    for (page.start..page.end) |i| {
+        mem.memory_region[i] = 0;
+    }
+}
