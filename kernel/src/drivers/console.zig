@@ -31,31 +31,24 @@ pub fn printErr(str: []const u8) void {
         }
     }
 }
-fn hashStr(str: []const u8) u32 {
-    var hash: u32 = 2166136261;
-    for (str) |c| {
-        hash = (hash ^ c) *% 16777619;
-    }
-    return hash;
-}
 
 pub fn execute_command() void {
-    const hash = hashStr(debug.firstWordOfArray(&stream.stdin));
+    const hash = debug.hashStr(debug.firstWordOfArray(&stream.stdin));
     const parameter: u64 = debug.numberInArray(&stream.stdin);
     switch (hash) {
-        hashStr("info") => utils.info(),
-        hashStr("meminfo") => utils.printMem(),
-        hashStr("testmem") => utils.testMemStart(parameter),
-        hashStr("fractal") => fractal.start(parameter),
-        hashStr("clear") => scr.clear(),
-        hashStr("motd") => scr.printMOTD(),
-        hashStr("cacfetch") => cacfetch.run(),
-        hashStr("test") => print("Working fine"),
-        hashStr("logo") => scr.printLogo(),
-        hashStr("echo") => utils.echo(),
-        hashStr("help") => utils.help(),
-        hashStr("snake") => snake.start(),
-        hashStr("stop") => {
+        debug.hashStr("info") => utils.info(),
+        debug.hashStr("meminfo") => utils.printMem(),
+        debug.hashStr("testmem") => utils.testMemStart(parameter),
+        debug.hashStr("fractal") => fractal.start(parameter),
+        debug.hashStr("clear") => scr.clear(),
+        debug.hashStr("motd") => scr.printMOTD(),
+        debug.hashStr("cacfetch") => cacfetch.run(),
+        debug.hashStr("test") => print("Working fine"),
+        debug.hashStr("logo") => scr.printLogo(),
+        debug.hashStr("echo") => utils.echo(),
+        debug.hashStr("help") => utils.help(),
+        debug.hashStr("snake") => snake.start(),
+        debug.hashStr("stop") => {
             debug.print("Stopping");
             print("Stopping");
             cpu.stop();

@@ -12,12 +12,18 @@ var id: usize = undefined;
 
 const bg = 0xeaaa56;
 
+var seed: usize = 234;
+
 //game variables
 //head coordinates in Cells (snake size)
 //that means that x = 2 means coordinate x = 2 * snake_size on the screen
 var x: u8 = 25;
 var y: u8 = 25;
 
+var fruit_x: u8 = 12;
+var fruit_y: u8 = 12;
+
+//TODO see why this doesn't work
 fn checkCollision(snake: pages.Page, length: usize) bool {
     const mem = &memory.memory_region;
     var i: usize = 0;
@@ -61,7 +67,8 @@ fn run() void {
     const snake_size = 16;
     const snake_color = 0x14591d;
 
-    const length: usize = 5;
+    const length: usize = 30;
+
     const snake: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
         switch (err) {
             pages.errors.outOfPages => console.printErr("Error: out of pages"),
@@ -97,14 +104,11 @@ fn run() void {
             }
 
             stream.index = 0;
-            switch (stream.stdin[0]) {
-                'h' => direction = Directions.left,
-                'j' => direction = Directions.down,
-                'k' => direction = Directions.up,
-                'l' => direction = Directions.right,
-                else => {},
-            }
-            //if (x > 0 and x < 9 and y > 0 and y < 9) {
+            if (stream.stdin[0] == 'h' and direction != Directions.right) direction = Directions.left;
+            if (stream.stdin[0] == 'j' and direction != Directions.up) direction = Directions.down;
+            if (stream.stdin[0] == 'k' and direction != Directions.down) direction = Directions.up;
+            if (stream.stdin[0] == 'l' and direction != Directions.left) direction = Directions.right;
+
             switch (direction) {
                 Directions.up => y -= 1,
                 Directions.right => x += 1,
@@ -112,6 +116,12 @@ fn run() void {
                 Directions.left => x -= 1,
             }
             //}
+            if (x == fruit_x and y == fruit_y) {
+                seed += x;
+                fruit_x = @truncate(debug.hashNumber(seed));
+                seed += length;
+                fruit_x = @truncate(debug.hashNumber(seed));
+            }
 
             debug.shiftMem(snake, 2, length * 2 - 2);
             mem.*[snake.start] = x;
@@ -121,6 +131,8 @@ fn run() void {
             //draw the head
             //clear the tail
             scr.drawRect(@as(usize, mem.*[snake.start + length * 2 - 2]) * snake_size, @as(usize, mem.*[snake.start + length * 2 - 1]) * snake_size, snake_size, snake_size, bg);
+            //draw the fruit
+            scr.drawRect(@as(usize, fruit_x / 30) * snake_size, @as(usize, fruit_y / 30) * snake_size * snake_size, snake_size, snake_size, 0xff0000);
 
             slow = slower;
         } else slow -= 1;

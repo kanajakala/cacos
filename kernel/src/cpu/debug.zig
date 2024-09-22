@@ -23,6 +23,22 @@ pub fn panic(string: []const u8) void {
     cpu.stop();
 }
 
+pub fn hashStr(str: []const u8) u32 {
+    var hash: u32 = 2166136261;
+    for (str) |c| {
+        hash = (hash ^ c) *% 16777619;
+    }
+    return hash;
+}
+
+pub fn hashNumber(n: usize) u32 {
+    var hash: u32 = 2166136261;
+    for (0..n) |i| {
+        hash = @truncate((hash ^ i) *% 16723 * n);
+    }
+    return hash;
+}
+
 pub fn numberToStringHex(n: u64, buffer: []u8) []const u8 {
     return std.fmt.bufPrint(buffer, "{X}", .{n}) catch buffer[0..0];
 }
