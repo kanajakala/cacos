@@ -39,6 +39,17 @@ pub fn hashNumber(n: usize) u32 {
     return hash;
 }
 
+//non persistent buffer
+pub fn ntsHexFast(n: u64) []const u8 {
+    var buffer: [100]u8 = undefined;
+    return std.fmt.bufPrint(&buffer, "{X}", .{n}) catch buffer[0..0];
+}
+pub fn ntsDecFast(n: u64) []const u8 {
+    var buffer: [100]u8 = undefined;
+    return std.fmt.bufPrint(&buffer, "{d}", .{n}) catch buffer[0..0];
+}
+
+//persistent buffer
 pub fn numberToStringHex(n: u64, buffer: []u8) []const u8 {
     return std.fmt.bufPrint(buffer, "{X}", .{n}) catch buffer[0..0];
 }
@@ -99,13 +110,17 @@ pub fn shiftMem(page: pages.Page, direction: usize, comptime clip: usize) void {
     }
 }
 
-pub fn elementInArray(comptime T: type, element: T, arr: []T, skip: usize) bool {
+const arrayErrors = error{
+    elementNotInArray,
+};
+
+pub fn elementInArray(comptime T: type, element: T, arr: []T, skip: usize) !usize {
     var i: usize = 0;
     while (i < arr.len / skip - skip) : (i += skip) {
         if (arr[i] == element) {
-            return true;
+            return i;
         }
-    } else return false;
+    } else return arrayErrors.elementNotInArray;
 }
 
 pub fn charToInt(char: u8) u8 {

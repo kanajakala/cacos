@@ -27,12 +27,14 @@ var fruit_y: u8 = 12;
 fn checkCollision(snake: pages.Page, length: usize) bool {
     const mem = &memory.memory_region;
     var i: usize = 0;
-    while (i < snake.start + length * 2 - 4) : (i += 2) {
+    while (i < snake.start + length - 4) : (i += 2) {
         const cell_1: u8 = mem.*[snake.start + i];
         const cell_2: u8 = mem.*[snake.start + i + 1];
         const region_to_test_1 = mem.*[snake.start + i + 2 .. snake.start + length * 2];
         const region_to_test_2 = mem.*[snake.start + i + 3 .. snake.start + length * 2];
-        if (cell_1 != 0 and cell_2 != 0 and debug.elementInArray(u8, cell_1, region_to_test_1, 2) and debug.elementInArray(u8, cell_2, region_to_test_2, 2)) return true;
+        const index_1: usize = debug.elementInArray(u8, cell_1, region_to_test_1, 2) catch 0;
+        const index_2: usize = debug.elementInArray(u8, cell_2, region_to_test_2, 2) catch 0;
+        if (index_1 == index_2 + 1) return true;
     }
     return false;
 }
@@ -43,6 +45,7 @@ fn handleCrash(snake: pages.Page) void {
     scr.printCenter("Game Over", scr.errorc);
     scr.row += scr.font.height;
     scr.printCenter("Press r to restart", scr.text);
+    debug.printMem(memory.memory_region[snake.start .. snake.start + 41]);
     while (scheduler.running[id]) {
         stream.index = 0;
         if (stream.stdin[0] == 'r') {
@@ -67,7 +70,7 @@ fn run() void {
     const snake_size = 16;
     const snake_color = 0x14591d;
 
-    const length: usize = 30;
+    const length: usize = 20;
 
     const snake: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
         switch (err) {
@@ -132,7 +135,7 @@ fn run() void {
             //clear the tail
             scr.drawRect(@as(usize, mem.*[snake.start + length * 2 - 2]) * snake_size, @as(usize, mem.*[snake.start + length * 2 - 1]) * snake_size, snake_size, snake_size, bg);
             //draw the fruit
-            scr.drawRect(@as(usize, fruit_x / 30) * snake_size, @as(usize, fruit_y / 30) * snake_size * snake_size, snake_size, snake_size, 0xff0000);
+            //scr.drawRect(@as(usize, fruit_x / 4) * snake_size, @as(usize, fruit_y / 4) * snake_size * snake_size, snake_size, snake_size, 0xff0000);
 
             slow = slower;
         } else slow -= 1;
