@@ -83,6 +83,6 @@ pub fn handleKey(key: kb.KeyEvent) void {
                 },
             }
         }
-        scr.drawCursor();
+        if (!captured) scr.drawCursor();
     }
 }

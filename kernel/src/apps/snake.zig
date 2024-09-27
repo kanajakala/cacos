@@ -23,6 +23,8 @@ var y: u8 = 1;
 var fruit_x: u8 = 12;
 var fruit_y: u8 = 12;
 
+var score: usize = 0;
+
 const Directions = enum {
     up,
     right,
@@ -35,24 +37,9 @@ var direction: Directions = Directions.down;
 //TODO see why this doesn't work
 fn checkCollision(snake: pages.Page, length: usize) bool {
     const mem = &memory.memory_region;
-    //while (i < snake.start + length - 4) : (i += 2) {
-    //    const cell_1: u8 = mem.*[snake.start + i];
-    //    const cell_2: u8 = mem.*[snake.start + i + 1];
-    //    const region_to_test_1 = mem.*[snake.start + i + 2 .. snake.start + length * 2];
-    //    const region_to_test_2 = mem.*[snake.start + i + 3 .. snake.start + length * 2];
-    //    const index_1: usize = debug.elementInArray(u8, cell_1, region_to_test_1, 2) catch {
-    //        debug.panic("What cell not in array???");
-    //    };
-    //    const index_2: usize = debug.elementInArray(u8, cell_2, region_to_test_2, 2) catch 0;
-    //    if (index_1 == index_2 + 1) return true;
-    //}
-    //return false;
-
     for (snake.start + 2..snake.start + length) |i| {
         if (mem.*[snake.start] == mem.*[i * 2]) {
             if (mem.*[snake.start + 1] == mem.*[i * 2 + 1]) {
-                debug.print("collision at index: ");
-                debug.print(debug.ntsDecFast(i));
                 return true;
             }
         }
@@ -61,9 +48,14 @@ fn checkCollision(snake: pages.Page, length: usize) bool {
 }
 
 fn handleCrash(snake: pages.Page) void {
+    var buffer: [10]u8 = undefined;
     scr.drawRect(0, 0, scr.width, scr.height, 0x111111);
     scr.gotoCenter();
     scr.printCenter("Game Over", scr.errorc);
+    scr.row += scr.font.height;
+    scr.printCenter("-Score-", scr.text);
+    scr.row += scr.font.height;
+    scr.printCenter(debug.numberToStringDec(score, &buffer), scr.text);
     scr.row += scr.font.height;
     scr.printCenter("Press r to restart", scr.text);
     while (scheduler.running[id]) {
@@ -73,6 +65,15 @@ fn handleCrash(snake: pages.Page) void {
             return;
         }
     }
+}
+
+fn drawScore() void {
+    var buffer: [10]u8 = undefined;
+    scr.col = 2;
+    scr.row = 2;
+    scr.drawRect(0, 0, scr.width, scr.font.height + 4, 0x111111);
+    scr.print("score: ", bg);
+    scr.print(debug.numberToStringDec(score, &buffer), scr.errorc);
 }
 
 fn startGame(snake: pages.Page) void {
@@ -116,8 +117,9 @@ fn run() void {
 
     while (scheduler.running[id]) {
         if (slow == 0) {
+            drawScore();
             //check for collisions
-            if (x + 1 >= scr.width / snake_size or y + 1 >= scr.height / snake_size or x - 1 <= 0 or y - 1 <= 0 or checkCollision(snake, length)) {
+            if (x + 1 >= scr.width / snake_size or y + 1 >= scr.height / snake_size or x - 1 <= 0 or y - 2 <= 0 or checkCollision(snake, length)) {
                 handleCrash(snake);
             }
 
@@ -133,24 +135,27 @@ fn run() void {
                 Directions.down => y += 1,
                 Directions.left => x -= 1,
             }
-            //}
+
+            //check for collision with fruit
             if (x == fruit_x and y == fruit_y) {
+                scr.drawRect(@as(usize, fruit_x) * snake_size, @as(usize, fruit_y) * snake_size, snake_size, snake_size, snake_color);
                 seed += x;
-                fruit_x = @truncate(debug.hashNumber(seed));
+                fruit_x = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.width / snake_size)));
                 seed += length;
-                fruit_x = @truncate(debug.hashNumber(seed));
+                fruit_y = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.height / snake_size)));
+                score += 1;
             }
 
             debug.shiftMem(snake, 2, length * 2 - 2);
             mem.*[snake.start] = x;
             mem.*[snake.start + 1] = y;
 
-            scr.drawRect(@as(usize, mem.*[snake.start]) * snake_size, @as(usize, mem.*[snake.start + 1]) * snake_size, snake_size, snake_size, snake_color);
             //draw the head
+            scr.drawRect(@as(usize, mem.*[snake.start]) * snake_size, @as(usize, mem.*[snake.start + 1]) * snake_size, snake_size, snake_size, snake_color);
             //clear the tail
             scr.drawRect(@as(usize, mem.*[snake.start + length * 2 - 2]) * snake_size, @as(usize, mem.*[snake.start + length * 2 - 1]) * snake_size, snake_size, snake_size, bg);
             //draw the fruit
-            //scr.drawRect(@as(usize, fruit_x / 4) * snake_size, @as(usize, fruit_y / 4) * snake_size * snake_size, snake_size, snake_size, 0xff0000);
+            scr.drawRect(@as(usize, fruit_x) * snake_size, @as(usize, fruit_y) * snake_size, snake_size, snake_size, 0xff0000);
 
             slow = slower;
         } else slow -= 1;
