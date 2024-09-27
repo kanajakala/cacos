@@ -12,7 +12,7 @@ var id: usize = undefined;
 
 const bg = 0xeaaa56;
 
-var seed: usize = 234;
+var seed: usize = 233;
 
 //game variables
 //head coordinates in Cells (snake size)
@@ -25,6 +25,8 @@ var fruit_y: u8 = 12;
 
 var score: usize = 0;
 
+var length: usize = 2;
+
 const Directions = enum {
     up,
     right,
@@ -35,7 +37,7 @@ const Directions = enum {
 var direction: Directions = Directions.down;
 
 //TODO see why this doesn't work
-fn checkCollision(snake: pages.Page, length: usize) bool {
+fn checkCollision(snake: pages.Page) bool {
     const mem = &memory.memory_region;
     for (snake.start + 2..snake.start + length) |i| {
         if (mem.*[snake.start] == mem.*[i * 2]) {
@@ -82,6 +84,8 @@ fn startGame(snake: pages.Page) void {
     pages.clearPage(snake);
     x = 4;
     y = 4;
+    score = 0;
+    length = 2;
     memory.memory_region[snake.start] = 5;
     memory.memory_region[snake.start + 1] = 4;
     memory.memory_region[snake.start + 2] = 4;
@@ -95,8 +99,6 @@ fn run() void {
     //game constants
     const snake_size = 16;
     const snake_color = 0x14591d;
-
-    const length: usize = 20;
 
     const snake: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
         switch (err) {
@@ -112,14 +114,14 @@ fn run() void {
     stream.captured = true;
 
     //used to slow the game down
-    const slower: usize = 3_000_000;
+    const slower: usize = 2_500_000;
     var slow: usize = slower;
 
     while (scheduler.running[id]) {
         if (slow == 0) {
             drawScore();
             //check for collisions
-            if (x + 1 >= scr.width / snake_size or y + 1 >= scr.height / snake_size or x - 1 <= 0 or y - 2 <= 0 or checkCollision(snake, length)) {
+            if (x + 1 >= scr.width / snake_size or y + 1 >= scr.height / snake_size or x - 1 <= 0 or y <= 0 or checkCollision(snake)) {
                 handleCrash(snake);
             }
 
@@ -140,10 +142,11 @@ fn run() void {
             if (x == fruit_x and y == fruit_y) {
                 scr.drawRect(@as(usize, fruit_x) * snake_size, @as(usize, fruit_y) * snake_size, snake_size, snake_size, snake_color);
                 seed += x;
-                fruit_x = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.width / snake_size)));
+                fruit_x = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.width / (snake_size + 5))));
                 seed += length;
-                fruit_y = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.height / snake_size)));
+                fruit_y = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.height / (snake_size + 5))));
                 score += 1;
+                length += 1;
             }
 
             debug.shiftMem(snake, 2, length * 2 - 2);

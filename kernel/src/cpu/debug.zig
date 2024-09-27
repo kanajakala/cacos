@@ -102,11 +102,11 @@ pub fn printMem(arr: []u8) void {
     print(" >\n");
 }
 
-pub fn shiftMem(page: pages.Page, direction: usize, comptime clip: usize) void {
-    var temp: [clip]u8 = undefined;
-    @memcpy(&temp, mem.memory_region[page.start .. page.start + clip]);
-    for (temp, page.start..page.start + clip) |word, i| {
-        mem.memory_region[i + direction] = word;
+pub fn shiftMem(page: pages.Page, direction: usize, clip: usize) void {
+    var temp: [4000]u8 = undefined;
+    @memcpy(temp[0..clip], mem.memory_region[page.start .. page.start + clip]);
+    for (0..clip) |i| {
+        mem.memory_region[page.start + i + direction] = temp[i];
     }
 }
 
