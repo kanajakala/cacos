@@ -28,7 +28,7 @@ pub fn help() void {
     scr.print(" -> Prints info about the memory\n", scr.text);
 
     scr.print("testmem <number of pages>", scr.primary);
-    scr.print(" -> Test the allocation of n paages\n", scr.text);
+    scr.print(" -> Test the allocation of n pages\n", scr.text);
 
     scr.print("fractal <precision>", scr.primary);
     scr.print(" -> Displays a fractal with n iterations\n", scr.text);
