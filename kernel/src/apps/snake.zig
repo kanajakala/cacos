@@ -17,24 +17,45 @@ var seed: usize = 234;
 //game variables
 //head coordinates in Cells (snake size)
 //that means that x = 2 means coordinate x = 2 * snake_size on the screen
-var x: u8 = 25;
-var y: u8 = 25;
+var x: u8 = 1;
+var y: u8 = 1;
 
 var fruit_x: u8 = 12;
 var fruit_y: u8 = 12;
 
+const Directions = enum {
+    up,
+    right,
+    down,
+    left,
+};
+
+var direction: Directions = Directions.down;
+
 //TODO see why this doesn't work
 fn checkCollision(snake: pages.Page, length: usize) bool {
     const mem = &memory.memory_region;
-    var i: usize = 0;
-    while (i < snake.start + length - 4) : (i += 2) {
-        const cell_1: u8 = mem.*[snake.start + i];
-        const cell_2: u8 = mem.*[snake.start + i + 1];
-        const region_to_test_1 = mem.*[snake.start + i + 2 .. snake.start + length * 2];
-        const region_to_test_2 = mem.*[snake.start + i + 3 .. snake.start + length * 2];
-        const index_1: usize = debug.elementInArray(u8, cell_1, region_to_test_1, 2) catch 0;
-        const index_2: usize = debug.elementInArray(u8, cell_2, region_to_test_2, 2) catch 0;
-        if (index_1 == index_2 + 1) return true;
+    //while (i < snake.start + length - 4) : (i += 2) {
+    //    const cell_1: u8 = mem.*[snake.start + i];
+    //    const cell_2: u8 = mem.*[snake.start + i + 1];
+    //    const region_to_test_1 = mem.*[snake.start + i + 2 .. snake.start + length * 2];
+    //    const region_to_test_2 = mem.*[snake.start + i + 3 .. snake.start + length * 2];
+    //    const index_1: usize = debug.elementInArray(u8, cell_1, region_to_test_1, 2) catch {
+    //        debug.panic("What cell not in array???");
+    //    };
+    //    const index_2: usize = debug.elementInArray(u8, cell_2, region_to_test_2, 2) catch 0;
+    //    if (index_1 == index_2 + 1) return true;
+    //}
+    //return false;
+
+    for (snake.start + 2..snake.start + length) |i| {
+        if (mem.*[snake.start] == mem.*[i * 2]) {
+            if (mem.*[snake.start + 1] == mem.*[i * 2 + 1]) {
+                debug.print("collision at index: ");
+                debug.print(debug.ntsDecFast(i));
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -45,7 +66,6 @@ fn handleCrash(snake: pages.Page) void {
     scr.printCenter("Game Over", scr.errorc);
     scr.row += scr.font.height;
     scr.printCenter("Press r to restart", scr.text);
-    debug.printMem(memory.memory_region[snake.start .. snake.start + 41]);
     while (scheduler.running[id]) {
         stream.index = 0;
         if (stream.stdin[0] == 'r') {
@@ -58,9 +78,14 @@ fn handleCrash(snake: pages.Page) void {
 fn startGame(snake: pages.Page) void {
     //draw the background
     scr.drawRect(0, 0, scr.width, scr.height, bg);
-    x = 25;
-    y = 25;
     pages.clearPage(snake);
+    x = 4;
+    y = 4;
+    memory.memory_region[snake.start] = 5;
+    memory.memory_region[snake.start + 1] = 4;
+    memory.memory_region[snake.start + 2] = 4;
+    memory.memory_region[snake.start + 3] = 4;
+    direction = Directions.right;
 }
 
 fn run() void {
@@ -83,16 +108,6 @@ fn run() void {
 
     //when we are done we must free the memory
     defer pages.free(snake, &pages.pageTable);
-
-    const Directions = enum {
-        up,
-        right,
-        down,
-        left,
-    };
-
-    var direction: Directions = Directions.down;
-
     stream.captured = true;
 
     //used to slow the game down

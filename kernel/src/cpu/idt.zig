@@ -2,6 +2,7 @@
 const cpu = @import("cpu.zig");
 const pic = @import("pic.zig");
 const gdt = @import("gdt.zig");
+const scheduler = @import("scheduler.zig");
 const screen = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
 
@@ -175,6 +176,7 @@ fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {
 }
 
 fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    scheduler.stopAll();
     console.printErr("breakpoint");
 }
 
