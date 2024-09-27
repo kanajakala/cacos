@@ -21,16 +21,12 @@ pub var processes: [256]Process = .{empty} ** 256;
 //State of all processes (true means that the process is running)
 pub var running: [256]bool = .{false} ** 256;
 
-//number of currently running processes
-pub var n_of_processes: usize = 0;
-
 pub fn append(proc: Process) void {
     if (proc.id == 0) return debug.panic("Process 0 is reserved");
     if (proc.id >= 255) return debug.panic("id can't be bigger than 255");
 
     processes[proc.id] = proc;
     running[proc.id] = true;
-    n_of_processes += 1;
 }
 
 pub fn getFree() usize {
@@ -45,13 +41,11 @@ pub fn stop(id: usize) void {
     if (id >= 255) return debug.panic("id can't be bigger than 255");
     processes[id] = empty;
     running[id] = false;
-    n_of_processes -= 1;
 }
 pub fn stopAll() void {
     for (0..processes.len - 1) |i| {
         stop(i);
     }
-    n_of_processes = 0;
 }
 
 pub fn init() void {

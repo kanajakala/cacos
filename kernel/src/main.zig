@@ -11,7 +11,7 @@ const kb = @import("drivers/keyboard.zig");
 const console = @import("drivers/console.zig");
 
 export fn _start() callconv(.C) noreturn {
-    debug.print("Started CaCOS loading");
+    debug.print("\nStarted CaCOS loading\n");
 
     scr.init();
     scr.printMOTD();
@@ -22,7 +22,7 @@ export fn _start() callconv(.C) noreturn {
 
     console.init();
 
-    debug.print("Loaded Cacos!");
+    debug.print("Loaded Cacos!\n");
     scheduler.init();
 
     cpu.hang();

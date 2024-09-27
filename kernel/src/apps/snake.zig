@@ -1,3 +1,6 @@
+///A demo app made to show how one can use
+///CaCOS impressive memory management and
+///graphic capabilities to make simple apps
 const scr = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
 const stream = @import("../drivers/stream.zig");
@@ -74,7 +77,7 @@ fn drawScore() void {
     scr.col = 2;
     scr.row = 2;
     scr.drawRect(0, 0, scr.width, scr.font.height + 4, 0x111111);
-    scr.print("score: ", bg);
+    scr.print("Press Ctrl + C to stop  |  score: ", bg);
     scr.print(debug.numberToStringDec(score, &buffer), scr.errorc);
 }
 

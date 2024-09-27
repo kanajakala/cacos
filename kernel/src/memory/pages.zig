@@ -1,7 +1,7 @@
 const mem = @import("memory.zig");
 const cpu = @import("../cpu/cpu.zig");
 
-pub export const page_size: usize = 8000;
+pub export const page_size: usize = 4000;
 pub export const number_of_pages: usize = 200_000;
 
 pub export var pageTable: [number_of_pages]bool = .{false} ** number_of_pages;
