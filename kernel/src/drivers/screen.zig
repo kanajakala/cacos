@@ -1,6 +1,6 @@
 const limine = @import("limine");
-const cpu = @import("../cpu/cpu.zig");
-const debug = @import("../cpu/debug.zig");
+const cpu = @import("../core/cpu.zig");
+const db = @import("../core/debug.zig");
 const stream = @import("../drivers/stream.zig");
 
 //framebuffer
@@ -73,7 +73,7 @@ pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
     //check for owerflow else cut the overflowing part
     //const dw = if (x + w < width) w + x else w - ((x + w) - width) + x;
     //const dh = if (y + h < height) h + y else h - ((y + h) - height) + y;
-    if (x + w > width or y + h > height) debug.panic("Rectangle overflow");
+    if (x + w > width or y + h > height) db.panic("Rectangle overflow");
     for (0..w) |dx| {
         for (0..h) |dy| {
             putpixel(x + dx, y + dy, color);
@@ -112,20 +112,20 @@ pub fn createImagefromFile(file: []const u8) !Image {
 
     //The height is the first number after a whitespace
     //the first line contains 3 chars (magic number and line feed)
-    const im_height = debug.numberInArray(@constCast(file[3..]));
+    const im_height = db.numberInArray(@constCast(file[3..]));
 
-    //debug.print("Height of the image: ");
-    //debug.print(debug.numberToStringDec(im_height, &buffer));
+    //db.print("Height of the image: ");
+    //db.print(db.numberToStringDec(im_height, &buffer));
 
     //we need to offset by the length of the height string to read the width
-    //const w_offset = debug.numberToStringDec(im_height, &buffer).len + 4;
+    //const w_offset = db.numberToStringDec(im_height, &buffer).len + 4;
 
     //TODO actually get  the real value this is currently bad
-    const im_width = im_height; //debug.numberInArray(@constCast(file[w_offset..]));
-    //debug.print("Width of the image: ");
-    //debug.print(debug.numberToStringDec(im_width, &buffer));
+    const im_width = im_height; //db.numberInArray(@constCast(file[w_offset..]));
+    //db.print("Width of the image: ");
+    //db.print(db.numberToStringDec(im_width, &buffer));
 
-    const data_offset = 15; //w_offset + debug.numberToStringDec(im_width, &buffer).len + 9;
+    const data_offset = 15; //w_offset + db.numberToStringDec(im_width, &buffer).len + 9;
     const data = file[data_offset..];
 
     switch (file[1]) {
@@ -314,11 +314,10 @@ pub fn printLogo() void {
 }
 
 pub fn init() void {
-    // cpu.print("screen initialized\n");
     const maybe_framebuffer_response = framebuffer_request.response;
 
     if (maybe_framebuffer_response == null or maybe_framebuffer_response.?.framebuffers().len == 0) {
-        debug.panic("framebuffer error");
+        db.panic("framebuffer error");
     }
 
     const framebuffer_response = maybe_framebuffer_response.?;

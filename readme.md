@@ -26,6 +26,7 @@
  ⬜ Scrolling  
  ⬜ Displaying PBM images  
  ⬜ App interrupt   
+ 🟧 APIC for real keyboard driver  
  🟧 kernel error handling  
  🟧 integrate build system into build.zig  
  🟧 timer  

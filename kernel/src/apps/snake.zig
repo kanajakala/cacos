@@ -6,8 +6,8 @@ const console = @import("../drivers/console.zig");
 const stream = @import("../drivers/stream.zig");
 const kb = @import("../drivers/keyboard.zig");
 
-const debug = @import("../cpu/debug.zig");
-const scheduler = @import("../cpu/scheduler.zig");
+const db = @import("../core/debug.zig");
+const scheduler = @import("../core/scheduler.zig");
 
 const pages = @import("../memory/pages.zig");
 const memory = @import("../memory/memory.zig");
@@ -61,7 +61,7 @@ fn handleCrash(snake: pages.Page) void {
     scr.row += scr.font.height;
     scr.printCenter("-Score-", scr.text);
     scr.row += scr.font.height;
-    scr.printCenter(debug.numberToStringDec(score, &buffer), scr.text);
+    scr.printCenter(db.numberToStringDec(score, &buffer), scr.text);
     scr.row += scr.font.height;
     scr.printCenter("Press r to restart", scr.text);
     while (scheduler.running[id]) {
@@ -79,7 +79,7 @@ fn drawScore() void {
     scr.row = 2;
     scr.drawRect(0, 0, scr.width, scr.font.height + 4, 0x111111);
     scr.print("Press Ctrl + C to stop  |  score: ", bg);
-    scr.print(debug.numberToStringDec(score, &buffer), scr.errorc);
+    scr.print(db.numberToStringDec(score, &buffer), scr.errorc);
 }
 
 fn startGame(snake: pages.Page) void {
@@ -146,14 +146,14 @@ fn run() void {
             if (x == fruit_x and y == fruit_y) {
                 scr.drawRect(@as(usize, fruit_x) * snake_size, @as(usize, fruit_y) * snake_size, snake_size, snake_size, snake_color);
                 seed += x;
-                fruit_x = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.width / (snake_size + 5))));
+                fruit_x = @as(u8, @truncate(@mod(db.hashNumber(seed), scr.width / (snake_size + 5))));
                 seed += length;
-                fruit_y = @as(u8, @truncate(@mod(debug.hashNumber(seed), scr.height / (snake_size + 5))));
+                fruit_y = @as(u8, @truncate(@mod(db.hashNumber(seed), scr.height / (snake_size + 5))));
                 score += 1;
                 length += 1;
             }
 
-            debug.shiftMem(snake, 2, length * 2 - 2);
+            db.shiftMem(snake, 2, length * 2 - 2);
             mem.*[snake.start] = x;
             mem.*[snake.start + 1] = y;
 

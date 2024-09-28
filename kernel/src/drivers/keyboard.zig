@@ -1,7 +1,7 @@
-const cpu = @import("../cpu/cpu.zig");
-const debug = @import("../cpu/debug.zig");
-const idt = @import("../cpu/idt.zig");
-const pic = @import("../cpu/pic.zig");
+const cpu = @import("../core/cpu.zig");
+const db = @import("../core/debug.zig");
+const idt = @import("../core/idt.zig");
+const pic = @import("../core/pic.zig");
 
 const stream = @import("../drivers/stream.zig");
 
@@ -12,11 +12,16 @@ const disable_first_port = 0xAD;
 const enable_first_port = disable_first_port + 0x01;
 const disable_second_port = 0xA7;
 const enable_second_port = disable_second_port + 0x01;
+const enable_leds = 0xED;
+const led_mask = 0x07;
 
 /// Disable the communication of the PS/2 Keyboard
 pub fn enable() void {
     cpu.outb(command_port, enable_first_port);
     cpu.outb(command_port, enable_second_port);
+    //light the leds up
+    cpu.outb(command_port, enable_leds);
+    cpu.outb(command_port, led_mask);
 }
 
 /// Disable the communication of the PS/2 Keyboard

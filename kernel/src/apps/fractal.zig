@@ -1,8 +1,8 @@
 const scr = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
 
-const debug = @import("../cpu/debug.zig");
-const scheduler = @import("../cpu/scheduler.zig");
+const db = @import("../core/debug.zig");
+const scheduler = @import("../core/scheduler.zig");
 
 var precision: usize = undefined;
 var id: usize = undefined;

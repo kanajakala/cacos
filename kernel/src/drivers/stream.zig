@@ -2,9 +2,9 @@ const std = @import("std");
 const kb = @import("keyboard.zig");
 const scr = @import("screen.zig");
 const console = @import("console.zig");
-const debug = @import("../cpu/debug.zig");
-const scheduler = @import("../cpu/scheduler.zig");
-const cpu = @import("../cpu/cpu.zig");
+const db = @import("../core/debug.zig");
+const scheduler = @import("../core/scheduler.zig");
+const cpu = @import("../core/cpu.zig");
 
 pub const stream_size = 10_000;
 pub export var stdin: [stream_size]u8 = .{0} ** stream_size;
@@ -36,7 +36,7 @@ fn handleLineFeed() void {
     scr.clearChar();
 
     //if array is empty we do nothing
-    if (debug.sum(&stdin) == 0) {
+    if (db.sum(&stdin) == 0) {
         return;
     }
     //else we execute the command

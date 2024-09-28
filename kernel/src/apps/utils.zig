@@ -5,8 +5,8 @@ const stream = @import("../drivers/stream.zig");
 const mem = @import("../memory/memory.zig");
 const pages = @import("../memory/pages.zig");
 
-const debug = @import("../cpu/debug.zig");
-const scheduler = @import("../cpu/scheduler.zig");
+const db = @import("../core/debug.zig");
+const scheduler = @import("../core/scheduler.zig");
 
 pub fn info() void {
     console.print("CaCOS: Coherent and Cohesive OS");
@@ -73,9 +73,9 @@ pub fn testMem() void {
     };
 
     scr.print("\nAttempting allocation of ", scr.text);
-    scr.print(debug.numberToStringDec(value, &buffer), scr.errorc);
+    scr.print(db.numberToStringDec(value, &buffer), scr.errorc);
     scr.print(" pages at ", scr.text);
-    scr.print(debug.numberToStringHex(memory.start, &buffer), scr.text);
+    scr.print(db.numberToStringHex(memory.start, &buffer), scr.text);
 
     //allocating the pages
     var temp: pages.Page = undefined;
@@ -94,7 +94,7 @@ pub fn testMem() void {
 
     const value_to_write: u8 = @truncate(value);
     scr.print("\n -> Writing value ", 0x888888);
-    scr.print(debug.numberToStringHex(value_to_write, &buffer), 0x888888);
+    scr.print(db.numberToStringHex(value_to_write, &buffer), 0x888888);
 
     //writing the value
     var iterations: usize = 0;
@@ -105,7 +105,7 @@ pub fn testMem() void {
         }
     }
     scr.print("\n -> words written: ", 0x0fbbff);
-    scr.print(debug.numberToStringDec(iterations, &buffer), scr.errorc);
+    scr.print(db.numberToStringDec(iterations, &buffer), scr.errorc);
     stream.newLine();
 }
 pub fn testMemStart(parameter: usize) void {
@@ -117,19 +117,19 @@ pub fn testMemStart(parameter: usize) void {
 
 pub fn printMem() void {
     var buffer: [20]u8 = undefined;
-    const length = debug.numberToStringDec(mem.memory_region.len / 1_000_000, &buffer);
+    const length = db.numberToStringDec(mem.memory_region.len / 1_000_000, &buffer);
     scr.print("\nsize of memory: ", scr.text);
     scr.print(length, scr.errorc);
-    const number_of_pages = debug.numberToStringDec(pages.number_of_pages, &buffer);
+    const number_of_pages = db.numberToStringDec(pages.number_of_pages, &buffer);
     scr.print("\nnumber of pages: ", scr.text);
     scr.print(number_of_pages, scr.errorc);
-    const page_size = debug.numberToStringDec(pages.page_size, &buffer);
+    const page_size = db.numberToStringDec(pages.page_size, &buffer);
     scr.print("\npage size: ", scr.text);
     scr.print(page_size, scr.errorc);
-    const free_pages = debug.numberToStringDec(pages.getFreePages(&pages.pageTable), &buffer);
+    const free_pages = db.numberToStringDec(pages.getFreePages(&pages.pageTable), &buffer);
     scr.print("\nnumber of free pages: ", scr.text);
     scr.print(free_pages, scr.errorc);
-    const free_mem = debug.numberToStringDec(pages.getFreePages(&pages.pageTable) * pages.page_size / 1_000_000, &buffer);
+    const free_mem = db.numberToStringDec(pages.getFreePages(&pages.pageTable) * pages.page_size / 1_000_000, &buffer);
     scr.print("\nfree memory: ", scr.text);
     scr.print(free_mem, scr.errorc);
     scr.newLine();

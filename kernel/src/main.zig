@@ -1,8 +1,8 @@
-const cpu = @import("cpu/cpu.zig");
-const idt = @import("cpu/idt.zig");
-const gdt = @import("cpu/gdt.zig");
-const debug = @import("cpu/debug.zig");
-const scheduler = @import("cpu/scheduler.zig");
+const cpu = @import("core/cpu.zig");
+const idt = @import("core/idt.zig");
+const gdt = @import("core/gdt.zig");
+const db = @import("core/debug.zig");
+const scheduler = @import("core/scheduler.zig");
 
 const mem = @import("memory/memory.zig");
 
@@ -11,7 +11,7 @@ const kb = @import("drivers/keyboard.zig");
 const console = @import("drivers/console.zig");
 
 export fn _start() callconv(.C) noreturn {
-    debug.print("\nStarted CaCOS loading\n");
+    //db.print("\nStarted CaCOS loading\n");
 
     scr.init();
     scr.printMOTD();
@@ -22,7 +22,7 @@ export fn _start() callconv(.C) noreturn {
 
     console.init();
 
-    debug.print("Loaded Cacos!\n");
+    //db.print("Loaded Cacos!\n");
     scheduler.init();
 
     cpu.hang();

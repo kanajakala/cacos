@@ -1,6 +1,6 @@
 const mem = @import("../memory/memory.zig");
 const scr = @import("../drivers/screen.zig");
-const db = @import("../cpu/debug.zig");
+const db = @import("../core/debug.zig");
 const pages = @import("../memory/pages.zig");
 
 fn format(str: []const u8, value: usize, suffix: []const u8) void {

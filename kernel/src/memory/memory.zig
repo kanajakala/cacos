@@ -1,7 +1,7 @@
 const limine = @import("limine");
 const fmt = @import("std").fmt;
 const pages = @import("pages.zig");
-const debug = @import("../cpu/debug.zig");
+const db = @import("../core/debug.zig");
 const scr = @import("../drivers/screen.zig");
 
 // code taken from https://github.com/yhyadev/yos
@@ -22,7 +22,7 @@ fn hhinit() void {
     const maybe_hhdm_response = hhdm_request.response;
 
     if (maybe_hhdm_response == null) {
-        debug.panic("could not retrieve information about the higher half kernel");
+        db.panic("could not retrieve information about the higher half kernel");
     }
 
     const hhdm_response = maybe_hhdm_response.?;
@@ -34,7 +34,7 @@ pub fn init() void {
     const maybe_memory_map_response = memory_map_request.response;
 
     if (maybe_memory_map_response == null) {
-        debug.panic("\nCould not fetch RAM info\n");
+        db.panic("\nCould not fetch RAM info\n");
     }
     const memory_map_response = maybe_memory_map_response.?;
     var best_memory_region: ?[]u8 = null;
@@ -49,7 +49,7 @@ pub fn init() void {
     }
 
     if (best_memory_region == null) {
-        debug.panic("could not find a usable memory region");
+        db.panic("could not find a usable memory region");
     }
 
     memory_region = best_memory_region.?;
