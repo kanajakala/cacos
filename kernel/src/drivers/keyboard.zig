@@ -92,6 +92,11 @@ pub const KeyEvent = packed struct {
         escape,
         spacebar,
 
+        up,
+        down,
+        right,
+        left,
+
         unknown,
     };
 
@@ -158,14 +163,20 @@ pub inline fn map(scancode: u8) KeyEvent {
         14, 142 => .{ .code = .backspace, .state = if (scancode >= 129) .released else .pressed },
         1, 129 => .{ .code = .escape, .state = if (scancode >= 129) .released else .pressed },
         57, 185 => .{ .code = .spacebar, .state = if (scancode >= 129) .released else .pressed },
+
+        72, 200 => .{ .code = .up, .state = if (scancode >= 129) .released else .pressed },
+        75, 203 => .{ .code = .left, .state = if (scancode >= 129) .released else .pressed },
+        77, 205 => .{ .code = .right, .state = if (scancode >= 129) .released else .pressed },
+        80, 208 => .{ .code = .down, .state = if (scancode >= 129) .released else .pressed },
+
         else => .{ .code = .unknown, .state = .pressed },
     };
 }
 
-pub inline fn keyEventToChar(ke: KeyEvent) u8 {
+pub inline fn keyEventToChar(code: KeyEvent.Code) u8 {
     //normal keymap:
     if (!shifted) {
-        return switch (ke.code) {
+        return switch (code) {
             KeyEvent.Code.key_1 => '1',
             KeyEvent.Code.key_2 => '2',
             KeyEvent.Code.key_3 => '3',
@@ -217,10 +228,17 @@ pub inline fn keyEventToChar(ke: KeyEvent) u8 {
             KeyEvent.Code.spacebar => 0x20,
             KeyEvent.Code.enter => 0xa,
             KeyEvent.Code.backspace => 0x08,
+
+            //arrow keys
+            KeyEvent.Code.up => 0x8D,
+            KeyEvent.Code.down => 0x8F,
+            KeyEvent.Code.right => 0x90,
+            KeyEvent.Code.left => 0x9D,
+
             else => 0,
         };
     } else {
-        return switch (ke.code) {
+        return switch (code) {
             KeyEvent.Code.key_1 => '!',
             KeyEvent.Code.key_2 => '@',
             KeyEvent.Code.key_3 => '#',

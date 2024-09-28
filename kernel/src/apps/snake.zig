@@ -4,6 +4,7 @@
 const scr = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
 const stream = @import("../drivers/stream.zig");
+const kb = @import("../drivers/keyboard.zig");
 
 const debug = @import("../cpu/debug.zig");
 const scheduler = @import("../cpu/scheduler.zig");
@@ -129,10 +130,10 @@ fn run() void {
             }
 
             stream.index = 0;
-            if (stream.stdin[0] == 'h' and direction != Directions.right) direction = Directions.left;
-            if (stream.stdin[0] == 'j' and direction != Directions.up) direction = Directions.down;
-            if (stream.stdin[0] == 'k' and direction != Directions.down) direction = Directions.up;
-            if (stream.stdin[0] == 'l' and direction != Directions.left) direction = Directions.right;
+            if (stream.stdin[0] == 'h' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.left) and direction != Directions.right) direction = Directions.left;
+            if (stream.stdin[0] == 'j' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.down) and direction != Directions.up) direction = Directions.down;
+            if (stream.stdin[0] == 'k' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.up) and direction != Directions.down) direction = Directions.up;
+            if (stream.stdin[0] == 'l' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.right) and direction != Directions.left) direction = Directions.right;
 
             switch (direction) {
                 Directions.up => y -= 1,

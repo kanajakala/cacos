@@ -52,7 +52,7 @@ fn handleBackSpace() void {
 }
 
 pub fn handleKey(key: kb.KeyEvent) void {
-    const value = kb.keyEventToChar(key);
+    const value = kb.keyEventToChar(key.code);
     const codes = kb.KeyEvent.Code;
     if (key.state == kb.KeyEvent.State.pressed and value != 0) {
         //overflow check
