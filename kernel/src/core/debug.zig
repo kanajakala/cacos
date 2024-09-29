@@ -110,10 +110,27 @@ pub fn shiftMem(page: pages.Page, direction: usize, clip: usize) void {
     }
 }
 
-pub fn writeToMem(comptime T: type, where: usize, data: T) void {
+//TODO merge these 2 functions
+pub fn writeToMem64(comptime T: type, where: usize, data: T) void {
     for (0..@sizeOf(T)) |i| {
         mem.memory_region[where + i] = @as(u8, @truncate(data >> (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8));
     }
+}
+pub fn writeToMem16(comptime T: type, where: usize, data: T) void {
+    for (0..@sizeOf(T)) |i| {
+        mem.memory_region[where + i] = @as(u8, @truncate(data >> (@sizeOf(T) - @as(u4, @truncate(i)) - 1) * 8));
+    }
+}
+
+pub fn writeStringToMem(where: u64, str: []const u8) void {
+    for (str, 0..str.len) |char, i| {
+        mem.memory_region[where + i] = char;
+    }
+}
+
+pub fn stringFromMem(where: u64, length: u16, buffer: *[15]u8) []const u8 {
+    @memcpy(buffer[0..length], mem.memory_region[where .. where + length]);
+    return buffer[0..length];
 }
 
 pub fn readFromMem(comptime T: type, where: u64) T {

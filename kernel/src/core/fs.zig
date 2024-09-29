@@ -14,7 +14,7 @@ var super_block: pages.Page = undefined;
 
 const File = struct {
     address: u64,
-    name: []const u8,
+    name_length: u8, //length of the name of the file in bytes (characters)
     data: []u8,
 };
 
@@ -31,22 +31,34 @@ pub fn writeFileToSuperBlock(file: File) void {
     for (0..block_size / 8) |i| {
         //if the current block is empty
         if (checkEmpty(i * 8)) {
-            db.writeToMem(u64, super_block.start + i * 8, file.address);
+            db.writeToMem64(u64, super_block.start + i * 8, file.address);
             return;
         }
     }
 }
 
 pub fn createFile(name: []const u8) File {
+    //convert name.len to u16
+    const length: u8 = @truncate(name.len);
+    //allocate space for a new file
     const faddress: pages.Page = pages.alloc(&pages.pageTable) catch pages.empty_page;
-    const file = File{ .address = faddress.start, .name = name, .data = mem.*[faddress.start..faddress.end] };
+    //creation of the file
+    //we add 2 to  the start because we also need to store the length of the name which takes 2 bytes
+    const file = File{ .address = faddress.start, .name_length = length, .data = mem.*[faddress.start + length + 1 .. faddress.end] };
+    //we write the address of the file to the super block
     writeFileToSuperBlock(file);
+    //write the length of the name to the first to bytes of the file
+    mem.*[faddress.start] = length;
+    //write the name to the file
+    db.writeStringToMem(faddress.start + 1, name);
+    var buffer: [15]u8 = undefined;
+    db.print(db.stringFromMem(faddress.start + 1, length, &buffer));
     return file;
 }
 
 pub fn init() void {
     super_block = pages.alloc(&pages.pageTable) catch pages.empty_page;
-    const testf = createFile("test");
+    const testf = createFile("Namefe");
     testf.data[0] = 0xee;
     db.print("\nStart of test file\n");
     db.printMem(mem.*[testf.address .. testf.address + 10]);

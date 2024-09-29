@@ -2,6 +2,7 @@
 const cpu = @import("cpu.zig");
 const pic = @import("pic.zig");
 const gdt = @import("gdt.zig");
+const db = @import("debug.zig");
 const scheduler = @import("scheduler.zig");
 const screen = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
@@ -169,10 +170,12 @@ pub fn init() void {
 
 fn handleDivisionError(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("division error");
+    db.panic("division error");
 }
 
 fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("debug");
+    db.panic("debug");
 }
 
 fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
@@ -182,68 +185,85 @@ fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
 
 fn handleOverflow(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("overflow");
+    db.panic("overflow");
 }
 
 fn handleBoundRangeExceeded(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("bound range exceeded");
+    db.panic("bound range exceeded");
 }
 
 fn handleInvalidOpcode(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("invalid opcode");
+    db.panic("invalid opcode");
 }
 
 fn handleDeviceNotAvailable(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("device not available");
+    db.panic("device not available");
 }
 
 fn handleDoubleFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("double fault");
+    db.panic("double fault");
 }
 
 fn handleSegmentationFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("segmentation fault");
+    db.panic("segmentation fault");
 }
 
 fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("general protection fault");
+    db.panic("general protection fault");
 }
 
 fn handlePageFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("page fault");
+    db.panic("page fault");
 }
 
 fn handleX87FloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("x87 floating point exception");
+    db.panic("x87 floating point exception");
 }
 
 fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("alignment check: {}");
+    db.panic("alignment check: {}");
 }
 
 fn handleMachineCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("machine check");
+    db.panic("machine check");
 }
 
 fn handleSIMDFloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("simd floating point exception");
+    db.panic("simd floating point exception");
 }
 
 fn handleVirtualizationException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("virtualization exception");
+    db.panic("virtualization exception");
 }
 
 fn handleControlProtectionException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("control protection exception");
+    db.panic("control protection exception");
 }
 
 fn handleHypervisorInjectionException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("hypervisor injection exception");
+    db.panic("hypervisor injection exception");
 }
 
 fn handleVMMCommunicationException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("vmm communication exception");
+    db.panic("vmm communication exception");
 }
 
 fn handleSecurityException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("security exception");
+    db.panic("security exception");
 }
