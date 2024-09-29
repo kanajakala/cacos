@@ -15,6 +15,8 @@ pub const Page = packed struct {
     end: usize,
 };
 
+pub const empty_page = Page{ .start = 0, .end = 0 };
+
 pub fn alloc(pt: *[number_of_pages]bool) !Page {
     for (pt, 0..number_of_pages) |page, i| {
         if (!page) {

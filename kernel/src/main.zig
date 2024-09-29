@@ -2,6 +2,7 @@ const cpu = @import("core/cpu.zig");
 const idt = @import("core/idt.zig");
 const gdt = @import("core/gdt.zig");
 const db = @import("core/debug.zig");
+const fs = @import("core/fs.zig");
 const scheduler = @import("core/scheduler.zig");
 
 const mem = @import("memory/memory.zig");
@@ -19,6 +20,7 @@ export fn _start() callconv(.C) noreturn {
     gdt.init();
     idt.init();
     mem.init();
+    fs.init();
 
     console.init();
 

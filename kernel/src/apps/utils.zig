@@ -107,6 +107,14 @@ pub fn testMem() void {
     scr.print("\n -> words written: ", 0x0fbbff);
     scr.print(db.numberToStringDec(iterations, &buffer), scr.errorc);
     stream.newLine();
+
+    //used to test writeToMem()
+    //
+    //scr.print("nAttempting write of large value\n", scr.text);
+    //db.writeToMem(u64, memory.start, 0xbbbbbbbbbbbbbbbb);
+    //for (memory.start..memory.start + 8) |i| {
+    //    scr.print(db.numberToStringHex(mem.memory_region[i], &buffer), 0xffff00);
+    //}
 }
 pub fn testMemStart(parameter: usize) void {
     value = parameter;

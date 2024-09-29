@@ -110,6 +110,20 @@ pub fn shiftMem(page: pages.Page, direction: usize, clip: usize) void {
     }
 }
 
+pub fn writeToMem(comptime T: type, where: usize, data: T) void {
+    for (0..@sizeOf(T)) |i| {
+        mem.memory_region[where + i] = @as(u8, @truncate(data >> (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8));
+    }
+}
+
+pub fn readFromMem(comptime T: type, where: u64) T {
+    var out: T = 0;
+    for (0..@sizeOf(T)) |i| {
+        out += @as(T, mem.memory_region[where + i]) >> (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8;
+    }
+    return out;
+}
+
 const arrayErrors = error{
     elementNotInArray,
 };
