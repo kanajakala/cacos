@@ -21,7 +21,7 @@ pub fn echo() void {
 
 pub fn ls() void {
     for (0..fs.number_of_files) |i| {
-        console.print(fs.getName(db.readFromMem(u64, fs.super_block.start + i * 8)));
+        console.print(fs.getName(fs.addressFromSb(i)));
     }
 }
 

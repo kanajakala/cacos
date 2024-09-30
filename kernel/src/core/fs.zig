@@ -40,7 +40,33 @@ pub fn writeFileToSuperBlock(file: File) void {
     }
 }
 
-pub fn createFile(name: []const u8) File {
+pub fn addressFromSb(index: usize) u64 {
+    return db.readFromMem(u64, super_block.start + index * 8);
+}
+
+pub fn addressFromName(name: []const u8) u64 {
+    for (0..number_of_files) |i| {
+        const address: u64 = addressFromSb(i);
+        if (db.hashStr(getName(address)) == db.hashStr(name)) {
+            return address;
+        }
+    }
+    return 0;
+}
+
+pub fn writeDataToFile(where: u64, data: []const u8) void {
+    //we add one because the first byte stores the length
+    //of the name of the file
+    const name_length = mem.*[where];
+    @memcpy(mem.*[name_length + 1 .. data.len + name_length + 1], data[0..]);
+}
+
+pub fn readDataFromFile(where: u64) []u8 {
+    const name_length = mem.*[where];
+    return mem.*[where + name_length + 1 .. where + name_length + 1 + block_size];
+}
+
+pub fn createFile(name: []const u8) void {
     //convert name.len to u16
     const length: u8 = @truncate(name.len);
     //allocate space for a new file
@@ -54,7 +80,6 @@ pub fn createFile(name: []const u8) File {
     mem.*[faddress.start] = length;
     //write the name to the file
     db.writeStringToMem(faddress.start + 1, name);
-    return file;
 }
 
 pub fn debugFile(file: File) void {
@@ -76,7 +101,10 @@ pub fn getName(where: u64) []const u8 {
 
 pub fn init() void {
     super_block = pages.alloc(&pages.pageTable) catch pages.empty_page;
-    for (0..10) |_| {
-        _ = createFile("abc");
-    }
+    //test IO functionality
+    createFile("test");
+    const address = addressFromName("test");
+    writeDataToFile(address, "datada");
+    db.printArray(mem.*[address .. address + 32]);
+    db.printArray(readDataFromFile(address));
 }
