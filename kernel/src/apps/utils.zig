@@ -6,6 +6,7 @@ const mem = @import("../memory/memory.zig");
 const pages = @import("../memory/pages.zig");
 
 const db = @import("../core/debug.zig");
+const fs = @import("../core/fs.zig");
 const scheduler = @import("../core/scheduler.zig");
 
 pub fn info() void {
@@ -16,6 +17,12 @@ pub fn info() void {
 pub fn echo() void {
     const offset = "echo ".len;
     console.print(stream.stdin[offset..]);
+}
+
+pub fn ls() void {
+    for (0..fs.number_of_files) |i| {
+        console.print(fs.getName(db.readFromMem(u64, fs.super_block.start + i * 8)));
+    }
 }
 
 pub fn help() void {

@@ -5,6 +5,7 @@ const kb = @import("keyboard.zig");
 
 const cpu = @import("../core/cpu.zig");
 const db = @import("../core/debug.zig");
+const fs = @import("../core/fs.zig");
 
 const utils = @import("../apps/utils.zig");
 const fractal = @import("../apps/fractal.zig");
@@ -48,6 +49,7 @@ pub fn execute_command() void {
         db.hashStr("echo") => utils.echo(),
         db.hashStr("help") => utils.help(),
         db.hashStr("snake") => snake.start(),
+        db.hashStr("ls") => utils.ls(),
         db.hashStr("stop") => {
             db.print("Stopping");
             print("Stopping");

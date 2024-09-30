@@ -10,7 +10,9 @@ const block_size = pages.page_size;
 
 //The super block contains the start address of each file
 //Each file is 4kb in size
-var super_block: pages.Page = undefined;
+pub var super_block: pages.Page = undefined;
+
+pub var number_of_files: usize = 0;
 
 const File = struct {
     address: u64,
@@ -32,6 +34,7 @@ pub fn writeFileToSuperBlock(file: File) void {
         //if the current block is empty
         if (checkEmpty(i * 8)) {
             db.writeToMem64(u64, super_block.start + i * 8, file.address);
+            number_of_files += 1;
             return;
         }
     }
@@ -51,18 +54,29 @@ pub fn createFile(name: []const u8) File {
     mem.*[faddress.start] = length;
     //write the name to the file
     db.writeStringToMem(faddress.start + 1, name);
-    var buffer: [15]u8 = undefined;
-    db.print(db.stringFromMem(faddress.start + 1, length, &buffer));
     return file;
+}
+
+pub fn debugFile(file: File) void {
+    db.print("-------------------------------------------------\n");
+    file.data[0] = 0xee;
+    db.print("Address of file\n");
+    var buffer: [8]u8 = undefined;
+    db.print(db.numberToStringHex(file.address, &buffer));
+    db.print("\nname of the file\n");
+    db.print(getName(db.readFromMem(u64, super_block.start)));
+    db.print("-------------------------------------------------\n\n");
+}
+
+pub fn getName(where: u64) []const u8 {
+    const length: u8 = mem.*[where];
+    var buffer: [15]u8 = undefined;
+    return db.stringFromMem(where + 1, length + 1, &buffer);
 }
 
 pub fn init() void {
     super_block = pages.alloc(&pages.pageTable) catch pages.empty_page;
-    const testf = createFile("Namefe");
-    testf.data[0] = 0xee;
-    db.print("\nStart of test file\n");
-    db.printMem(mem.*[testf.address .. testf.address + 10]);
-    db.print("Start of super block\n");
-    var buffer: [10]u8 = undefined;
-    db.print(db.numberToStringHex(db.readFromMem(u64, super_block.start), &buffer));
+    for (0..10) |_| {
+        _ = createFile("abc");
+    }
 }

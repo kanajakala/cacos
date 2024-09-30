@@ -136,7 +136,7 @@ pub fn stringFromMem(where: u64, length: u16, buffer: *[15]u8) []const u8 {
 pub fn readFromMem(comptime T: type, where: u64) T {
     var out: T = 0;
     for (0..@sizeOf(T)) |i| {
-        out += @as(T, mem.memory_region[where + i]) >> (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8;
+        out += @as(T, mem.memory_region[where + i]) << (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8;
     }
     return out;
 }
