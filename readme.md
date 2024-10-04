@@ -9,7 +9,7 @@
 
 ### Features ?
 
- You can do basic memory manipulation, type characters and even delete them
+ You can do basic memory and file (not persistent) manipulation, type characters and play snake.
 
 ### TODO:
 
@@ -26,15 +26,14 @@
  ⬜ Scrolling  
  ⬜ Displaying PBM images  
  ⬜ App interrupt   
- 🟧 APIC for real keyboard driver  
- 🟧 kernel error handling  
- 🟧 integrate build system into build.zig  
  🟧 timer  
  🟨 Scheduler  
+ 🟨 Filesystem  
+ 🟧 kernel error handling  
  🟧 Optimized memory allocator  
- 🟧 Filesystem  
  🟧 GUI  
  🟧 Raytracer  
+ 🟧 integrate build system into build.zig  
 
 ### Dependecies
 
