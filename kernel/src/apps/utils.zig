@@ -115,6 +115,12 @@ pub fn help() void {
 
     scr.print("touch [name]", scr.primary);
     scr.print(" -> creates a new file\n", scr.text);
+
+    scr.print("pwd", scr.primary);
+    scr.print(" -> prints the current working directory\n", scr.text);
+
+    scr.print("cd", scr.primary);
+    scr.print(" -> changes the current working directory\n", scr.text);
 }
 
 var value: usize = undefined;
