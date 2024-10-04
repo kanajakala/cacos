@@ -14,7 +14,13 @@ pub var super_block: pages.Page = undefined;
 
 pub var number_of_files: usize = 0;
 
+const FileType = enum {
+    file,
+    directory,
+};
+
 const File = struct {
+    ftype: FileType,
     address: u64,
     name_length: u8, //length of the name of the file in bytes (characters)
     data: []u8,
@@ -55,15 +61,14 @@ pub fn addressFromName(name: []const u8) u64 {
 }
 
 pub fn writeDataToFile(where: u64, data: []const u8) void {
-    //we add one because the first byte stores the length
-    //of the name of the file
-    const name_length = mem.*[where];
-    @memcpy(mem.*[name_length + 1 .. data.len + name_length + 1], data[0..]);
+    //we add 2 because the first byte stores the type and the second the length of the name
+    const name_length = mem.*[where + 1];
+    @memcpy(mem.*[where + name_length + 2 .. where + data.len + name_length + 2], data[0..]);
 }
 
 pub fn readDataFromFile(where: u64) []u8 {
-    const name_length = mem.*[where];
-    return mem.*[where + name_length + 1 .. where + name_length + 1 + block_size];
+    const name_length = mem.*[where + 1];
+    return mem.*[where + name_length + 2 .. where + block_size];
 }
 
 pub fn createFile(name: []const u8) void {
@@ -72,8 +77,8 @@ pub fn createFile(name: []const u8) void {
     //allocate space for a new file
     const faddress: pages.Page = pages.alloc(&pages.pageTable) catch pages.empty_page;
     //creation of the file
-    //we add 2 to  the start because we also need to store the length of the name which takes 2 bytes
-    const file = File{ .address = faddress.start, .name_length = length, .data = mem.*[faddress.start + length + 1 .. faddress.end] };
+    //we add 2 to  the start because we also need to store the type which takes one byte and the length of the name which takes 1 bytes
+    const file = File{ .ftype = FileType.file, .address = faddress.start, .name_length = length, .data = mem.*[faddress.start + length + 2 .. faddress.end] };
     //we write the address of the file to the super block
     writeFileToSuperBlock(file);
     //write the length of the name to the first to bytes of the file
@@ -89,14 +94,31 @@ pub fn debugFile(file: File) void {
     var buffer: [8]u8 = undefined;
     db.print(db.numberToStringHex(file.address, &buffer));
     db.print("\nname of the file\n");
-    db.print(getName(db.readFromMem(u64, super_block.start)));
-    db.print("-------------------------------------------------\n\n");
+    db.print(getName(db.readFromMem(u64, super_block.start + file.address / 4000)));
+    db.print("\n-------------------------------------------------\n\n");
+}
+
+pub fn debugFiles() void {
+    db.print("\nALL FILES IN SUPER BLOCK\n");
+    for (0..number_of_files) |i| {
+        db.print("\n");
+        const address = addressFromSb(i);
+        var buffer: [16]u8 = undefined;
+        db.print("address of file n");
+        db.print(db.numberToStringDec(i, &buffer));
+        db.print(": ");
+        db.print(db.numberToStringHex(address, &buffer));
+        db.print("\nRaw memory at this address: \n");
+        db.printMem(mem.*[address .. address + 20]);
+        db.printArrayFull(mem.*[address .. address + 20]);
+        db.print("\n");
+    }
+    db.print("\n\n");
 }
 
 pub fn getName(where: u64) []const u8 {
     const length: u8 = mem.*[where];
-    var buffer: [15]u8 = undefined;
-    return db.stringFromMem(where + 1, length + 1, &buffer);
+    return db.stringFromMem(where + 1, length);
 }
 
 pub fn init() void {
@@ -104,7 +126,5 @@ pub fn init() void {
     //test IO functionality
     createFile("test");
     const address = addressFromName("test");
-    writeDataToFile(address, "datada");
-    db.printArray(mem.*[address .. address + 32]);
-    db.printArray(readDataFromFile(address));
+    writeDataToFile(address, "dat");
 }

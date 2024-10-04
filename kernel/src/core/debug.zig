@@ -90,7 +90,15 @@ pub fn printArray(arr: []u8) void {
     }
     printChar('}');
 }
-
+pub fn printArrayFull(arr: []u8) void {
+    print(".{ ");
+    for (arr) |i| {
+        printChar(' ');
+        printChar(i);
+        printChar(',');
+    }
+    printChar('}');
+}
 pub fn printMem(arr: []u8) void {
     print("< ");
     var buffer: [2]u8 = undefined;
@@ -128,9 +136,8 @@ pub fn writeStringToMem(where: u64, str: []const u8) void {
     }
 }
 
-pub fn stringFromMem(where: u64, length: u16, buffer: *[15]u8) []const u8 {
-    @memcpy(buffer[0..length], mem.memory_region[where .. where + length]);
-    return buffer[0..length];
+pub fn stringFromMem(where: u64, length: u8) []const u8 {
+    return @constCast(mem.memory_region[where .. where + length]);
 }
 
 pub fn readFromMem(comptime T: type, where: u64) T {

@@ -21,8 +21,15 @@ pub fn echo() void {
 
 pub fn ls() void {
     for (0..fs.number_of_files) |i| {
-        console.print(fs.getName(fs.addressFromSb(i)));
+        const address = fs.addressFromSb(i);
+        const name = fs.getName(address);
+        console.print(name);
     }
+}
+
+pub fn touch() void {
+    const offset = "touch ".len;
+    fs.createFile(db.firstWordOfArray(stream.stdin[offset..]));
 }
 
 pub fn help() void {
@@ -60,10 +67,17 @@ pub fn help() void {
 
     scr.print("echo [text]", scr.primary);
     scr.print(" -> prints the provided text to stdout\n", scr.text);
+
+    scr.print("ls", scr.primary);
+    scr.print(" -> lists all of the file in the system\n", scr.text);
+
+    scr.print("touch [name]", scr.primary);
+    scr.print(" -> creates a new file\n", scr.text);
 }
 
 var value: usize = undefined;
 var id: usize = undefined;
+
 pub fn testMem() void {
     if (value == 0) {
         console.printErr("Value can't be zero");
@@ -114,15 +128,8 @@ pub fn testMem() void {
     scr.print("\n -> words written: ", 0x0fbbff);
     scr.print(db.numberToStringDec(iterations, &buffer), scr.errorc);
     stream.newLine();
-
-    //used to test writeToMem()
-    //
-    //scr.print("nAttempting write of large value\n", scr.text);
-    //db.writeToMem(u64, memory.start, 0xbbbbbbbbbbbbbbbb);
-    //for (memory.start..memory.start + 8) |i| {
-    //    scr.print(db.numberToStringHex(mem.memory_region[i], &buffer), 0xffff00);
-    //}
 }
+
 pub fn testMemStart(parameter: usize) void {
     value = parameter;
     id = scheduler.getFree();

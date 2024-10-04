@@ -50,6 +50,7 @@ pub fn execute_command() void {
         db.hashStr("help") => utils.help(),
         db.hashStr("snake") => snake.start(),
         db.hashStr("ls") => utils.ls(),
+        db.hashStr("touch") => utils.touch(),
         db.hashStr("stop") => {
             db.print("Stopping");
             print("Stopping");
