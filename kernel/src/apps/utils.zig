@@ -23,13 +23,55 @@ pub fn ls() void {
     for (0..fs.number_of_files) |i| {
         const address = fs.addressFromSb(i);
         const name = fs.getName(address);
-        console.print(name);
+        const ftype: fs.FileType = fs.getType(address);
+        if (fs.getParent(address) == fs.current_dir) {
+            if (ftype == fs.FileType.directory) {
+                console.printInfo(name);
+            } else {
+                console.print(name);
+            }
+        }
     }
 }
 
 pub fn touch() void {
     const offset = "touch ".len;
-    fs.createFile(db.firstWordOfArray(stream.stdin[offset..]));
+    fs.createFile(db.firstWordOfArray(stream.stdin[offset..]), fs.current_dir);
+}
+
+pub fn cd() void {
+    const offset = "cd ".len;
+    const name: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
+    if (db.hashStr(name) == db.hashStr("..")) {
+        const parent_dir = fs.getParent(fs.current_dir);
+        fs.current_dir = parent_dir;
+        return;
+    }
+    fs.current_dir = fs.addressFromName(name);
+    if (fs.current_dir == 0) fs.current_dir = fs.root_address;
+}
+
+pub fn mkdir() void {
+    const offset = "mkdir ".len;
+    fs.createDir(db.firstWordOfArray(stream.stdin[offset..]), fs.current_dir);
+}
+
+pub fn pwd() void {
+    const mxpt = fs.max_path_size;
+    var path: [mxpt]u64 = .{0} ** mxpt;
+    var temp: u64 = fs.current_dir;
+    var iterations: usize = 1;
+    for (0..mxpt) |i| {
+        path[i] = temp;
+        temp = fs.getParent(temp);
+        if (temp == 0) break;
+        iterations += 1;
+    }
+    console.print("");
+    for (1..iterations + 1) |j| {
+        console.printf(fs.getName(path[iterations - j]));
+        console.printf("/");
+    }
 }
 
 pub fn help() void {

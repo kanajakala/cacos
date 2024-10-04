@@ -14,7 +14,13 @@ pub var super_block: pages.Page = undefined;
 
 pub var number_of_files: usize = 0;
 
-const FileType = enum {
+pub var root_address: u64 = undefined;
+
+pub var current_dir: u64 = 0;
+
+pub const max_path_size = 255;
+
+pub const FileType = enum {
     file,
     directory,
 };
@@ -23,6 +29,7 @@ const File = struct {
     ftype: FileType,
     address: u64,
     name_length: u8, //length of the name of the file in bytes (characters)
+    parent: u64,
     data: []u8,
 };
 
@@ -71,20 +78,58 @@ pub fn readDataFromFile(where: u64) []u8 {
     return mem.*[where + name_length + 2 .. where + block_size];
 }
 
-pub fn createFile(name: []const u8) void {
-    //convert name.len to u16
+pub fn createFile(name: []const u8, parent: u64) void {
+    //convert name.len to u8
     const length: u8 = @truncate(name.len);
+
     //allocate space for a new file
     const faddress: pages.Page = pages.alloc(&pages.pageTable) catch pages.empty_page;
+
     //creation of the file
     //we add 2 to  the start because we also need to store the type which takes one byte and the length of the name which takes 1 bytes
-    const file = File{ .ftype = FileType.file, .address = faddress.start, .name_length = length, .data = mem.*[faddress.start + length + 2 .. faddress.end] };
+    const file = File{ .ftype = FileType.file, .address = faddress.start, .name_length = length, .parent = parent, .data = mem.*[faddress.start + length + 10 .. faddress.end] };
+
     //we write the address of the file to the super block
     writeFileToSuperBlock(file);
-    //write the length of the name to the first to bytes of the file
-    mem.*[faddress.start] = length;
+
+    //write the type as a file to the first byte of the file
+    mem.*[faddress.start] = 0;
+    //write the length of the name to the second byte of the file
+    mem.*[faddress.start + 1] = length;
+
+    //set the parent
+    db.writeToMem64(u64, faddress.start + 2, parent);
     //write the name to the file
-    db.writeStringToMem(faddress.start + 1, name);
+    db.writeStringToMem(faddress.start + 2 + 8, name);
+
+    debugFiles();
+}
+
+pub fn createDir(name: []const u8, parent: u64) void {
+    //convert name.len to u8
+    const length: u8 = @truncate(name.len);
+
+    //allocate space for a new directory
+    const faddress: pages.Page = pages.alloc(&pages.pageTable) catch pages.empty_page;
+
+    //creation of the directory
+    //we add 2 to  the start because we also need to store the type which takes one byte and the length of the name which takes 1 bytes
+    const dir = File{ .ftype = FileType.directory, .address = faddress.start, .name_length = length, .parent = parent, .data = mem.*[faddress.start + length + 10 .. faddress.end] };
+
+    //we write the address of the directory to the super block
+    writeFileToSuperBlock(dir);
+
+    //set the type as a directory in the first byte
+    mem.*[faddress.start] = 1;
+    //write the length of the name to the second byte of the file
+    mem.*[faddress.start + 1] = length;
+
+    //set the parent
+    db.writeToMem64(u64, faddress.start + 2, parent);
+    //write the name to the directory
+    db.writeStringToMem(faddress.start + 10, name);
+
+    debugFiles();
 }
 
 pub fn debugFile(file: File) void {
@@ -108,6 +153,11 @@ pub fn debugFiles() void {
         db.print(db.numberToStringDec(i, &buffer));
         db.print(": ");
         db.print(db.numberToStringHex(address, &buffer));
+        db.print("\nname of the file: ");
+        db.print(getName(address));
+        db.print("\nparent of the file: ");
+        //const name_length = mem.*[address + 1];
+        db.print(db.numberToStringHex(getParent(address), &buffer));
         db.print("\nRaw memory at this address: \n");
         db.printMem(mem.*[address .. address + 20]);
         db.printArrayFull(mem.*[address .. address + 20]);
@@ -117,14 +167,28 @@ pub fn debugFiles() void {
 }
 
 pub fn getName(where: u64) []const u8 {
-    const length: u8 = mem.*[where];
-    return db.stringFromMem(where + 1, length);
+    const length: u8 = mem.*[where + 1];
+    return db.stringFromMem(where + 10, length);
+}
+
+pub fn getType(where: u64) FileType {
+    const type_byte: u8 = mem.*[where];
+    if (type_byte == 1) {
+        return FileType.directory;
+    } else {
+        return FileType.file;
+    }
+}
+
+pub fn getParent(where: u64) u64 {
+    return db.readFromMem(u64, where + 2);
 }
 
 pub fn init() void {
     super_block = pages.alloc(&pages.pageTable) catch pages.empty_page;
-    //test IO functionality
-    createFile("test");
-    const address = addressFromName("test");
-    writeDataToFile(address, "dat");
+    //creation of root
+    createDir("/", 0);
+    const address = addressFromName("/");
+    root_address = address;
+    current_dir = root_address;
 }

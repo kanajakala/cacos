@@ -23,6 +23,23 @@ pub fn print(str: []const u8) void {
         }
     }
 }
+pub fn printf(str: []const u8) void {
+    for (str, 0..str.len) |char, i| {
+        if (char != 0) {
+            stream.stdout[i] = char;
+            scr.printChar(char, out_color);
+        }
+    }
+}
+pub fn printInfo(str: []const u8) void {
+    scr.newLine();
+    for (str, 0..str.len) |char, i| {
+        if (char != 0) {
+            stream.stdout[i] = char;
+            scr.printChar(char, scr.primary);
+        }
+    }
+}
 pub fn printErr(str: []const u8) void {
     scr.newLine();
     for (str, 0..str.len) |char, i| {
@@ -51,6 +68,9 @@ pub fn execute_command() void {
         db.hashStr("snake") => snake.start(),
         db.hashStr("ls") => utils.ls(),
         db.hashStr("touch") => utils.touch(),
+        db.hashStr("mkdir") => utils.mkdir(),
+        db.hashStr("cd") => utils.cd(),
+        db.hashStr("pwd") => utils.pwd(),
         db.hashStr("stop") => {
             db.print("Stopping");
             print("Stopping");

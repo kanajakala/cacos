@@ -40,13 +40,13 @@ pub fn hashNumber(n: usize) u32 {
 }
 
 //non persistent buffer
-pub fn ntsHexFast(n: u64) []const u8 {
-    var buffer: [100]u8 = undefined;
-    return std.fmt.bufPrint(&buffer, "{X}", .{n}) catch buffer[0..0];
+pub fn printValue(n: u128) void {
+    var buffer: [32]u8 = undefined;
+    print(std.fmt.bufPrint(&buffer, "{X}", .{n}) catch buffer[0..0]);
 }
-pub fn ntsDecFast(n: u64) []const u8 {
-    var buffer: [100]u8 = undefined;
-    return std.fmt.bufPrint(&buffer, "{d}", .{n}) catch buffer[0..0];
+pub fn printValueDec(n: u128) void {
+    var buffer: [32]u8 = undefined;
+    print(std.fmt.bufPrint(&buffer, "{X}", .{n}) catch buffer[0..0]);
 }
 
 //persistent buffer
