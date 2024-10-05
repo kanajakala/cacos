@@ -73,6 +73,25 @@ pub fn writeData(where: u64, data: []const u8) void {
     @memcpy(mem.*[where + name_length + 10 .. where + data.len + name_length + 10], data[0..]);
 }
 
+pub fn clearFile(file: u64) void {
+    writeData(file, .{0} ** block_size);
+}
+
+pub fn appendData(file: u64, data: []u8) void {
+    //we add 2 because the first byte stores the type and the second the length of the name
+    const name_length = mem.*[file + 1];
+    //find the end of the data
+    var end: usize = 0;
+    for (file + name_length + 10..file + block_size + name_length + 10) |i| {
+        if (mem.*[i] == 0) {
+            end = i;
+            break;
+        }
+    }
+    db.printValue(end);
+    @memcpy(mem.*[end .. end + data.len], data[0..]);
+}
+
 pub fn getData(where: u64) []u8 {
     const name_length = mem.*[where + 1];
     return mem.*[where + name_length + 10 .. where + block_size];
@@ -166,6 +185,13 @@ pub fn debugFiles() void {
     db.print("\n\n");
 }
 
+pub fn loadEmbed(comptime path: []const u8, name: []const u8) void {
+    const file: []const u8 = @embedFile(path);
+    createFile(name, root_address);
+    const osfile = addressFromName(name);
+    writeData(osfile, file[0..]);
+}
+
 pub fn getName(where: u64) []const u8 {
     const length: u8 = mem.*[where + 1];
     return db.stringFromMem(where + 10, length);
@@ -196,4 +222,5 @@ pub fn init() void {
     const address = addressFromName("/");
     root_address = address;
     current_dir = root_address;
+    loadEmbed("../info.txt", "info.txt");
 }

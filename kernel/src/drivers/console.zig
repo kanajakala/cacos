@@ -73,6 +73,7 @@ pub fn execute_command() void {
         db.hashStr("pwd") => utils.pwd(),
         db.hashStr("write") => utils.write(),
         db.hashStr("read") => utils.read(),
+        db.hashStr("append") => utils.append(),
         db.hashStr("stop") => {
             db.print("Stopping");
             print("Stopping");

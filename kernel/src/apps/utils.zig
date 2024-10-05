@@ -90,6 +90,15 @@ pub fn read() void {
     console.print(fs.getData(file));
 }
 
+pub fn append() void {
+    const command_offset = "append ".len;
+    const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    const offset = command_offset + file_name.len + 1;
+    const in = stream.stdin[offset .. offset + fs.block_size];
+    const file = fs.addressFromName(file_name);
+    fs.appendData(file, in);
+}
+
 pub fn help() void {
     //simple help menu to explain commands
     scr.newLine();
@@ -129,7 +138,7 @@ pub fn help() void {
     scr.print("ls", scr.primary);
     scr.print(" -> lists all of the file in the system\n", scr.text);
 
-    scr.print("touch [name]", scr.primary);
+    scr.print("touch [file]", scr.primary);
     scr.print(" -> creates a new file\n", scr.text);
 
     scr.print("pwd", scr.primary);
@@ -137,6 +146,15 @@ pub fn help() void {
 
     scr.print("cd", scr.primary);
     scr.print(" -> changes the current working directory\n", scr.text);
+
+    scr.print("read [file]", scr.primary);
+    scr.print(" -> Displays the content of a file\n", scr.text);
+
+    scr.print("write [file] [text]", scr.primary);
+    scr.print(" -> Writes the provided text to the file, will overwrite the previous text\n", scr.text);
+
+    scr.print("append [file] [text]", scr.primary);
+    scr.print(" -> Writes the provided text to the file, will be added after the previous text\n", scr.text);
 }
 
 var value: usize = undefined;
