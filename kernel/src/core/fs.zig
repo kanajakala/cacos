@@ -6,7 +6,7 @@ const pages = @import("../memory/pages.zig");
 const memory = @import("../memory/memory.zig");
 const mem = &memory.memory_region;
 
-const block_size = pages.page_size;
+pub const block_size = pages.page_size;
 
 //The super block contains the start address of each file
 //Each file is 4kb in size
@@ -70,12 +70,12 @@ pub fn addressFromName(name: []const u8) u64 {
 pub fn writeDataToFile(where: u64, data: []const u8) void {
     //we add 2 because the first byte stores the type and the second the length of the name
     const name_length = mem.*[where + 1];
-    @memcpy(mem.*[where + name_length + 2 .. where + data.len + name_length + 2], data[0..]);
+    @memcpy(mem.*[where + name_length + 10 .. where + data.len + name_length + 10], data[0..]);
 }
 
-pub fn readDataFromFile(where: u64) []u8 {
+pub fn getData(where: u64) []u8 {
     const name_length = mem.*[where + 1];
-    return mem.*[where + name_length + 2 .. where + block_size];
+    return mem.*[where + name_length + 10 .. where + block_size];
 }
 
 pub fn createFile(name: []const u8, parent: u64) void {
@@ -182,6 +182,11 @@ pub fn getType(where: u64) FileType {
 
 pub fn getParent(where: u64) u64 {
     return db.readFromMem(u64, where + 2);
+}
+
+pub fn getDataStart(where: u64) u64 {
+    const name_length = mem.*[where + 1];
+    return where + name_length + 10;
 }
 
 pub fn init() void {

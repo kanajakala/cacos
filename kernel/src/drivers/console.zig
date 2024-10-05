@@ -71,6 +71,8 @@ pub fn execute_command() void {
         db.hashStr("mkdir") => utils.mkdir(),
         db.hashStr("cd") => utils.cd(),
         db.hashStr("pwd") => utils.pwd(),
+        db.hashStr("write") => utils.write(),
+        db.hashStr("read") => utils.read(),
         db.hashStr("stop") => {
             db.print("Stopping");
             print("Stopping");

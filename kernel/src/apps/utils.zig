@@ -74,6 +74,22 @@ pub fn pwd() void {
     }
 }
 
+pub fn write() void {
+    const command_offset = "write ".len;
+    const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    const offset = command_offset + file_name.len + 1;
+    const in = stream.stdin[offset .. offset + fs.block_size];
+    const file = fs.addressFromName(file_name);
+    fs.writeDataToFile(file, in);
+}
+
+pub fn read() void {
+    const command_offset = "read ".len;
+    const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    const file = fs.addressFromName(file_name);
+    console.print(fs.getData(file));
+}
+
 pub fn help() void {
     //simple help menu to explain commands
     scr.newLine();
