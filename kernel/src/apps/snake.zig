@@ -8,6 +8,7 @@ const kb = @import("../drivers/keyboard.zig");
 
 const db = @import("../core/debug.zig");
 const scheduler = @import("../core/scheduler.zig");
+const fs = @import("../core/fs.zig");
 
 const pages = @import("../memory/pages.zig");
 const memory = @import("../memory/memory.zig");
@@ -17,6 +18,9 @@ var id: usize = undefined;
 const bg = 0xeaaa56;
 
 var seed: usize = 233;
+
+var file: u64 = undefined;
+var highscore: u64 = 0;
 
 //game variables
 //head coordinates in Cells (snake size)
@@ -61,9 +65,26 @@ fn handleCrash(snake: pages.Page) void {
     scr.row += scr.font.height;
     scr.printCenter("-Score-", scr.text);
     scr.row += scr.font.height;
-    scr.printCenter(db.numberToStringDec(score, &buffer), scr.text);
+    scr.printCenter(db.numberToStringDec(score, &buffer), scr.primary);
     scr.row += scr.font.height;
-    scr.printCenter("Press r to restart", scr.text);
+
+    const highestScore = fs.getData(file);
+    //write score to score file
+    scr.printCenter("-Highest Score-", scr.text);
+    scr.row += scr.font.height;
+    scr.col -= scr.font.width * 8;
+    scr.print(highestScore[0..9], 0xffff00);
+    scr.row += scr.font.height;
+
+    //update the highest score
+    if (score > highscore) {
+        highscore = score;
+        db.print("\n\nCRASH\n\n");
+        fs.writeData(file, db.numberToStringDec(score, &buffer));
+    }
+
+    fs.writeData(file, db.numberToStringDec(highscore, &buffer));
+    scr.printCenter("Press r to restart, q to quit", scr.text);
     while (scheduler.running[id]) {
         stream.index = 0;
         if (stream.stdin[0] == 'r') {
@@ -101,7 +122,7 @@ fn run() void {
     const mem = &memory.memory_region;
 
     //game constants
-    const snake_size = 16;
+    const snake_size = 20;
     const snake_color = 0x14591d;
 
     const snake: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
@@ -112,6 +133,12 @@ fn run() void {
     };
 
     startGame(snake);
+
+    //create the score file
+    fs.createDir("snake", fs.root_address);
+    fs.createFile("highscore.snake", fs.addressFromName("snake"));
+    file = fs.addressFromName("highscore.snake");
+    //fs.writeData(file, "0");
 
     //when we are done we must free the memory
     defer pages.free(snake, &pages.pageTable);
@@ -128,6 +155,8 @@ fn run() void {
             if (x + 1 >= scr.width / snake_size or y + 1 >= scr.height / snake_size or x - 1 <= 0 or y <= 0 or checkCollision(snake)) {
                 handleCrash(snake);
             }
+
+            if (!scheduler.running[id]) return;
 
             stream.index = 0;
             if (stream.stdin[0] == 'h' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.left) and direction != Directions.right) direction = Directions.left;

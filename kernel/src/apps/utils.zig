@@ -80,7 +80,7 @@ pub fn write() void {
     const offset = command_offset + file_name.len + 1;
     const in = stream.stdin[offset .. offset + fs.block_size];
     const file = fs.addressFromName(file_name);
-    fs.writeDataToFile(file, in);
+    fs.writeData(file, in);
 }
 
 pub fn read() void {

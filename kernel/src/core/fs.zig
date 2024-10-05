@@ -67,7 +67,7 @@ pub fn addressFromName(name: []const u8) u64 {
     return 0;
 }
 
-pub fn writeDataToFile(where: u64, data: []const u8) void {
+pub fn writeData(where: u64, data: []const u8) void {
     //we add 2 because the first byte stores the type and the second the length of the name
     const name_length = mem.*[where + 1];
     @memcpy(mem.*[where + name_length + 10 .. where + data.len + name_length + 10], data[0..]);
@@ -159,8 +159,8 @@ pub fn debugFiles() void {
         //const name_length = mem.*[address + 1];
         db.print(db.numberToStringHex(getParent(address), &buffer));
         db.print("\nRaw memory at this address: \n");
-        db.printMem(mem.*[address .. address + 20]);
-        db.printArrayFull(mem.*[address .. address + 20]);
+        db.printMem(mem.*[address .. address + 40]);
+        db.printArrayFull(mem.*[address .. address + 40]);
         db.print("\n");
     }
     db.print("\n\n");
