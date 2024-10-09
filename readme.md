@@ -9,7 +9,7 @@
 
 ### Features ?
 
- You can do basic memory and file (not persistent) manipulation, type characters and play snake.
+ You can edit files (not persistent), type characters do very basic commands and play snake.
 
 ### TODO:
 

@@ -155,6 +155,12 @@ pub fn help() void {
 
     scr.print("append [file] [text]", scr.primary);
     scr.print(" -> Writes the provided text to the file, will be added after the previous text\n", scr.text);
+
+    scr.print("editor [file]", scr.primary);
+    scr.print(" -> Edit the provided file in an interractive editor\n", scr.text);
+
+    scr.print("snake", scr.primary);
+    scr.print(" -> Play the famous game in CaCOS !\n", scr.text);
 }
 
 var value: usize = undefined;
