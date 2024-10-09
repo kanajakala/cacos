@@ -26,14 +26,14 @@
  ⬜ Scrolling  
  ⬜ Displaying PBM images  
  ⬜ App interrupt   
- 🟧 timer  
  🟨 Scheduler  
  🟨 Filesystem  
+ 🟧 timer  
  🟧 kernel error handling  
  🟧 Optimized memory allocator  
+ 🟧 integrate build system into build.zig  
  🟧 GUI  
  🟧 Raytracer  
- 🟧 integrate build system into build.zig  
 
 ### Dependecies
 
