@@ -150,6 +150,7 @@ pub fn readFromMem(comptime T: type, where: u64) T {
 
 const arrayErrors = error{
     elementNotInArray,
+    arrayFull,
 };
 
 pub fn elementInArray(comptime T: type, element: T, arr: []T, skip: usize) !usize {
@@ -195,6 +196,16 @@ pub fn numberInArray(arr: []u8) u64 {
         }
     }
     return 0;
+}
+
+//Find the first 0 in an array (end of writed memory)
+pub fn findEndOfArray(arr: []u8) !usize {
+    for (0..arr.len, arr) |i, el| {
+        if (el == 0) {
+            return i;
+        }
+    }
+    return arrayErrors.arrayFull;
 }
 
 //NOT TESTED

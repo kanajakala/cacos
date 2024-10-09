@@ -67,10 +67,10 @@ pub fn addressFromName(name: []const u8) u64 {
     return 0;
 }
 
-pub fn writeData(where: u64, data: []const u8) void {
+pub fn writeData(file: u64, data: []const u8) void {
     //we add 2 because the first byte stores the type and the second the length of the name
-    const name_length = mem.*[where + 1];
-    @memcpy(mem.*[where + name_length + 10 .. where + data.len + name_length + 10], data[0..]);
+    const name_length = mem.*[file + 1];
+    @memcpy(mem.*[file + name_length + 10 .. file + data.len + name_length + 10], data[0..]);
 }
 
 pub fn clearFile(file: u64) void {
@@ -92,9 +92,9 @@ pub fn appendData(file: u64, data: []u8) void {
     @memcpy(mem.*[end .. end + data.len], data[0..]);
 }
 
-pub fn getData(where: u64) []u8 {
-    const name_length = mem.*[where + 1];
-    return mem.*[where + name_length + 10 .. where + block_size];
+pub fn getData(file: u64) []u8 {
+    const name_length = mem.*[file + 1];
+    return mem.*[file + name_length + 10 .. file + block_size];
 }
 
 pub fn createFile(name: []const u8, parent: u64) void {
@@ -192,13 +192,13 @@ pub fn loadEmbed(comptime path: []const u8, name: []const u8) void {
     writeData(osfile, file[0..]);
 }
 
-pub fn getName(where: u64) []const u8 {
-    const length: u8 = mem.*[where + 1];
-    return db.stringFromMem(where + 10, length);
+pub fn getName(file: u64) []const u8 {
+    const length: u8 = mem.*[file + 1];
+    return db.stringFromMem(file + 10, length);
 }
 
-pub fn getType(where: u64) FileType {
-    const type_byte: u8 = mem.*[where];
+pub fn getType(file: u64) FileType {
+    const type_byte: u8 = mem.*[file];
     if (type_byte == 1) {
         return FileType.directory;
     } else {
@@ -206,13 +206,22 @@ pub fn getType(where: u64) FileType {
     }
 }
 
-pub fn getParent(where: u64) u64 {
-    return db.readFromMem(u64, where + 2);
+pub fn getParent(file: u64) u64 {
+    return db.readFromMem(u64, file + 2);
 }
 
-pub fn getDataStart(where: u64) u64 {
-    const name_length = mem.*[where + 1];
-    return where + name_length + 10;
+pub fn getDataStart(file: u64) u64 {
+    const name_length = mem.*[file + 1];
+    return file + name_length + 10;
+}
+
+pub fn getHeaderSize(file: u64) usize {
+    const name_length = mem.*[file + 1];
+    return name_length + 10;
+}
+
+pub fn getFileSize(file: u64) usize {
+    return block_size - getHeaderSize(file);
 }
 
 pub fn init() void {

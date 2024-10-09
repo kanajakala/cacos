@@ -111,6 +111,8 @@ pub const KeyEvent = packed struct {
     };
 };
 
+pub const empty_key = KeyEvent{ .code = KeyEvent.Code.unknown, .state = KeyEvent.State.released };
+
 pub inline fn map(scancode: u8) KeyEvent {
     return switch (scancode) {
         2, 130 => .{ .code = .key_1, .state = if (scancode >= 129) .released else .pressed },

@@ -193,6 +193,25 @@ pub fn printImage(img: Image) void {
     row += img.height;
 }
 
+pub fn skipChar(n: usize) void {
+    col += font.width * n;
+}
+
+pub fn gotoChar(n: usize) void {
+    gotoStart();
+    //check for overflow
+    if (n >= (height / font.height) * (width / font.width)) {
+        //find how many lines we need to scroll:
+        const scrollLines = (height / font.height) - (n / width);
+
+        for (font.height..height) |i| {
+            copyLine(i, i - font.height * scrollLines);
+        }
+    }
+    col = @mod(n, width / font.width) * font.width;
+    row = (n / (width / font.width)) * font.height;
+}
+
 pub fn drawCharacter(char: u8, fg: u32) void {
     const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
     const glyph_offset: usize = @as(usize, char) * font.height;
@@ -208,7 +227,7 @@ pub fn clearChar() void {
     drawRect(col, row, font.width, font.height, bg);
 }
 
-pub fn manageOwerflow(offset: u8) void {
+pub fn manageOwerflow(offset: usize) void {
     if (col + offset < width) {
         return;
     } else if (row + font.height <= height) {
@@ -229,7 +248,7 @@ pub fn printChar(char: u8, fg: u32) void {
         },
         else => {
             drawCharacter(char, fg);
-            col += font.width;
+            skipChar(1);
         },
     }
 }
@@ -254,7 +273,7 @@ pub fn newLine() void {
 pub fn drawCursor() void {
     //draw one character to the right
     manageOwerflow(2 * font.width);
-    //col += font.width;
+    //skipChar(1);
     clearChar();
     drawCharacter('#', 0xf98a13);
     //col -= font.width;
@@ -286,7 +305,7 @@ pub fn gotoCenter() void {
     row = height / 2;
 }
 
-pub fn gotoFirstLine() void {
+pub fn gotoStart() void {
     col = 0;
     row = 0;
 }

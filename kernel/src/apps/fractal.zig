@@ -13,7 +13,7 @@ pub fn run() void {
         return;
     }
     scr.drawRect(0, 0, scr.width, scr.height, 0);
-    scr.gotoFirstLine();
+    scr.gotoStart();
     const message: []const u8 = "Press Ctrl + c to interrupt\n";
     scr.print(message, 0xaaffff);
     for (0..scr.height) |y| {
