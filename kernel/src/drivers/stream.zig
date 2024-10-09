@@ -79,6 +79,7 @@ pub fn handleKey(key: kb.KeyEvent) void {
             }
         } else {
             //regular key handling
+            current_modifier = codes.unknown;
             switch (key.code) {
                 codes.enter => if (!captured) handleLineFeed(),
                 codes.backspace => if (!captured) handleBackSpace(),

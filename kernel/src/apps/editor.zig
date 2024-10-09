@@ -14,9 +14,11 @@ var file: u64 = undefined;
 
 var cursor: usize = 0;
 
+//width of a line in characters
+var width: usize = undefined;
+
 //Find the index corresponding to the end of the file
 pub fn findEndOfFile(arr: []u8) usize {
-    const width = (scr.width / scr.font.width);
     var col: usize = 0;
     var row: usize = 0;
     for (arr) |el| {
@@ -33,7 +35,10 @@ pub fn findEndOfFile(arr: []u8) usize {
     }
     return 0;
 }
+
 fn run() void {
+    width = (scr.width / scr.font.width);
+
     var allocated_data: [fs.block_size]u8 = .{0} ** fs.block_size;
     var data: []u8 = allocated_data[0..fs.getFileSize(file)];
     const file_data: []u8 = fs.getData(file);
@@ -57,7 +62,11 @@ fn run() void {
         const key = stream.current_key;
         const value: u8 = kb.keyEventToChar(key.code);
         //if the key is pressed
-        if (key.state == kb.KeyEvent.State.pressed and value != 0) {
+        //check if we need to write file
+        if (stream.current_modifier == kb.KeyEvent.Code.key_s) {
+            fs.writeData(file, data);
+        }
+        if (key.state == kb.KeyEvent.State.pressed and value != 0 and stream.current_modifier == kb.KeyEvent.Code.unknown) {
             //check if we need to write file
             if (stream.current_modifier == kb.KeyEvent.Code.key_s) {
                 fs.writeData(file, data);
@@ -65,7 +74,6 @@ fn run() void {
             data[cursor] = value;
 
             //display the text
-            scr.gotoChar(cursor);
             scr.clearChar();
             scr.printChar(value, scr.primary);
 

@@ -231,5 +231,5 @@ pub fn init() void {
     const address = addressFromName("/");
     root_address = address;
     current_dir = root_address;
-    loadEmbed("../info.txt", "info.txt");
+    loadEmbed("../info.txt", "info");
 }
