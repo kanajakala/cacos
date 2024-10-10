@@ -60,7 +60,7 @@ pub const errorc = 0xff0000;
 pub const primary = 0x8dfdcc;
 pub const accent = 0xf6aa70;
 
-pub fn putpixel(x: usize, y: usize, color: u32) void {
+pub inline fn putpixel(x: usize, y: usize, color: u32) void {
     // Calculate the pixel offset using the framebuffer information we obtained above.
     // We skip `y` scanlines (pitch is provided in bytes) and add `x * 4` to skip `x` pixels forward.
     const pixel_offset = y * framebuffer.pitch + x * 4;
@@ -71,11 +71,11 @@ pub fn putpixel(x: usize, y: usize, color: u32) void {
 
 pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
     //check for owerflow else cut the overflowing part
-    //const dw = if (x + w < width) w + x else w - ((x + w) - width) + x;
-    //const dh = if (y + h < height) h + y else h - ((y + h) - height) + y;
-    if (x + w > width or y + h > height) db.panic("Rectangle overflow");
-    for (0..w) |dx| {
-        for (0..h) |dy| {
+    const dw: usize = if (w + x < width) w else w - ((x + w) - width);
+    const dh: usize = if (h + y < height) h else h - ((y + h) - height);
+    //if (x + w > width or y + h > height) db.panic("Rectangle overflow");
+    for (0..dw) |dx| {
+        for (0..dh) |dy| {
             putpixel(x + dx, y + dy, color);
         }
     }
@@ -101,11 +101,8 @@ pub fn scroll() void {
 }
 
 pub fn createImagefromFile(file: []const u8) !Image {
-    //If the magic number is invalid we return an errro
+    //If the magic number is invalid we return an error
     if (file[0] != 'P') return imgErrs.invalidFormat;
-
-    //required to transform numbers to strings
-    //var buffer: [30]u8 = undefined;
 
     //the type of the file: 4 => Portable Bitmap Format  6 => Portable Pixmap (colors)
     var img_type: Img_Type = undefined;

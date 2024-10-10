@@ -88,7 +88,6 @@ pub fn appendData(file: u64, data: []u8) void {
             break;
         }
     }
-    db.printValue(end);
     @memcpy(mem.*[end .. end + data.len], data[0..]);
 }
 
@@ -190,6 +189,14 @@ pub fn loadEmbed(comptime path: []const u8, name: []const u8) void {
     createFile(name, root_address);
     const osfile = addressFromName(name);
     writeData(osfile, file[0..]);
+}
+
+pub fn fileExists(name: []const u8) bool {
+    for (0..number_of_files) |i| {
+        const address = addressFromSb(i);
+        if (db.hashStr(name) == db.hashStr(getName(address))) return true;
+    }
+    return false;
 }
 
 pub fn getName(file: u64) []const u8 {

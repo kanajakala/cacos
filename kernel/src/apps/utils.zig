@@ -19,6 +19,8 @@ pub fn echo() void {
     console.print(stream.stdin[offset..]);
 }
 
+const no_file = "No such file";
+
 pub fn ls() void {
     for (0..fs.number_of_files) |i| {
         const address = fs.addressFromSb(i);
@@ -36,7 +38,9 @@ pub fn ls() void {
 
 pub fn touch() void {
     const offset = "touch ".len;
-    fs.createFile(db.firstWordOfArray(stream.stdin[offset..]), fs.current_dir);
+    const name = db.firstWordOfArray(stream.stdin[offset..]);
+    if (fs.fileExists(name)) return console.printErr("File already exists !");
+    fs.createFile(name, fs.current_dir);
 }
 
 pub fn cd() void {
@@ -47,13 +51,16 @@ pub fn cd() void {
         fs.current_dir = parent_dir;
         return;
     }
+    if (!fs.fileExists(name)) return console.printErr(no_file);
     fs.current_dir = fs.addressFromName(name);
     if (fs.current_dir == 0) fs.current_dir = fs.root_address;
 }
 
 pub fn mkdir() void {
     const offset = "mkdir ".len;
-    fs.createDir(db.firstWordOfArray(stream.stdin[offset..]), fs.current_dir);
+    const name: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
+    if (fs.fileExists(name)) return console.printErr("File already exists !");
+    fs.createDir(name, fs.current_dir);
 }
 
 pub fn pwd() void {
@@ -70,13 +77,14 @@ pub fn pwd() void {
     console.print("");
     for (1..iterations + 1) |j| {
         console.printf(fs.getName(path[iterations - j]));
-        console.printf("/");
+        if (j != 1) console.printf("/");
     }
 }
 
 pub fn write() void {
     const command_offset = "write ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    if (!fs.fileExists(file_name)) return console.printErr(no_file);
     const offset = command_offset + file_name.len + 1;
     const in = stream.stdin[offset .. offset + fs.block_size];
     const file = fs.addressFromName(file_name);
@@ -86,6 +94,7 @@ pub fn write() void {
 pub fn read() void {
     const command_offset = "read ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    if (!fs.fileExists(file_name)) return console.printErr(no_file);
     const file = fs.addressFromName(file_name);
     console.print(fs.getData(file));
 }
@@ -93,6 +102,7 @@ pub fn read() void {
 pub fn append() void {
     const command_offset = "append ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    if (!fs.fileExists(file_name)) return console.printErr(no_file);
     const offset = command_offset + file_name.len + 1;
     const in = stream.stdin[offset .. offset + fs.block_size];
     const file = fs.addressFromName(file_name);

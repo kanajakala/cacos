@@ -79,12 +79,11 @@ fn handleCrash(snake: pages.Page) void {
     //update the highest score
     if (score > highscore) {
         highscore = score;
-        db.print("\n\nCRASH\n\n");
         fs.writeData(file, db.numberToStringDec(score, &buffer));
     }
 
     fs.writeData(file, db.numberToStringDec(highscore, &buffer));
-    scr.printCenter("Press r to restart, q to quit", scr.text);
+    scr.printCenter("Press r to restart, ctrl + c to quit", scr.text);
     while (scheduler.running[id]) {
         stream.index = 0;
         if (stream.stdin[0] == 'r') {
