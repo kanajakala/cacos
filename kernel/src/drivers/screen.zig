@@ -29,11 +29,7 @@ const Image = struct {
     height: usize,
 };
 
-pub const font: Font = .{
-    .data = @embedFile("assets/vga8x16.bin"),
-    .width = 8,
-    .height = 16,
-};
+pub const font: Font = loadFont(Fonts.vga, @embedFile("assets/vga8x16.bin"), 8, 16);
 
 const imgErrs = error{
     invalidFormat,
@@ -98,6 +94,46 @@ pub fn scroll() void {
     }
     gotoLastLine();
     clearLastLine();
+}
+
+pub const Fonts = enum {
+    vga,
+    psf,
+};
+
+pub fn loadFont(ftype: Fonts, data: []const u8, fwidth: usize, fheight: usize) Font {
+    switch (ftype) {
+        Fonts.vga => return Font{
+            .data = data,
+            .width = fwidth,
+            .height = fheight,
+        },
+        Fonts.psf => {
+            //PSF VERSION 1 NOT SUPPORTED
+
+            const psf_font_magic = 0x864ab572;
+
+            const psf_header = struct {
+                magic: u32, //magic bytes to identify PSF
+                version: u32, //zero
+                headersize: u32, //offset of bitmaps in file, 32
+                flags: u32, //0 if there's no unicode table
+                numglyph: u32, //number of glyphs
+                bytesperglyph: u32, //size of each glyph
+                height: u32, //height in pixels
+                width: u32, //width in pixels
+            };
+
+            _ = psf_font_magic;
+            _ = psf_header;
+
+            return Font{
+                .data = data,
+                .width = fwidth,
+                .height = fheight,
+            };
+        },
+    }
 }
 
 pub fn createImagefromFile(file: []const u8) !Image {
