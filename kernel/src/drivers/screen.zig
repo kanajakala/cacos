@@ -141,7 +141,7 @@ pub fn loadFont(ftype: Fonts, data: []const u8, fwidth: usize, fheight: usize) F
 
             const out = Font{
                 .ftype = ftype,
-                .data = data[header.headersize..],
+                .data = data[header.headersize + 1 ..],
                 .width = fwidth,
                 .height = fheight,
             };
@@ -261,28 +261,13 @@ pub fn gotoChar(n: usize) void {
 }
 
 pub fn drawCharacter(char: u8, fg: u32) void {
-    switch (font.ftype) {
-        Fonts.vga => {
-            const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
-            const glyph_offset: usize = @as(usize, char) * font.height;
-            manageOwerflow(font.width);
-            for (0..font.height) |cy| {
-                for (0..font.width) |cx| {
-                    if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel(cx + col, cy + row, fg);
-                }
-            }
-        },
-        Fonts.psf => {
-            const mask_1 = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
-            const mask_2 = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
-            const glyph_offset: usize = @as(usize, char) * font.height;
-            manageOwerflow(font.width);
-            for (0..font.height) |cy| {
-                for (0..font.width) |cx| {
-                    if (font.data[glyph_offset + cy] & mask_1[cx / 2] != 0 and font.data[glyph_offset + cy + 1] & mask_2[cx / 2] != 0) putpixel(cx + col, cy + row, fg);
-                }
-            }
-        },
+    const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
+    const glyph_offset: usize = @as(usize, char) * font.height;
+    manageOwerflow(font.width);
+    for (0..font.height) |cy| {
+        for (0..font.width) |cx| {
+            if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel(cx + col, cy + row, fg);
+        }
     }
 }
 
@@ -404,7 +389,7 @@ pub fn init() void {
 
     const framebuffer_response = maybe_framebuffer_response.?;
 
-    font = loadFont(Fonts.psf, @embedFile("assets/font.psf"), 16, 32);
+    font = loadFont(Fonts.psf, @embedFile("assets/font.psf"), 8, 16);
     db.print("\nLoaded font!\n");
 
     framebuffers = framebuffer_response.framebuffers();
