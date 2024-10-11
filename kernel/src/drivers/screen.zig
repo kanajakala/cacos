@@ -7,15 +7,22 @@ const stream = @import("../drivers/stream.zig");
 pub export var framebuffer_request: limine.FramebufferRequest = .{};
 pub export var base_revision: limine.BaseRevision = .{ .revision = 1 };
 
-//font
+///font
+pub const Fonts = enum {
+    vga,
+    psf,
+};
+
 const Font = struct {
     /// A Bit Map containing the shape of each character, it must be compatible with
     /// the ASCII Table so we can get the shape using the character itself
+    ftype: Fonts,
     data: []const u8,
-    width: u8,
-    height: u8,
+    width: usize,
+    height: usize,
 };
 
+//image handling
 const Img_Type = enum {
     pbm, //portable bitmap format
     ppm, //portable pixmap (colors)
@@ -29,7 +36,10 @@ const Image = struct {
     height: usize,
 };
 
-pub const font: Font = loadFont(Fonts.vga, @embedFile("assets/vga8x16.bin"), 8, 16);
+//pub const font_fallback: Font = loadFont(Fonts.vga, @embedFile("assets/vga8x16.bin"), 8, 16);
+const emptyArray: [1]u8 = .{0};
+pub const placeholder_font = Font{ .ftype = Fonts.vga, .data = emptyArray[0..], .width = 0, .height = 0 };
+pub var font: Font = placeholder_font;
 
 const imgErrs = error{
     invalidFormat,
@@ -96,14 +106,10 @@ pub fn scroll() void {
     clearLastLine();
 }
 
-pub const Fonts = enum {
-    vga,
-    psf,
-};
-
 pub fn loadFont(ftype: Fonts, data: []const u8, fwidth: usize, fheight: usize) Font {
     switch (ftype) {
         Fonts.vga => return Font{
+            .ftype = ftype,
             .data = data,
             .width = fwidth,
             .height = fheight,
@@ -111,9 +117,7 @@ pub fn loadFont(ftype: Fonts, data: []const u8, fwidth: usize, fheight: usize) F
         Fonts.psf => {
             //PSF VERSION 1 NOT SUPPORTED
 
-            const psf_font_magic = 0x864ab572;
-
-            const psf_header = struct {
+            const PSF_Header = struct {
                 magic: u32, //magic bytes to identify PSF
                 version: u32, //zero
                 headersize: u32, //offset of bitmaps in file, 32
@@ -124,14 +128,25 @@ pub fn loadFont(ftype: Fonts, data: []const u8, fwidth: usize, fheight: usize) F
                 width: u32, //width in pixels
             };
 
-            _ = psf_font_magic;
-            _ = psf_header;
+            const header = PSF_Header{
+                .magic = data[0],
+                .version = data[1],
+                .headersize = data[2],
+                .flags = data[3],
+                .numglyph = data[4],
+                .bytesperglyph = data[5],
+                .height = data[6],
+                .width = data[7],
+            };
 
-            return Font{
-                .data = data,
+            const out = Font{
+                .ftype = ftype,
+                .data = data[header.headersize..],
                 .width = fwidth,
                 .height = fheight,
             };
+
+            return out;
         },
     }
 }
@@ -246,13 +261,28 @@ pub fn gotoChar(n: usize) void {
 }
 
 pub fn drawCharacter(char: u8, fg: u32) void {
-    const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
-    const glyph_offset: usize = @as(usize, char) * font.height;
-    manageOwerflow(font.width);
-    for (0..font.height) |cy| {
-        for (0..font.width) |cx| {
-            if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel(cx + col, cy + row, fg);
-        }
+    switch (font.ftype) {
+        Fonts.vga => {
+            const mask = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
+            const glyph_offset: usize = @as(usize, char) * font.height;
+            manageOwerflow(font.width);
+            for (0..font.height) |cy| {
+                for (0..font.width) |cx| {
+                    if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel(cx + col, cy + row, fg);
+                }
+            }
+        },
+        Fonts.psf => {
+            const mask_1 = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
+            const mask_2 = [8]u8{ 128, 64, 32, 16, 8, 4, 2, 1 };
+            const glyph_offset: usize = @as(usize, char) * font.height;
+            manageOwerflow(font.width);
+            for (0..font.height) |cy| {
+                for (0..font.width) |cx| {
+                    if (font.data[glyph_offset + cy] & mask_1[cx / 2] != 0 and font.data[glyph_offset + cy + 1] & mask_2[cx / 2] != 0) putpixel(cx + col, cy + row, fg);
+                }
+            }
+        },
     }
 }
 
@@ -373,6 +403,9 @@ pub fn init() void {
     }
 
     const framebuffer_response = maybe_framebuffer_response.?;
+
+    font = loadFont(Fonts.psf, @embedFile("assets/font.psf"), 16, 32);
+    db.print("\nLoaded font!\n");
 
     framebuffers = framebuffer_response.framebuffers();
     framebuffer = framebuffers[0];
