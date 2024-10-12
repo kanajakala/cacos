@@ -1,0 +1,15 @@
+.{
+    .name = "cacos",
+    .version = "0.0.1",
+    .paths = .{"."},
+    .dependencies = .{
+        .limine = .{
+            .url = "git+https://github.com/48cf/limine-zig?ref=trunk#7b29b6e6f6d35052f01ed3831085a39aae131705",
+            .hash = "1220f946f839eab2ec49dca1c805ce72ac3e3ef9c47b3afcdecd1c05a7b35f66d277",
+        },
+        .limine_raw = .{
+            .url = "git+https://github.com/limine-bootloader/limine?ref=v8.x-binary#614e34e3d780a302de3ea7fc67c228554c6386fd",
+            .hash = "12202745158c4e0099cc0d05dd6c6733ba76f0c92e7379ab3507a7864ab87bfec5fd",
+        },
+    },
+}
