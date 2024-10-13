@@ -120,7 +120,7 @@ pub fn createFile(name: []const u8, parent: u64) void {
     //write the name to the file
     db.writeStringToMem(faddress.start + 2 + 8, name);
 
-    debugFiles();
+    //debugFiles();
 }
 
 pub fn createDir(name: []const u8, parent: u64) void {

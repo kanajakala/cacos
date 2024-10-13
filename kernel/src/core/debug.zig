@@ -6,6 +6,8 @@ const scr = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
 const stream = @import("../drivers/stream.zig");
 
+pub var empty_array: [1]u8 = .{0};
+
 pub inline fn printChar(char: u8) void {
     cpu.outb(0xe9, char);
 }
@@ -46,7 +48,7 @@ pub fn printValue(n: u128) void {
 }
 pub fn printValueDec(n: u128) void {
     var buffer: [32]u8 = undefined;
-    print(std.fmt.bufPrint(&buffer, "{X}", .{n}) catch buffer[0..0]);
+    print(std.fmt.bufPrint(&buffer, "{d}", .{n}) catch buffer[0..0]);
 }
 
 //persistent buffer
@@ -71,7 +73,7 @@ pub fn arrayStartsWith(arr: []u8, str: []const u8) bool {
     return std.mem.eql(u8, arr[0..str.len], str);
 }
 
-pub fn sum(arr: []u8) usize {
+pub fn sum(arr: []const u8) usize {
     var out: usize = 0;
     for (arr) |i| {
         out += i;
@@ -79,7 +81,7 @@ pub fn sum(arr: []u8) usize {
     return out;
 }
 
-pub fn printArray(arr: []u8) void {
+pub fn printArray(arr: []const u8) void {
     print(".{ ");
     for (arr) |i| {
         if (i != 0) {
@@ -190,7 +192,7 @@ pub fn numberInArray(arr: []u8) u64 {
         }
         //if the current char is a digit and the next one is a space we know the
         //number has ended
-        if ((arr[i + 1] == ' ' or arr[i + 1] == 0) and arr[i] >= '0' and arr[i] <= '9') {
+        if ((arr[i + 1] == ' ' or arr[i + 1] == 0) and (arr[i] >= '0' and arr[i] <= '9')) {
             index2 = i + 1;
             return stringToNumber(arr[index1..index2]);
         }

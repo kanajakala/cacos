@@ -28,7 +28,7 @@ const Img_Type = enum {
     ppm, //portable pixmap (colors)
 };
 
-const Image = struct {
+pub const Image = struct {
     img_type: Img_Type,
     ///A bitmap used to display images
     data: []const u8,
@@ -36,9 +36,11 @@ const Image = struct {
     height: usize,
 };
 
-//pub const font_fallback: Font = loadFont(Fonts.vga, @embedFile("assets/vga8x16.bin"), 8, 16);
-const emptyArray: [1]u8 = .{0};
-pub const placeholder_font = Font{ .ftype = Fonts.vga, .data = emptyArray[0..], .width = 0, .height = 0 };
+const empty_array: [1]u8 = .{0};
+
+pub const empty_image = Image{ .img_type = Img_Type.pbm, .data = empty_array[0..], .width = 1, .height = 1 };
+
+pub const placeholder_font = Font{ .ftype = Fonts.vga, .data = empty_array[0..], .width = 0, .height = 0 };
 pub var font: Font = placeholder_font;
 
 const imgErrs = error{
@@ -162,18 +164,23 @@ pub fn createImagefromFile(file: []const u8) !Image {
     //the first line contains 3 chars (magic number and line feed)
     const im_height = db.numberInArray(@constCast(file[3..]));
 
-    //db.print("Height of the image: ");
-    //db.print(db.numberToStringDec(im_height, &buffer));
+    var buffer: [100]u8 = undefined;
+
+    //db.print("\nHeight of the image: ");
+    //db.printValueDec(im_height);
 
     //we need to offset by the length of the height string to read the width
-    //const w_offset = db.numberToStringDec(im_height, &buffer).len + 4;
+    const w_offset = db.numberToStringDec(im_height, &buffer).len + 3;
+    //db.print("\nLength of height: ");
+    //db.printValueDec(w_offset);
 
     //TODO actually get  the real value this is currently bad
     const im_width = im_height; //db.numberInArray(@constCast(file[w_offset..]));
-    //db.print("Width of the image: ");
-    //db.print(db.numberToStringDec(im_width, &buffer));
+    //db.print("\nWidth of the image: ");
+    //db.printValueDec(im_width);
+    //db.print("\n");
 
-    const data_offset = 15; //w_offset + db.numberToStringDec(im_width, &buffer).len + 9;
+    const data_offset = w_offset + db.numberToStringDec(im_width, &buffer).len + 6;
     const data = file[data_offset..];
 
     switch (file[1]) {

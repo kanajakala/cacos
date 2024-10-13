@@ -12,6 +12,7 @@ const fractal = @import("../apps/fractal.zig");
 const cacfetch = @import("../apps/cacfetch.zig");
 const snake = @import("../apps/snake.zig");
 const editor = @import("../apps/editor.zig");
+const dancing_man = @import("../apps/dancing_man.zig");
 
 const out_color = scr.text;
 
@@ -74,8 +75,11 @@ pub fn execute_command() void {
         db.hashStr("pwd") => utils.pwd(),
         db.hashStr("write") => utils.write(),
         db.hashStr("read") => utils.read(),
+        db.hashStr("readhex") => utils.readhex(),
         db.hashStr("append") => utils.append(),
         db.hashStr("editor") => editor.start(),
+        db.hashStr("display") => utils.display(),
+        db.hashStr("dance") => dancing_man.start(),
         db.hashStr("stop") => {
             db.print("Stopping");
             print("Stopping");

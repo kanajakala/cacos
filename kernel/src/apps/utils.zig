@@ -99,6 +99,32 @@ pub fn read() void {
     console.print(fs.getData(file));
 }
 
+pub fn readhex() void {
+    const command_offset = "readhex ".len;
+    const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    if (!fs.fileExists(file_name)) return console.printErr(no_file);
+    const file = fs.addressFromName(file_name);
+    var buffer: [2]u8 = undefined;
+    const data = fs.getData(file)[0..1000];
+    for (data) |i| {
+        scr.print(db.numberToStringHex(i, &buffer), 0xa2f280);
+        scr.print(" ", 0);
+    }
+}
+
+pub fn display() void {
+    const command_offset = "display ".len;
+    const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    if (!fs.fileExists(file_name)) return console.printErr(no_file);
+    const file = fs.addressFromName(file_name);
+    const data = fs.getData(file);
+    const image: scr.Image = scr.createImagefromFile(data) catch blk: {
+        console.printErr("Unsupported image type");
+        break :blk scr.empty_image;
+    };
+    scr.drawImage(1000, 100, image);
+}
+
 pub fn append() void {
     const command_offset = "append ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
@@ -158,7 +184,10 @@ pub fn help() void {
     scr.print(" -> changes the current working directory\n", scr.text);
 
     scr.print("read [file]", scr.primary);
-    scr.print(" -> Displays the content of a file\n", scr.text);
+    scr.print(" -> Displays the content of a file in plain text\n", scr.text);
+
+    scr.print("readhex [file]", scr.primary);
+    scr.print(" -> Displays the content of a file iin hexadecimal\n", scr.text);
 
     scr.print("write [file] [text]", scr.primary);
     scr.print(" -> Writes the provided text to the file, will overwrite the previous text\n", scr.text);
@@ -171,6 +200,9 @@ pub fn help() void {
 
     scr.print("snake", scr.primary);
     scr.print(" -> Play the famous game in CaCOS !\n", scr.text);
+
+    scr.print("display [file]", scr.primary);
+    scr.print(" -> displays the provided image\n", scr.text);
 }
 
 var value: usize = undefined;
@@ -184,11 +216,8 @@ pub fn testMem() void {
 
     var buffer: [20]u8 = undefined;
 
-    var memory: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
-        switch (err) {
-            pages.errors.outOfPages => console.printErr("Error: out of pages"),
-        }
-        return;
+    var memory: pages.Page = pages.alloc(&pages.pageTable) catch |err| switch (err) {
+        pages.errors.outOfPages => return console.printErr("Error: out of pages"),
     };
 
     scr.print("\nAttempting allocation of ", scr.text);
@@ -201,11 +230,8 @@ pub fn testMem() void {
     for (0..value) |i| {
         if (scheduler.running[id]) {
             _ = i;
-            temp = pages.alloc(&pages.pageTable) catch |err| { //on errors
-                switch (err) {
-                    pages.errors.outOfPages => console.printErr("Error: out of pages"),
-                }
-                return;
+            temp = pages.alloc(&pages.pageTable) catch |err| switch (err) {
+                pages.errors.outOfPages => return console.printErr("Error: out of pages"),
             };
         } else return;
     }
