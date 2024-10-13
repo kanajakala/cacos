@@ -40,7 +40,7 @@ fn run() void {
     width = (scr.width / scr.font.width);
 
     var allocated_data: [fs.block_size]u8 = .{0} ** fs.block_size;
-    var data: []u8 = allocated_data[0..fs.getFileSize(file)];
+    var data: []u8 = allocated_data[0..fs.getSize(file)];
     const file_data: []u8 = fs.getData(file);
     @memcpy(data[0..file_data.len], file_data);
 

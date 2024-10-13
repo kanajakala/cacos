@@ -40,7 +40,7 @@ pub fn touch() void {
     const offset = "touch ".len;
     const name = db.firstWordOfArray(stream.stdin[offset..]);
     if (fs.fileExists(name)) return console.printErr("File already exists !");
-    fs.createFile(name, fs.current_dir);
+    fs.createFile(name, fs.current_dir, fs.block_size);
 }
 
 pub fn cd() void {

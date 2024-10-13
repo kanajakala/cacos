@@ -135,7 +135,7 @@ fn run() void {
 
     //create the score file
     fs.createDir("snake", fs.root_address);
-    fs.createFile("highscore.snake", fs.addressFromName("snake"));
+    fs.createFile("highscore.snake", fs.addressFromName("snake"), 100);
     file = fs.addressFromName("highscore.snake");
     //fs.writeData(file, "0");
 
