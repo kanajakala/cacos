@@ -31,7 +31,7 @@ const File = struct {
     file_length: u8, //length of the file in blocks
     name_length: u8, //length of the name of the file in bytes (characters)
     parent: u64,
-    next_block: u64,
+    block_list: *[1000]Block,
     data: []u8,
 };
 
@@ -121,7 +121,7 @@ pub fn createFile(name: []const u8, parent: u64, size: usize) void {
         .file_length = n_of_blocks,
         .name_length = length,
         .parent = parent,
-        .next_block = block_list[0].address,
+        .block_list = &block_list,
         .data = mem.*[faddress.start + length + 19 .. faddress.end], //we add 10 because we need to offset by the header length
     };
 
@@ -161,7 +161,7 @@ pub fn createDir(name: []const u8, parent: u64) void {
         .file_length = 1,
         .name_length = length,
         .parent = parent,
-        .next_block = 0, //No next block
+        .block_list = undefined,
         .data = mem.*[faddress.start + length + 17 .. faddress.end], //same as for the files;
     };
 
@@ -254,9 +254,11 @@ pub fn writeData(file: u64, data: []const u8) void {
     if (data.len >= file_size * block_size) return;
     //we know that the file is big enough to contain our data
     //this represents the number of blocks we need to write
-    //for (0..data.len / block_size + 1) |i| {
-    @memcpy(mem.*[file + name_length + 19 .. file + data.len + name_length + 19], data[0..]);
-    //}
+    if (data.len <= block_size - 19 - name_length) {
+        @memcpy(mem.*[file + name_length + 19 .. file + data.len + name_length + 19], data[0..]);
+    } else {
+        //how many blocks do we need ?
+    }
 }
 
 pub fn clearFile(file: u64) void {

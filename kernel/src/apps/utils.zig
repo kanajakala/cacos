@@ -122,7 +122,7 @@ pub fn display() void {
         console.printErr("Unsupported image type");
         break :blk scr.empty_image;
     };
-    scr.drawImage(1000, 100, image);
+    scr.printImage(image);
 }
 
 pub fn append() void {
