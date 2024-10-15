@@ -209,46 +209,48 @@ var value: usize = undefined;
 var id: usize = undefined;
 
 pub fn testMem() void {
-    if (value == 0) {
-        console.printErr("Value can't be zero");
-        return;
-    }
+    if (value == 0) return console.printErr("Value can't be zero");
+    if (value >= 100) return console.printErr("Value can't be bigger than 100");
 
-    var buffer: [20]u8 = undefined;
-
-    var memory: pages.Page = pages.alloc(&pages.pageTable) catch |err| switch (err) {
-        pages.errors.outOfPages => return console.printErr("Error: out of pages"),
-    };
+    var buffer: [10]u8 = undefined;
 
     scr.print("\nAttempting allocation of ", scr.text);
-    scr.print(db.numberToStringDec(value, &buffer), scr.errorc);
-    scr.print(" pages at ", scr.text);
-    scr.print(db.numberToStringHex(memory.start, &buffer), scr.text);
+    //this line makes app crash for some reason
+    //scr.print(db.numberToStringDec(value, &buffer), scr.errorc);
+    scr.print(" pages", scr.text);
+    db.print("\n\n\nTesting memory !");
 
     //allocating the pages
-    var temp: pages.Page = undefined;
+    db.print("\nallocating the pages...");
+    var page_list: [100]pages.Page = .{pages.empty_page} ** 100;
+    db.print("\ncreated array");
+
     for (0..value) |i| {
         if (scheduler.running[id]) {
-            _ = i;
-            temp = pages.alloc(&pages.pageTable) catch |err| switch (err) {
+            page_list[i] = pages.alloc(&pages.pt) catch |err| switch (err) {
                 pages.errors.outOfPages => return console.printErr("Error: out of pages"),
             };
+            db.print("\n  allocated ONE page");
         } else return;
     }
-    memory.end = temp.end;
+    db.print("\nDone allocating");
 
     const value_to_write: u8 = @truncate(value);
     scr.print("\n -> Writing value ", 0x888888);
     scr.print(db.numberToStringHex(value_to_write, &buffer), 0x888888);
 
     //writing the value
+    db.print("\nWriting values...");
     var iterations: usize = 0;
-    for (0..memory.end - memory.start) |j| {
+    for (0..value) |i| {
         if (scheduler.running[id]) {
-            mem.memory_region[memory.start + j] = value_to_write;
-            iterations = j;
+            for (0..pages.page_size) |j| {
+                page_list[i].data[j] = value_to_write;
+                iterations = j;
+            }
         }
     }
+    db.print("\nDone writing values");
     scr.print("\n -> words written: ", 0x0fbbff);
     scr.print(db.numberToStringDec(iterations, &buffer), scr.errorc);
     stream.newLine();
@@ -263,20 +265,26 @@ pub fn testMemStart(parameter: usize) void {
 
 pub fn printMem() void {
     var buffer: [20]u8 = undefined;
+
     const length = db.numberToStringDec(mem.memory_region.len / 1_000_000, &buffer);
     scr.print("\nsize of memory: ", scr.text);
     scr.print(length, scr.errorc);
+
     const number_of_pages = db.numberToStringDec(pages.number_of_pages, &buffer);
     scr.print("\nnumber of pages: ", scr.text);
     scr.print(number_of_pages, scr.errorc);
+
     const page_size = db.numberToStringDec(pages.page_size, &buffer);
     scr.print("\npage size: ", scr.text);
     scr.print(page_size, scr.errorc);
-    const free_pages = db.numberToStringDec(pages.getFreePages(&pages.pageTable), &buffer);
+
+    const free_pages = db.numberToStringDec(pages.getFreePages(&pages.pt), &buffer);
     scr.print("\nnumber of free pages: ", scr.text);
     scr.print(free_pages, scr.errorc);
-    const free_mem = db.numberToStringDec(pages.getFreePages(&pages.pageTable) * pages.page_size / 1_000_000, &buffer);
+
+    const free_mem = db.numberToStringDec(pages.getFreePages(&pages.pt) * pages.page_size / 1_000_000, &buffer);
     scr.print("\nfree memory: ", scr.text);
     scr.print(free_mem, scr.errorc);
+
     scr.newLine();
 }

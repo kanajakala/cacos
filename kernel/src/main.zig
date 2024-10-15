@@ -6,6 +6,7 @@ const fs = @import("core/fs.zig");
 const scheduler = @import("core/scheduler.zig");
 
 const mem = @import("memory/memory.zig");
+const pages = @import("memory/pages.zig");
 
 const scr = @import("drivers/screen.zig");
 const kb = @import("drivers/keyboard.zig");
@@ -21,7 +22,10 @@ export fn _start() callconv(.C) noreturn {
 
     gdt.init();
     idt.init();
+
     mem.init();
+    pages.init();
+
     fs.init();
 
     apps.init();

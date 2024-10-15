@@ -15,7 +15,7 @@ fn format(str: []const u8, value: usize, suffix: []const u8) void {
 pub fn run() void {
     scr.newLine();
     const mem_length = mem.memory_region.len / 1_000_000;
-    const mem_free: usize = pages.getFreePages(&pages.pageTable) * pages.page_size / 1_000_000;
+    const mem_free: usize = pages.getFreePages(&pages.pt) * pages.page_size / 1_000_000;
     scr.print("\n   .d8888b.            .d8888b.   .d88888b.   .d8888b.  ", scr.accent);
     format("Coherent and Cohesive Operating System by kanajakala", 0, "");
     scr.print("  d88P  Y88b          d88P  Y88b d88P\" \"Y88b d88P  Y88b ", scr.accent);

@@ -1,35 +1,48 @@
 const mem = @import("memory.zig");
 const cpu = @import("../core/cpu.zig");
 
-pub export const page_size: usize = 4000;
-pub export const number_of_pages: usize = 200_000;
+pub const page_size: usize = 4000;
+pub const number_of_pages: usize = 200_000;
 
-pub export var pageTable: [number_of_pages]bool = .{false} ** number_of_pages;
+//page table
+pub var pt: [number_of_pages]bool = undefined;
+
+//basically null page
+//this is used to avoid errors mostly :D
+//will  get better later
+pub var empty_page: Page = undefined;
 
 pub const errors = error{
     outOfPages,
 };
 
-pub const Page = packed struct {
-    start: usize,
-    end: usize,
+//States a page can be in
+//you shouldn't be able to write to a protected page
+pub const States = enum {
+    protected,
+    normal,
 };
 
-pub const empty_page = Page{ .start = 0, .end = 0 };
+pub const Page = struct {
+    state: States,
+    start: usize,
+    data: []u8,
+};
 
-pub fn alloc(pt: *[number_of_pages]bool) !Page {
-    for (pt, 0..number_of_pages) |page, i| {
-        if (!page) {
-            pt[i] = true;
-            return Page{ .start = i * page_size, .end = i * page_size + page_size };
+pub fn alloc(page_table: *[number_of_pages]bool) !Page {
+    //we start at one because 1 is reserved
+    for (1..number_of_pages) |i| {
+        if (!page_table[i]) {
+            page_table[i] = true;
+            return Page{ .state = States.normal, .start = i * page_size, .data = mem.memory_region[i * page_size .. i * page_size + page_size] };
         }
     }
     return errors.outOfPages;
 }
 
-pub fn getFreePages(pt: *[number_of_pages]bool) usize {
+pub fn getFreePages(page_table: *[number_of_pages]bool) usize {
     var tot: usize = 0;
-    for (pt) |page| {
+    for (page_table) |page| {
         if (!page) {
             tot += 1;
         }
@@ -37,16 +50,23 @@ pub fn getFreePages(pt: *[number_of_pages]bool) usize {
     return tot;
 }
 
-pub fn free(page: Page, pt: *[number_of_pages]bool) void {
+pub fn free(page: Page, page_table: *[number_of_pages]bool) void {
     if (page.start == 0) {
-        pt[0] = false;
+        page_table[0] = false;
     } else {
-        pt[page.start / page_size] = false;
+        page_table[page.start / page_size] = false;
     }
 }
 
 pub fn clearPage(page: Page) void {
-    for (page.start..page.end) |i| {
-        mem.memory_region[i] = 0;
+    for (page.data[0..page_size]) |i| {
+        page.data[i] = 0;
     }
+}
+
+pub fn init() void {
+    empty_page = Page{ .state = States.protected, .start = 0, .data = mem.memory_region[0..page_size] };
+    //the first page is reserved
+    pt = .{false} ** number_of_pages;
+    pt[0] = true;
 }

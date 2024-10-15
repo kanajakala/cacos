@@ -72,7 +72,7 @@ pub fn createFile(name: []const u8, parent: u64, size: usize) void {
     db.print(name);
 
     //allocate space for a new file
-    const faddress: pages.Page = pages.alloc(&pages.pageTable) catch pages.empty_page;
+    const faddress: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
     var first_block: pages.Page = pages.empty_page;
 
     //creation of the file
@@ -85,7 +85,7 @@ pub fn createFile(name: []const u8, parent: u64, size: usize) void {
 
     //we also allocate space for the first block if we need one
     if (n_of_blocks > 1) {
-        first_block = pages.alloc(&pages.pageTable) catch pages.empty_page;
+        first_block = pages.alloc(&pages.pt) catch pages.empty_page;
         db.print("\nallocated space for first block: ");
         db.printValue(first_block.start);
     }
@@ -97,7 +97,7 @@ pub fn createFile(name: []const u8, parent: u64, size: usize) void {
     //allocate space for all the blocks
     for (0..n_of_blocks) |i| {
         const address: u64 = if (i == 0) first_block.start else block_list[i - 1].next_block; //get the address of the allocated space for this block
-        const next_block: pages.Page = pages.alloc(&pages.pageTable) catch pages.empty_page;
+        const next_block: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
         db.print("\naddress of current block ");
         db.printValue(address);
         db.print("\naddress of next block: ");
@@ -122,7 +122,7 @@ pub fn createFile(name: []const u8, parent: u64, size: usize) void {
         .name_length = length,
         .parent = parent,
         .block_list = &block_list,
-        .data = mem.*[faddress.start + length + 19 .. faddress.end], //we add 10 because we need to offset by the header length
+        .data = faddress.data, //we add 10 because we need to offset by the header length
     };
 
     //we write the address of the file to the super block
@@ -143,7 +143,7 @@ pub fn createFile(name: []const u8, parent: u64, size: usize) void {
     db.writeStringToMem(faddress.start + 3 + 8 + 8, name);
 
     db.print("\nDone creating files");
-    debugFiles();
+    //debugFiles();
 }
 
 pub fn createDir(name: []const u8, parent: u64) void {
@@ -151,7 +151,7 @@ pub fn createDir(name: []const u8, parent: u64) void {
     const length: u8 = @truncate(name.len);
 
     //allocate space for a new directory
-    const faddress: pages.Page = pages.alloc(&pages.pageTable) catch pages.empty_page;
+    const faddress: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
 
     //creation of the directory
     //we add 2 to  the start because we also need to store the type which takes one byte and the length of the name which takes 1 bytes
@@ -162,7 +162,7 @@ pub fn createDir(name: []const u8, parent: u64) void {
         .name_length = length,
         .parent = parent,
         .block_list = undefined,
-        .data = mem.*[faddress.start + length + 17 .. faddress.end], //same as for the files;
+        .data = faddress.data, //same as for the files;
     };
 
     //we write the address of the directory to the super block
@@ -182,7 +182,7 @@ pub fn createDir(name: []const u8, parent: u64) void {
     //write the name to the directory
     db.writeStringToMem(faddress.start + 19, name);
 
-    debugFiles();
+    //debugFiles();
 }
 
 pub fn debugFile(file: File) void {
@@ -336,7 +336,7 @@ pub fn getAddressOfNextBlock(address: u64) u64 {
 }
 
 pub fn init() void {
-    super_block = pages.alloc(&pages.pageTable) catch pages.empty_page;
+    super_block = pages.alloc(&pages.pt) catch pages.empty_page;
     //creation of root
     createDir("/", 0);
     const address = addressFromName("/");

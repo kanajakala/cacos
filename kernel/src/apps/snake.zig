@@ -124,7 +124,7 @@ fn run() void {
     const snake_size = 20;
     const snake_color = 0x14591d;
 
-    const snake: pages.Page = pages.alloc(&pages.pageTable) catch |err| { //on errors
+    const snake: pages.Page = pages.alloc(&pages.pt) catch |err| { //on errors
         switch (err) {
             pages.errors.outOfPages => console.printErr("Error: out of pages"),
         }
@@ -140,7 +140,7 @@ fn run() void {
     //fs.writeData(file, "0");
 
     //when we are done we must free the memory
-    defer pages.free(snake, &pages.pageTable);
+    defer pages.free(snake, &pages.pt);
     stream.captured = true;
 
     //used to slow the game down
