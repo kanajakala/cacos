@@ -85,14 +85,10 @@ pub fn write() void {
     db.print("\n-----------Writing Data-----------\n");
     const command_offset = "write ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
-    db.print("\ngot file name");
     if (!fs.fileExists(file_name)) return console.printErr(no_file);
     const offset = command_offset + file_name.len + 1;
-    db.print("\ngetting the input data...");
-    const in = stream.stdin[offset .. offset + fs.block_size];
-    db.print("\ngetting address...");
+    const in = stream.stdin[offset..];
     const file = fs.addressFromName(file_name);
-    db.print("\ngot address !");
     fs.writeData(file, in);
 }
 

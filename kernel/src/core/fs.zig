@@ -112,7 +112,6 @@ pub fn addBlock(file: u64) void {
     if (getType(file) == 1) return;
     //we add one block so we need to change the size
     const size = getSize(file) + 1;
-    db.print("\nSize of the file:");
     db.printValue(size);
 
     //100 blocks is the maximum size for now
@@ -194,33 +193,26 @@ pub fn writeData(file: u64, data: []const u8) void {
     //we overwrite the data:
     clearData(file);
     //How many blocks do we need to write ?
-    db.print("\n\nWriting data");
-    db.print("\ndata length:");
-    db.printValue(data.len);
+    db.printValueDec(data.len);
 
     const number_of_blocks = data.len / block_size + 1;
-    db.print("\nNumber of blocks to add:");
-    db.printValue(number_of_blocks);
+    db.printValueDec(number_of_blocks);
 
     for (0..number_of_blocks) |i| {
+        db.printValueDec(i);
         //copy data to the right block
         var block = getBlock(file, i);
         //if block doesn't exist we create a new one
         if (block == 0) {
-            db.print("\nAdded new block");
             addBlock(file);
             //upadte the block address to be the correct one
             block = getBlock(file, i);
         }
         //we need to handle the last block separately
         if (i != number_of_blocks - 1) {
-            db.print("\nattempting to write to not last block");
-            @memcpy(mem.*[block .. block + block_size], data[i * block_size .. i * 2 * block_size]);
-            db.print("\nwrote data to block that is not the last :-)");
+            @memcpy(mem.*[block .. block + block_size], data[i * block_size .. i * block_size + block_size]);
         } else {
-            db.print("attempting to write to last block");
-            @memcpy(mem.*[block .. block + data.len], data[i * block_size .. data.len]);
-            db.print("\nwrote to last block\n");
+            @memcpy(mem.*[block .. block + data.len - (i * block_size)], data[i * block_size .. data.len]);
         }
     }
 
