@@ -200,14 +200,10 @@ pub fn writeData(file: u64, data: []const u8) void {
 
     for (0..number_of_blocks) |i| {
         db.printValueDec(i);
-        //copy data to the right block
-        var block = getBlock(file, i);
-        //if block doesn't exist we create a new one
-        if (block == 0) {
-            addBlock(file);
-            //upadte the block address to be the correct one
-            block = getBlock(file, i);
-        }
+        var block: u64 = undefined;
+        addBlock(file);
+        //upadte the block address to be the correct one
+        block = getBlock(file, i);
         //we need to handle the last block separately
         if (i != number_of_blocks - 1) {
             @memcpy(mem.*[block .. block + block_size], data[i * block_size .. i * block_size + block_size]);
@@ -220,17 +216,24 @@ pub fn writeData(file: u64, data: []const u8) void {
 }
 
 pub fn appendData(file: u64, data: []u8) void {
-    //we add 2 because the first byte stores the type and the second the length of the name
-    const name_length = mem.*[file + 2];
-    //find the end of the data
-    var end: usize = 0;
-    for (file + name_length + 11..file + block_size + name_length + 11) |i| {
-        if (mem.*[i] == 0) {
-            end = i;
-            break;
+    const size = getSize(file);
+    const number_of_blocks = data.len / block_size + 1;
+    db.printValueDec(number_of_blocks);
+
+    for (0..number_of_blocks - 1) |i| {
+        var block: u64 = undefined;
+        addBlock(file);
+        //upadte the block address to be the correct one
+        block = getBlock(file, i + size);
+        //we need to handle the last block separately
+        if (i != number_of_blocks - 1) {
+            @memcpy(mem.*[block .. block + block_size], data[i * block_size .. i * block_size + block_size]);
+        } else {
+            @memcpy(mem.*[block .. block + data.len - (i * block_size)], data[i * block_size .. data.len]);
         }
     }
-    @memcpy(mem.*[end .. end + data.len], data[0..]);
+
+    debugFile(file);
 }
 
 pub fn getData(file: u64) []u8 {
