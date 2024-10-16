@@ -114,9 +114,9 @@ pub fn printMem(arr: []u8) void {
 
 pub fn shiftMem(page: pages.Page, direction: usize, clip: usize) void {
     var temp: [pages.page_size]u8 = undefined;
-    @memcpy(temp[0..clip], mem.memory_region[page.start .. page.start + clip]);
+    @memcpy(temp[0..clip], mem.memory_region[page.address .. page.address + clip]);
     for (0..clip) |i| {
-        mem.memory_region[page.start + i + direction] = temp[i];
+        mem.memory_region[page.address + i + direction] = temp[i];
     }
 }
 
@@ -221,7 +221,7 @@ pub fn loadFileToMem(comptime path: []const u8) pages.Page {
         return pages.empty_page;
     };
     //copy the file to memory
-    @memcpy(mem.memory_region[memory.start .. memory.start + data.len], data[0..]);
+    @memcpy(mem.memory_region[memory.address .. memory.address + data.len], data[0..]);
 }
 
 //NOT TESTED

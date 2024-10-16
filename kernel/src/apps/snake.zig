@@ -46,10 +46,9 @@ var direction: Directions = Directions.down;
 
 //TODO see why this doesn't work
 fn checkCollision(snake: pages.Page) bool {
-    const mem = &memory.memory_region;
-    for (snake.start + 2..snake.start + length) |i| {
-        if (mem.*[snake.start] == mem.*[i * 2]) {
-            if (mem.*[snake.start + 1] == mem.*[i * 2 + 1]) {
+    for (2..length) |i| {
+        if (snake.data[i] == snake.data[i * 2]) {
+            if (snake.data[1] == snake.data[i * 2 + 1]) {
                 return true;
             }
         }
@@ -110,32 +109,27 @@ fn startGame(snake: pages.Page) void {
     y = 4;
     score = 0;
     length = 2;
-    memory.memory_region[snake.start] = 5;
-    memory.memory_region[snake.start + 1] = 4;
-    memory.memory_region[snake.start + 2] = 4;
-    memory.memory_region[snake.start + 3] = 4;
+    snake.data[0] = 5;
+    snake.data[1] = 4;
+    snake.data[2] = 4;
+    snake.data[3] = 4;
     direction = Directions.right;
 }
 
 fn run() void {
-    const mem = &memory.memory_region;
-
     //game constants
     const snake_size = 20;
     const snake_color = 0x14591d;
 
-    const snake: pages.Page = pages.alloc(&pages.pt) catch |err| { //on errors
-        switch (err) {
-            pages.errors.outOfPages => console.printErr("Error: out of pages"),
-        }
-        return;
+    const snake: pages.Page = pages.alloc(&pages.pt) catch |err| switch (err) { //on errors
+        pages.errors.outOfPages => return console.printErr("Error: out of pages"),
     };
 
     startGame(snake);
 
     //create the score file
     fs.createDir("snake", fs.root_address);
-    fs.createFile("highscore.snake", fs.addressFromName("snake"), 100);
+    fs.createFile("highscore.snake", fs.addressFromName("snake"));
     file = fs.addressFromName("highscore.snake");
     //fs.writeData(file, "0");
 
@@ -151,17 +145,17 @@ fn run() void {
         if (slow == 0) {
             drawScore();
             //check for collisions
-            if (x + 1 >= scr.width / snake_size or y + 1 >= scr.height / snake_size or x - 1 <= 0 or y <= 0 or checkCollision(snake)) {
+            if (x + 1 >= scr.width / snake_size or y + 1 >= scr.height / snake_size or x <= 0 or y <= 0 or checkCollision(snake)) {
                 handleCrash(snake);
             }
 
             if (!scheduler.running[id]) return;
 
             stream.index = 0;
-            if (stream.stdin[0] == 'h' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.left) and direction != Directions.right) direction = Directions.left;
-            if (stream.stdin[0] == 'j' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.down) and direction != Directions.up) direction = Directions.down;
-            if (stream.stdin[0] == 'k' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.up) and direction != Directions.down) direction = Directions.up;
-            if (stream.stdin[0] == 'l' or stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.right) and direction != Directions.left) direction = Directions.right;
+            if (stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.left) and direction != Directions.right) direction = Directions.left;
+            if (stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.down) and direction != Directions.up) direction = Directions.down;
+            if (stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.up) and direction != Directions.down) direction = Directions.up;
+            if (stream.stdin[0] == kb.keyEventToChar(kb.KeyEvent.Code.right) and direction != Directions.left) direction = Directions.right;
 
             switch (direction) {
                 Directions.up => y -= 1,
@@ -182,13 +176,13 @@ fn run() void {
             }
 
             db.shiftMem(snake, 2, length * 2 - 2);
-            mem.*[snake.start] = x;
-            mem.*[snake.start + 1] = y;
+            snake.data[0] = x;
+            snake.data[1] = y;
 
             //draw the head
-            scr.drawRect(@as(usize, mem.*[snake.start]) * snake_size, @as(usize, mem.*[snake.start + 1]) * snake_size, snake_size, snake_size, snake_color);
+            scr.drawRect(@as(usize, snake.data[0]) * snake_size, @as(usize, snake.data[1]) * snake_size, snake_size, snake_size, snake_color);
             //clear the tail
-            scr.drawRect(@as(usize, mem.*[snake.start + length * 2 - 2]) * snake_size, @as(usize, mem.*[snake.start + length * 2 - 1]) * snake_size, snake_size, snake_size, bg);
+            scr.drawRect(@as(usize, snake.data[length * 2 - 2]) * snake_size, @as(usize, snake.data[length * 2 - 1]) * snake_size, snake_size, snake_size, bg);
             //draw the fruit
             scr.drawRect(@as(usize, fruit_x) * snake_size, @as(usize, fruit_y) * snake_size, snake_size, snake_size, 0xff0000);
 

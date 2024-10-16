@@ -6,7 +6,7 @@ const db = @import("../core/debug.zig");
 const scheduler = @import("../core/scheduler.zig");
 const cpu = @import("../core/cpu.zig");
 
-pub const stream_size = 10_000;
+pub const stream_size = 8000;
 pub var stdin: [stream_size]u8 = .{0} ** stream_size;
 pub var stdout: [stream_size]u8 = .{0} ** stream_size;
 pub var stderr: [stream_size]u8 = .{0} ** stream_size;

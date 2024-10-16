@@ -28,7 +28,7 @@ export fn _start() callconv(.C) noreturn {
 
     fs.init();
 
-    apps.init();
+    //apps.init();
 
     console.init();
 

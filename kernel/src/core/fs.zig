@@ -9,8 +9,10 @@ const mem = &memory.memory_region;
 pub const block_size = pages.page_size;
 
 //The super block contains the start address of each file
-//Each file is 4kb in size
-pub var super_block: pages.Page = undefined;
+//Each block is 4kb in size
+
+pub const max_files = 1000;
+pub var super_block: [max_files]pages.Page = undefined;
 
 pub var number_of_files: usize = 0;
 
@@ -20,220 +22,162 @@ pub var current_dir: u64 = 0;
 
 pub const max_path_size = 255;
 
-pub const FileType = enum {
-    file,
-    directory,
-};
-
-const File = struct {
-    ftype: FileType,
-    address: u64,
-    file_length: u8, //length of the file in blocks
-    name_length: u8, //length of the name of the file in bytes (characters)
-    parent: u64,
-    block_list: *[1000]Block,
-    data: []u8,
-};
-
-const Block = struct {
-    index: u8,
-    parent: u64,
-    previous_block: u64,
-    address: u64,
-    next_block: u64,
-    data: []u8,
-};
+//MEMORY LAYOUT OF FILE
+//┌──────┬──────┬────────┬────────────────┬──────────────────┬─────────────────────────┐
+//│ type │ size │ length │ parent address │ name of the file │ list of block addresses │
+//└──────┴──────┴────────┴────────────────┴──────────────────┴─────────────────────────┘
+//  byte   byte   byte     8 bytes (u64)    unknown            rest of the file
+//  0      1      2        3                11
 
 fn checkEmpty(index: usize) bool {
-    if (db.sum(mem.*[super_block.start + index .. super_block.start + 8 + index]) == 0) {
+    if (db.sum(mem.*[super_block.address + index .. super_block.address + 8 + index]) == 0) {
         return true;
     }
     return false;
 }
 
-pub fn writeFileToSuperBlock(file: File) void {
-    //we divide by  8 because the memory is defined in bytes but an address is
-    //8 bytes wide
-    for (0..block_size / 8) |i| {
+pub fn writeFileToSuperBlock(file: pages.Page) void {
+    for (0..max_files) |i| {
         //if the current block is empty
-        if (checkEmpty(i * 8)) {
-            db.writeToMem64(u64, super_block.start + i * 8, file.address);
+        if (super_block[i].address == 0) {
+            super_block[i] = file;
             number_of_files += 1;
             return;
         }
     }
+    db.print("Super Block is full");
 }
 
-pub fn createFile(name: []const u8, parent: u64, size: usize) void {
+fn writeHeader(file: pages.Page, ftype: u8, size: u8, length: u8, parent: u64, name: []const u8) void {
+    //write the type as a file to the first byte of the file
+    file.data[0] = ftype;
+    //write the size of the file in blocks to memory
+    file.data[1] = size;
+    //write the length of the name to the third byte of the file
+    file.data[2] = length;
+
+    //set the parent
+    db.writeToMem64(u64, file.address + 3, parent);
+    //write the name to the file
+    db.writeStringToMem(file.address + 3 + 8, name);
+}
+
+pub fn createFile(name: []const u8, parent: u64) void {
     //convert name.len to u8
     const length: u8 = @truncate(name.len);
 
-    db.print("\n\nattempting creation of file: ");
-    db.print(name);
-
     //allocate space for a new file
-    const faddress: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
-    var first_block: pages.Page = pages.empty_page;
+    const page: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
 
-    //creation of the file
-
-    //number of blocks we need to store the file
-    const n_of_blocks: u8 = @as(u8, @truncate(size / block_size + 1));
-
-    db.print("\nnumber of required blocks: ");
-    db.printValueDec(n_of_blocks);
-
-    //we also allocate space for the first block if we need one
-    if (n_of_blocks > 1) {
-        first_block = pages.alloc(&pages.pt) catch pages.empty_page;
-        db.print("\nallocated space for first block: ");
-        db.printValue(first_block.start);
-    }
-
-    //max file size is 4mb for now
-    var block_list: [1_000]Block = .{undefined} ** 1000;
-    db.print("\nCreated block list");
-
-    //allocate space for all the blocks
-    for (0..n_of_blocks) |i| {
-        const address: u64 = if (i == 0) first_block.start else block_list[i - 1].next_block; //get the address of the allocated space for this block
-        const next_block: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
-        db.print("\naddress of current block ");
-        db.printValue(address);
-        db.print("\naddress of next block: ");
-        db.printValue(next_block.start);
-
-        block_list[i] = Block{
-            .index = @as(u8, @truncate(i)),
-            .parent = faddress.start,
-            .previous_block = if (i == 0) faddress.start else block_list[i - 1].address, //get the address from the previous block
-            .address = address,
-            .next_block = next_block.start,
-            .data = mem.*[address .. address + block_size],
-        };
-    }
-
-    db.print("\nspace should be allocated for the file now");
-
-    const file = File{
-        .ftype = FileType.file,
-        .address = faddress.start,
-        .file_length = n_of_blocks,
-        .name_length = length,
-        .parent = parent,
-        .block_list = &block_list,
-        .data = faddress.data, //we add 10 because we need to offset by the header length
-    };
-
+    //max file size is 400kb for now
     //we write the address of the file to the super block
-    writeFileToSuperBlock(file);
+    writeFileToSuperBlock(page);
 
-    //write the type as a file to the first byte of the file
-    mem.*[faddress.start] = 0;
-    //write the length of the file in blocks to memory
-    mem.*[faddress.start + 1] = n_of_blocks;
-    //write the length of the name to the third byte of the file
-    mem.*[faddress.start + 2] = length;
+    //create the file header
+    writeHeader(page, 0, 0, length, parent, name);
 
-    //set the parent
-    db.writeToMem64(u64, faddress.start + 3, parent);
-    //set the next_block
-    db.writeToMem64(u64, faddress.start + 11, first_block.start);
-    //write the name to the file
-    db.writeStringToMem(faddress.start + 3 + 8 + 8, name);
-
-    db.print("\nDone creating files");
-    //debugFiles();
+    //add a new block;
+    addBlock(page.address);
+    debugFile(page.address);
 }
 
 pub fn createDir(name: []const u8, parent: u64) void {
+    //very similar to the creation of a file
+    //we simply change the type
     //convert name.len to u8
     const length: u8 = @truncate(name.len);
 
     //allocate space for a new directory
-    const faddress: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
-
-    //creation of the directory
-    //we add 2 to  the start because we also need to store the type which takes one byte and the length of the name which takes 1 bytes
-    const dir = File{
-        .ftype = FileType.directory,
-        .address = faddress.start,
-        .file_length = 1,
-        .name_length = length,
-        .parent = parent,
-        .block_list = undefined,
-        .data = faddress.data, //same as for the files;
-    };
+    const page: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
 
     //we write the address of the directory to the super block
-    writeFileToSuperBlock(dir);
-
-    //set the type as a directory in the first byte
-    mem.*[faddress.start] = 1;
-    //write the length of the directory in blocks. A directory is precisely one block in size
-    mem.*[faddress.start + 1] = 1;
-    //write the length of the name to the second byte of the file
-    mem.*[faddress.start + 2] = length;
-
-    //set the parent
-    db.writeToMem64(u64, faddress.start + 3, parent);
-    //set the address of the next block
-    db.writeToMem64(u64, faddress.start + 11, 0xffffffffffffffff);
-    //write the name to the directory
-    db.writeStringToMem(faddress.start + 19, name);
-
-    //debugFiles();
+    writeFileToSuperBlock(page);
+    writeHeader(page, 1, 0, length, parent, name);
+    debugFile(page.address);
 }
 
-pub fn debugFile(file: File) void {
-    db.print("-------------------------------------------------\n");
-    file.data[0] = 0xee;
-    db.print("Address of file\n");
-    var buffer: [8]u8 = undefined;
-    db.print(db.numberToStringHex(file.address, &buffer));
-    db.print("\nname of the file\n");
-    db.print(getName(db.readFromMem(u64, super_block.start + file.address / 4000)));
-    db.print("\n-------------------------------------------------\n\n");
+pub fn setSize(file: u64, size: u8) void {
+    mem.*[file + 1] = size;
+}
+
+pub fn clearData(file: u64) void {
+    const size = getHeaderSize(file);
+    const empty: [block_size]u8 = .{0} ** block_size;
+    @memcpy(mem.*[file + size .. file + block_size], empty[size..block_size]);
+    setSize(file, 0);
+}
+
+pub fn addBlock(file: u64) void {
+    //check if the type is correct
+    if (getType(file) == 1) return;
+    //we add one block so we need to change the size
+    const size = getSize(file) + 1;
+    db.print("\nSize of the file:");
+    db.printValue(size);
+
+    //100 blocks is the maximum size for now
+    if (size >= 100) return;
+
+    setSize(file, size);
+    //add the new block to the first free spot
+    const page: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
+    const offset = getHeaderSize(file) + (size * 8);
+    db.writeToMem64(u64, file + offset, page.address);
+}
+
+pub fn getBlock(file: u64, index: usize) u64 {
+    const hsize = getHeaderSize(file);
+    return db.readFromMem(u64, file + hsize + (index * 8));
+}
+
+pub fn debugFile(file: u64) void {
+    db.print("\naddress of file \"");
+    db.print(getName(file));
+    db.print("\": ");
+    db.printValue(file);
+
+    db.print("\ntype of file: ");
+    switch (getType(file)) {
+        0 => db.print("file"),
+        1 => db.print("directory"),
+        else => db.print("unknown type"),
+    }
+
+    db.print("\nsize of file in blocks: ");
+    db.printValue(getSize(file));
+
+    db.print("\nname of the file: ");
+    db.print(getName(file));
+
+    db.print("\nparent of the file: ");
+    db.printValue(getParent(file));
+
+    db.print("\naddresses of the blocks: \n");
+    for (0..getSize(file)) |i| {
+        db.print("  ");
+        db.printValue(i);
+        db.print(": ");
+        db.printValue(getBlock(file, i));
+        db.print("\n");
+    }
+
+    db.print("Raw memory at this file: \n");
+    db.printMem(mem.*[file .. file + 40]);
+    db.printArrayFull(mem.*[file .. file + 40]);
+    db.print("\n");
 }
 
 pub fn debugFiles() void {
     db.print("\nALL FILES IN SUPER BLOCK\n");
     for (0..number_of_files) |i| {
-        const address = addressFromSb(i);
-
-        db.print("\naddress of file n");
-        db.printValueDec(i);
-        db.print(": ");
-        db.printValue(address);
-
-        db.print("\ntype of file: ");
-        switch (getType(address)) {
-            FileType.file => db.print("file"),
-            FileType.directory => db.print("directory"),
-        }
-
-        db.print("\nsize of file in blocks: ");
-        db.printValue(getSize(address));
-
-        db.print("\nnext block of file: ");
-        db.printValue(getAddressOfNextBlock(address));
-
-        db.print("\nname of the file: ");
-        db.print(getName(address));
-
-        db.print("\nparent of the file: ");
-        db.printValue(getParent(address));
-
-        db.print("\nRaw memory at this address: \n");
-        db.printMem(mem.*[address .. address + 40]);
-        db.printArrayFull(mem.*[address .. address + 40]);
-        db.print("\n");
+        const file = addressFromSb(i);
+        debugFile(file);
     }
     db.print("\n\n");
 }
 
 pub fn addressFromSb(index: usize) u64 {
-    return db.readFromMem(u64, super_block.start + index * 8);
+    return super_block[index].address;
 }
 
 pub fn addressFromName(name: []const u8) u64 {
@@ -247,22 +191,40 @@ pub fn addressFromName(name: []const u8) u64 {
 }
 
 pub fn writeData(file: u64, data: []const u8) void {
-    //we add 2 because the first byte stores the type and the second the file_length
-    const name_length = mem.*[file + 2];
-    //TODO update to have support for longer files
-    const file_size = getSize(file);
-    if (data.len >= file_size * block_size) return;
-    //we know that the file is big enough to contain our data
-    //this represents the number of blocks we need to write
-    if (data.len <= block_size - 19 - name_length) {
-        @memcpy(mem.*[file + name_length + 19 .. file + data.len + name_length + 19], data[0..]);
-    } else {
-        //how many blocks do we need ?
-    }
-}
+    //we overwrite the data:
+    clearData(file);
+    //How many blocks do we need to write ?
+    db.print("\n\nWriting data");
+    db.print("\ndata length:");
+    db.printValue(data.len);
 
-pub fn clearFile(file: u64) void {
-    writeData(file, .{0} ** block_size);
+    const number_of_blocks = data.len / block_size + 1;
+    db.print("\nNumber of blocks to add:");
+    db.printValue(number_of_blocks);
+
+    for (0..number_of_blocks) |i| {
+        //copy data to the right block
+        var block = getBlock(file, i);
+        //if block doesn't exist we create a new one
+        if (block == 0) {
+            db.print("\nAdded new block");
+            addBlock(file);
+            //upadte the block address to be the correct one
+            block = getBlock(file, i);
+        }
+        //we need to handle the last block separately
+        if (i != number_of_blocks - 1) {
+            db.print("\nattempting to write to not last block");
+            @memcpy(mem.*[block .. block + block_size], data[i * block_size .. i * 2 * block_size]);
+            db.print("\nwrote data to block that is not the last :-)");
+        } else {
+            db.print("attempting to write to last block");
+            @memcpy(mem.*[block .. block + data.len], data[i * block_size .. data.len]);
+            db.print("\nwrote to last block\n");
+        }
+    }
+
+    debugFile(file);
 }
 
 pub fn appendData(file: u64, data: []u8) void {
@@ -270,7 +232,7 @@ pub fn appendData(file: u64, data: []u8) void {
     const name_length = mem.*[file + 2];
     //find the end of the data
     var end: usize = 0;
-    for (file + name_length + 19..file + block_size + name_length + 19) |i| {
+    for (file + name_length + 11..file + block_size + name_length + 11) |i| {
         if (mem.*[i] == 0) {
             end = i;
             break;
@@ -280,13 +242,25 @@ pub fn appendData(file: u64, data: []u8) void {
 }
 
 pub fn getData(file: u64) []u8 {
-    const name_length = mem.*[file + 2];
-    return mem.*[file + name_length + 19 .. file + block_size];
+    //How many blocks do we need to read ?
+    const number_of_blocks = getSize(file);
+    //for now we consider that 10 blocks is the maximum size
+    var out: [10 * block_size]u8 = .{0} ** (10 * block_size);
+
+    for (0..number_of_blocks) |i| {
+        const block = getBlock(file, i);
+        @memcpy(
+            out[i * block_size .. i * block_size + block_size],
+            mem.*[block .. block + block_size],
+        );
+    }
+
+    return out[0 .. number_of_blocks * block_size];
 }
 
 pub fn loadEmbed(comptime path: []const u8, parent: u64, name: []const u8) void {
     const file: []const u8 = @embedFile(path);
-    createFile(name, parent, file.len);
+    createFile(name, parent);
     const osfile = addressFromName(name);
     writeData(osfile, file[0..]);
 }
@@ -301,16 +275,11 @@ pub fn fileExists(name: []const u8) bool {
 
 pub fn getName(file: u64) []const u8 {
     const length: u8 = mem.*[file + 2];
-    return db.stringFromMem(file + 19, length);
+    return db.stringFromMem(file + 11, length);
 }
 
-pub fn getType(file: u64) FileType {
-    const type_byte: u8 = mem.*[file];
-    if (type_byte == 1) {
-        return FileType.directory;
-    } else {
-        return FileType.file;
-    }
+pub fn getType(file: u64) u8 {
+    return mem.*[file];
 }
 
 pub fn getParent(file: u64) u64 {
@@ -336,11 +305,12 @@ pub fn getAddressOfNextBlock(address: u64) u64 {
 }
 
 pub fn init() void {
-    super_block = pages.alloc(&pages.pt) catch pages.empty_page;
+    super_block = .{pages.empty_page} ** max_files;
     //creation of root
     createDir("/", 0);
     const address = addressFromName("/");
     root_address = address;
     current_dir = root_address;
     loadEmbed("../info.txt", root_address, "info");
+    db.print("\nloaded embed");
 }

@@ -25,7 +25,7 @@ pub const States = enum {
 
 pub const Page = struct {
     state: States,
-    start: usize,
+    address: usize,
     data: []u8,
 };
 
@@ -34,7 +34,7 @@ pub fn alloc(page_table: *[number_of_pages]bool) !Page {
     for (1..number_of_pages) |i| {
         if (!page_table[i]) {
             page_table[i] = true;
-            return Page{ .state = States.normal, .start = i * page_size, .data = mem.memory_region[i * page_size .. i * page_size + page_size] };
+            return Page{ .state = States.normal, .address = i * page_size, .data = mem.memory_region[i * page_size .. i * page_size + page_size] };
         }
     }
     return errors.outOfPages;
@@ -51,10 +51,10 @@ pub fn getFreePages(page_table: *[number_of_pages]bool) usize {
 }
 
 pub fn free(page: Page, page_table: *[number_of_pages]bool) void {
-    if (page.start == 0) {
+    if (page.address == 0) {
         page_table[0] = false;
     } else {
-        page_table[page.start / page_size] = false;
+        page_table[page.address / page_size] = false;
     }
 }
 
@@ -65,7 +65,7 @@ pub fn clearPage(page: Page) void {
 }
 
 pub fn init() void {
-    empty_page = Page{ .state = States.protected, .start = 0, .data = mem.memory_region[0..page_size] };
+    empty_page = Page{ .state = States.protected, .address = 0, .data = mem.memory_region[0..page_size] };
     //the first page is reserved
     pt = .{false} ** number_of_pages;
     pt[0] = true;
