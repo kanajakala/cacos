@@ -239,7 +239,7 @@ pub fn appendData(file: u64, data: []u8) void {
 pub fn getData(file: u64) []u8 {
     //How many blocks do we need to read ?
     const number_of_blocks = getSize(file);
-    //for now we consider that 10 blocks is the maximum size
+    //for now we consider that 100 blocks is the maximum size
     var out: [10 * block_size]u8 = .{0} ** (10 * block_size);
 
     for (0..number_of_blocks) |i| {

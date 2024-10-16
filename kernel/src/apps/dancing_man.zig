@@ -28,6 +28,7 @@ pub fn run() void {
 
     while (scheduler.running[id]) {
         for (images) |image| {
+            db.print("\nDisplaying image");
             if (slow == 0) {
                 scr.drawImage(500, 100, image);
                 slow = slower;
