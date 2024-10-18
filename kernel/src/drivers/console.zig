@@ -72,6 +72,7 @@ pub fn execute_command() void {
         db.hashStr("touch") => utils.touch(),
         db.hashStr("mkdir") => utils.mkdir(),
         db.hashStr("cd") => utils.cd(),
+        db.hashStr("mv") => utils.mv(),
         db.hashStr("pwd") => utils.pwd(),
         db.hashStr("write") => utils.write(),
         db.hashStr("read") => utils.read(),

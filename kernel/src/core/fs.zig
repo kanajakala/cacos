@@ -318,6 +318,9 @@ pub fn getType(file: u64) u8 {
 pub fn getParent(file: u64) u64 {
     return db.readFromMem(u64, file + 3);
 }
+pub fn setParent(file: u64, parent: u64) void {
+    db.writeToMem64(u64, file + 3, parent);
+}
 
 pub fn getDataStart(file: u64) u64 {
     const name_length = mem.*[file + 2];

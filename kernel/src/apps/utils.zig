@@ -56,6 +56,18 @@ pub fn cd() void {
     if (fs.current_dir == 0) fs.current_dir = fs.root_address;
 }
 
+pub fn mv() void {
+    const offset = "mv ".len;
+    const file: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
+    const parent_dir_name: []const u8 = db.firstWordOfArray(stream.stdin[offset + file.len + 1 ..]);
+    db.print(parent_dir_name);
+    var parent_dir: u64 = fs.addressFromName(parent_dir_name);
+    if (!fs.fileExists(file)) return console.printErr(no_file);
+    if (db.hashStr(file) == db.hashStr("..")) parent_dir = fs.getParent(fs.current_dir);
+    if (fs.getType(parent_dir) != 1) return console.printErr("Must move to directory");
+    fs.setParent(fs.addressFromName(file), parent_dir);
+}
+
 pub fn mkdir() void {
     const offset = "mkdir ".len;
     const name: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
@@ -204,6 +216,9 @@ pub fn help() void {
 
     scr.print("read [file]", scr.primary);
     scr.print(" -> Displays the content of a file in plain text\n", scr.text);
+
+    scr.print("mv [file] [directory]", scr.primary);
+    scr.print(" -> Moves the file to the provided directory\n", scr.text);
 
     scr.print("readhex [file]", scr.primary);
     scr.print(" -> Displays the content of a file iin hexadecimal\n", scr.text);
