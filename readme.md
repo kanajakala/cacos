@@ -6,6 +6,7 @@
 ![Picure of the OS](./screenshots/1.png)
 ![Picure of the OS](./screenshots/2.png)
 ![Picure of the OS](./screenshots/3.png)
+![Picure of the OS](./screenshots/4.png)
 
 ### Features ?
 
