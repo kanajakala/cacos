@@ -53,6 +53,12 @@ fn handleBackSpace() void {
     scr.printChar(0x8, scr.text);
 }
 
+pub fn append(value: u8) void {
+    if (index >= stream_size) index = 0;
+    stdin[index] = value;
+    index += 1;
+}
+
 pub fn handleKey(key: kb.KeyEvent) void {
     const value = kb.keyEventToChar(key.code);
     const codes = kb.KeyEvent.Code;
@@ -84,8 +90,7 @@ pub fn handleKey(key: kb.KeyEvent) void {
                 codes.enter => if (!captured) handleLineFeed(),
                 codes.backspace => if (!captured) handleBackSpace(),
                 else => {
-                    stdin[index] = value;
-                    index += 1;
+                    append(value);
                     if (!captured) {
                         scr.clearChar();
                         scr.printChar(value, scr.text);

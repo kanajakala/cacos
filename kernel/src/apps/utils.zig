@@ -96,8 +96,26 @@ pub fn read() void {
     const command_offset = "read ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
     if (!fs.fileExists(file_name)) return console.printErr(no_file);
-    const file = fs.addressFromName(file_name);
-    console.print(fs.getData(file));
+    const file: fs.File = fs.open(file_name);
+    scr.newLine();
+    for (0..file.size * fs.block_size) |i| {
+        const data: u8 = file.read(i);
+        scr.printChar(data, scr.text);
+        stream.append(data);
+    }
+}
+
+pub fn stat() void {
+    const command_offset = "stat ".len;
+    const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    if (!fs.fileExists(file_name)) return console.printErr(no_file);
+    const file: fs.File = fs.open(file_name);
+    var buffer: [10]u8 = undefined;
+    console.print("Name: ");
+    console.printf(file.name);
+    console.print("Size: ");
+    console.printf(db.numberToStringDec(file.size * fs.block_size / 1_000, &buffer));
+    console.printf("kb");
 }
 
 pub fn readhex() void {
@@ -119,7 +137,7 @@ pub fn display() void {
     if (!fs.fileExists(file_name)) return console.printErr(no_file);
     const file = fs.addressFromName(file_name);
     const data = fs.getData(file);
-    const image: scr.Image = scr.createImagefromFile(data) catch blk: {
+    const image: scr.Image = scr.createImagefromFile(data, file_name) catch blk: {
         console.printErr("Unsupported image type");
         break :blk scr.empty_image;
     };
@@ -196,6 +214,9 @@ pub fn help() void {
     scr.print("append [file] [text]", scr.primary);
     scr.print(" -> Writes the provided text to the file, will be added after the previous text\n", scr.text);
 
+    scr.print("stat [file]", scr.primary);
+    scr.print(" -> Prints informations about a file\n", scr.text);
+
     scr.print("editor [file]", scr.primary);
     scr.print(" -> Edit the provided file in an interractive editor\n", scr.text);
 
@@ -266,26 +287,36 @@ pub fn testMemStart(parameter: usize) void {
 
 pub fn printMem() void {
     var buffer: [20]u8 = undefined;
+    const orange = 0xff4e00;
 
     const length = db.numberToStringDec(mem.memory_region.len / 1_000_000, &buffer);
     scr.print("\nsize of memory: ", scr.text);
     scr.print(length, scr.errorc);
+    scr.print("mb", orange);
 
-    const number_of_pages = db.numberToStringDec(pages.number_of_pages, &buffer);
+    const number_of_pages = db.numberToStringDec(pages.number_of_pages / 1_000, &buffer);
     scr.print("\nnumber of pages: ", scr.text);
     scr.print(number_of_pages, scr.errorc);
+    scr.print("kp", orange);
 
-    const page_size = db.numberToStringDec(pages.page_size, &buffer);
+    const page_size = db.numberToStringDec(pages.page_size / 1_000, &buffer);
     scr.print("\npage size: ", scr.text);
     scr.print(page_size, scr.errorc);
+    scr.print("kb", orange);
 
-    const free_pages = db.numberToStringDec(pages.getFreePages(&pages.pt), &buffer);
+    const free_pages = db.numberToStringDec(pages.getFreePages(&pages.pt) / 1_000, &buffer);
     scr.print("\nnumber of free pages: ", scr.text);
     scr.print(free_pages, scr.errorc);
+    scr.print("kp", orange);
 
     const free_mem = db.numberToStringDec(pages.getFreePages(&pages.pt) * pages.page_size / 1_000_000, &buffer);
     scr.print("\nfree memory: ", scr.text);
     scr.print(free_mem, scr.errorc);
+    scr.print("mb", orange);
 
-    scr.newLine();
+    scr.print("\nused memory: ", scr.text);
+    const percent_number = pages.getFreePages(&pages.pt) / pages.number_of_pages;
+    const percent = db.numberToStringDec(percent_number, &buffer);
+    scr.print(percent, scr.errorc);
+    scr.print("%", orange);
 }

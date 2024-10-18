@@ -171,6 +171,12 @@ pub fn charToInt(char: u8) u8 {
     return 0;
 }
 
+pub fn debugChars() void {
+    for (0..255) |i| {
+        scr.printChar(@as(u8, @truncate(i)), scr.primary);
+    }
+}
+
 pub fn firstWordOfArray(arr: []u8) []const u8 {
     for (arr, 0..arr.len) |element, i| {
         if (element == ' ' or element == 0) {

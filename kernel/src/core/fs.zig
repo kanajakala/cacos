@@ -22,6 +22,31 @@ pub var current_dir: u64 = 0;
 
 pub const max_path_size = 255;
 
+pub const fileErrors = error{
+    indexOverflow,
+    fileNotFound,
+};
+
+pub const File = struct {
+    name: []const u8,
+    size: u8, //size in blocks
+    data: []u64, //slice of block addresses
+
+    pub inline fn read(self: File, index: usize) u8 {
+        //if (index >= self.size * block_size) return fileErrors.indexOverflow;
+        const page_number = @divFloor(index, block_size); //find the right page
+        const page_offset = @mod(index, block_size); //find which position we need to write in the file
+        return mem.*[self.data[page_number] + page_offset];
+    }
+
+    pub inline fn write(self: File, index: usize, data: u8) void {
+        //if (index >= self.size * block_size) return fileErrors.indexOverflow;
+        const page_number = @floor(index / block_size); //find the right page
+        const page_offset = @mod(index, block_size); //find which position we need to read in the file
+        mem.*[self.data[page_number] + page_offset] = data;
+    }
+};
+
 //MEMORY LAYOUT OF FILE
 //┌──────┬──────┬────────┬────────────────┬──────────────────┬─────────────────────────┐
 //│ type │ size │ length │ parent address │ name of the file │ list of block addresses │
@@ -45,7 +70,7 @@ pub fn writeFileToSuperBlock(file: pages.Page) void {
             return;
         }
     }
-    db.print("Super Block is full");
+    //db.print("Super Block is full");
 }
 
 fn writeHeader(file: pages.Page, ftype: u8, size: u8, length: u8, parent: u64, name: []const u8) void {
@@ -78,7 +103,7 @@ pub fn createFile(name: []const u8, parent: u64) void {
 
     //add a new block;
     addBlock(page.address);
-    debugFile(page.address);
+    //debugFile(page.address);
 }
 
 pub fn createDir(name: []const u8, parent: u64) void {
@@ -93,7 +118,7 @@ pub fn createDir(name: []const u8, parent: u64) void {
     //we write the address of the directory to the super block
     writeFileToSuperBlock(page);
     writeHeader(page, 1, 0, length, parent, name);
-    debugFile(page.address);
+    //debugFile(page.address);
 }
 
 pub fn setSize(file: u64, size: u8) void {
@@ -112,7 +137,7 @@ pub fn addBlock(file: u64) void {
     if (getType(file) == 1) return;
     //we add one block so we need to change the size
     const size = getSize(file) + 1;
-    db.printValue(size);
+    //db.printValue(size);
 
     //100 blocks is the maximum size for now
     if (size >= 100) return;
@@ -120,7 +145,7 @@ pub fn addBlock(file: u64) void {
     setSize(file, size);
     //add the new block to the first free spot
     const page: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
-    const offset = getHeaderSize(file) + (size * 8);
+    const offset = getHeaderSize(file) + ((size - 1) * 8);
     db.writeToMem64(u64, file + offset, page.address);
 }
 
@@ -193,13 +218,12 @@ pub fn writeData(file: u64, data: []const u8) void {
     //we overwrite the data:
     clearData(file);
     //How many blocks do we need to write ?
-    db.printValueDec(data.len);
+    //db.printValueDec(data.len);
 
     const number_of_blocks = data.len / block_size + 1;
-    db.printValueDec(number_of_blocks);
+    //db.printValueDec(number_of_blocks);
 
     for (0..number_of_blocks) |i| {
-        db.printValueDec(i);
         var block: u64 = undefined;
         addBlock(file);
         //upadte the block address to be the correct one
@@ -212,13 +236,13 @@ pub fn writeData(file: u64, data: []const u8) void {
         }
     }
 
-    debugFile(file);
+    //debugFile(file);
 }
 
 pub fn appendData(file: u64, data: []u8) void {
     const size = getSize(file);
     const number_of_blocks = data.len / block_size + 1;
-    db.printValueDec(number_of_blocks);
+    //db.printValueDec(number_of_blocks);
 
     for (0..number_of_blocks - 1) |i| {
         var block: u64 = undefined;
@@ -233,13 +257,14 @@ pub fn appendData(file: u64, data: []u8) void {
         }
     }
 
-    debugFile(file);
+    //debugFile(file);
 }
 
 pub fn getData(file: u64) []u8 {
     //How many blocks do we need to read ?
     const number_of_blocks = getSize(file);
     //for now we consider that 100 blocks is the maximum size
+    //extremely wastefull
     var out: [10 * block_size]u8 = .{0} ** (10 * block_size);
 
     for (0..number_of_blocks) |i| {
@@ -251,6 +276,19 @@ pub fn getData(file: u64) []u8 {
     }
 
     return out[0 .. number_of_blocks * block_size];
+}
+
+pub fn open(file: []const u8) File {
+    const address: u64 = addressFromName(file);
+    //if (address == 0) return fileErrors.fileNotFound;
+    const size = getSize(address);
+    //for now max size is 1_000 blocks (4mb)
+    var data: [1_000]u64 = .{0} ** 1_000;
+    //fill the  data with the block addresses
+    for (0..size) |i| {
+        data[i] = getBlock(address, i);
+    }
+    return File{ .name = file, .size = size, .data = &data };
 }
 
 pub fn loadEmbed(comptime path: []const u8, parent: u64, name: []const u8) void {
@@ -307,5 +345,5 @@ pub fn init() void {
     root_address = address;
     current_dir = root_address;
     loadEmbed("../info.txt", root_address, "info");
-    db.print("\nloaded embed");
+    //db.print("\nloaded embed");
 }

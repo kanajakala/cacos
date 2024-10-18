@@ -77,6 +77,7 @@ pub fn execute_command() void {
         db.hashStr("read") => utils.read(),
         db.hashStr("readhex") => utils.readhex(),
         db.hashStr("append") => utils.append(),
+        db.hashStr("stat") => utils.stat(),
         db.hashStr("editor") => editor.start(),
         db.hashStr("display") => utils.display(),
         db.hashStr("dance") => dancing_man.start(),

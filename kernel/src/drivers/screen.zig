@@ -29,6 +29,7 @@ const Img_Type = enum {
 };
 
 pub const Image = struct {
+    name: []const u8,
     img_type: Img_Type,
     ///A bitmap used to display images
     data: []const u8,
@@ -38,7 +39,7 @@ pub const Image = struct {
 
 const empty_array: [1]u8 = .{0};
 
-pub const empty_image = Image{ .img_type = Img_Type.pbm, .data = empty_array[0..], .width = 1, .height = 1 };
+pub const empty_image = Image{ .name = "empty", .img_type = Img_Type.pbm, .data = empty_array[0..], .width = 1, .height = 1 };
 
 pub const placeholder_font = Font{ .ftype = Fonts.vga, .data = empty_array[0..], .width = 0, .height = 0 };
 pub var font: Font = placeholder_font;
@@ -153,7 +154,7 @@ pub fn loadFont(ftype: Fonts, data: []const u8, fwidth: usize, fheight: usize) F
     }
 }
 
-pub fn createImagefromFile(file: []const u8) !Image {
+pub fn createImagefromFile(file: []const u8, name: []const u8) !Image {
     //If the magic number is invalid we return an error
     if (file[0] != 'P') return imgErrs.invalidFormat;
 
@@ -188,11 +189,13 @@ pub fn createImagefromFile(file: []const u8) !Image {
         '4' => {
             img_type = Img_Type.pbm;
 
-            return Image{ .img_type = img_type, .data = data, .height = im_height, .width = im_width };
+            return Image{ .name = name, .img_type = img_type, .data = data, .height = im_height, .width = im_width };
         },
         '6' => {
+            db.print("\n Created new image: ");
+            db.print(name);
             img_type = Img_Type.ppm;
-            return Image{ .img_type = img_type, .data = data, .height = im_height, .width = im_width };
+            return Image{ .name = name, .img_type = img_type, .data = data, .height = im_height, .width = im_width };
         },
 
         else => return imgErrs.unsupportedFormat,
@@ -219,12 +222,15 @@ pub fn drawImage(x: usize, y: usize, img: Image) void {
             var imx: usize = 0;
             var imy: usize = 0;
             var d: usize = 0;
+            db.print("\nactual name: ");
+            db.print(img.name);
             while (d <= img.data.len - 3) : (d += 3) {
                 //check for overflows
                 if (imx + 1 > img.width) {
                     imx = 0;
                     imy += 1;
                 }
+
                 //we read data as a byte triplet
                 //one byte per color channel
                 //we want color as 32 bit so we have to shift the colors
@@ -382,7 +388,7 @@ pub fn printMOTD() void {
 }
 
 pub fn printLogo() void {
-    const img = createImagefromFile(@embedFile("assets/caclogo.ppm")) catch Image{ .img_type = Img_Type.ppm, .data = "cac", .height = 0, .width = 0 };
+    const img = createImagefromFile(@embedFile("assets/caclogo.ppm"), "logo") catch empty_image;
 
     printImage(img);
 }
@@ -397,7 +403,7 @@ pub fn init() void {
     const framebuffer_response = maybe_framebuffer_response.?;
 
     font = loadFont(Fonts.psf, @embedFile("assets/font.psf"), 8, 16);
-    db.print("\nLoaded font!\n");
+    //db.print("\nLoaded font!\n");
 
     framebuffers = framebuffer_response.framebuffers();
     framebuffer = framebuffers[0];
