@@ -28,6 +28,7 @@
  ⬜ App interrupt   
  🟨 Scheduler  
  🟨 Filesystem  
+ 🟨 Binaries  
  🟧 timer  
  🟧 kernel error handling  
  🟧 Optimized memory allocator  
