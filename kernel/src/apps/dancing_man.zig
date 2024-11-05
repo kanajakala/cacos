@@ -8,10 +8,8 @@ const fs = @import("../core/fs.zig");
 var id: usize = 0;
 const n_of_images = 8;
 
+var images: [n_of_images]scr.Image = .{undefined} ** n_of_images;
 pub fn run() void {
-    //scuffed way of initializing an array of slices
-    //the empty array will then be replaced with actual data
-    var images: [n_of_images]scr.Image = .{undefined} ** n_of_images;
     var buffer: [3]u8 = undefined;
     //create the images
     for (0..n_of_images) |i| {
@@ -21,16 +19,22 @@ pub fn run() void {
             console.printErr("Unsupported image type");
             break :blk scr.empty_image;
         };
+        db.print("\n -> Name in struct: ");
+        db.print(images[i].name);
     }
     //run the animation
     //used to slow the game down
     // const slower: usize = 1_000_000;
     // var slow: usize = slower;
+    db.print(images[0].name);
+    db.print(images[2].name);
+    db.print(images[3].name);
+    db.print(images[4].name);
 
-    for (images) |img| {
+    for (0..n_of_images) |i| {
         db.print("\n\nname outside the loop: ");
-        db.print(img.name);
-        scr.drawImage(500, 100, img);
+        db.print(images[i].name);
+        scr.drawImage(500, 100, images[i]);
     }
 
     //while (scheduler.running[id]) {

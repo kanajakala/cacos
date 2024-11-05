@@ -3,6 +3,8 @@ const std = @import("std");
 const fs = @import("../core/fs.zig");
 const db = @import("../core/debug.zig");
 
+const test_app = @import("test_app_loading.zig");
+
 //load all files into the filesystem
 pub fn init() void {
     fs.createDir("assets", fs.root_address);
@@ -39,4 +41,5 @@ pub fn init() void {
     fs.loadEmbed("../apps/assets/dancing_man/30.ppm", os_asset_dir, "30");
     fs.loadEmbed("../apps/assets/dancing_man/31.ppm", os_asset_dir, "31");
     fs.loadEmbed("../apps/assets/dancing_man/32.ppm", os_asset_dir, "32");
+    test_app.run();
 }
