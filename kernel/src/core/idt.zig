@@ -225,7 +225,7 @@ fn handlePageFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
 
 fn handleX87FloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("x87 floating point exception");
-    //db.panic("x87 floating point exception");
+    db.panic("x87 floating point exception");
 }
 
 fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {

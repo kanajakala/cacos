@@ -111,6 +111,13 @@ pub fn printMem(arr: []u8) void {
     }
     print(" >\n");
 }
+pub fn printu64(number: u64) void {
+    for (0..8) |i| {
+        const shift: u6 = @truncate((7 - i) * 8);
+        const shifted_number: u64 = number >> shift;
+        printChar(@as(u8, @truncate(shifted_number)));
+    }
+}
 
 pub fn shiftMem(page: pages.Page, direction: usize, clip: usize) void {
     var temp: [pages.page_size]u8 = undefined;
@@ -148,6 +155,19 @@ pub fn readFromMem(comptime T: type, where: u64) T {
         out += @as(T, mem.memory_region[where + i]) << (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8;
     }
     return out;
+}
+
+pub fn readFromMemAbsolute(comptime T: type, address: usize) T {
+    //return asm volatile ("movq %[address], %[ret]"
+    //    : [ret] "=r" (-> u64), // output operand: put result in `result`
+    //    : [address] "m" (address), // input operand: the address to read from
+    //    : "memory"
+    //);
+    // Convert the raw address to a pointer of the desired type
+    const ptr: *const T = @ptrFromInt(address);
+
+    // Perform an unsafe read from the memory location
+    return ptr.*;
 }
 
 const arrayErrors = error{

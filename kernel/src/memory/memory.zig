@@ -12,10 +12,16 @@ pub var memory_region: []u8 = undefined;
 export var hhdm_request: limine.HhdmRequest = .{};
 pub var hhdm_offset: usize = undefined;
 
+pub var virtual_offset: usize = undefined;
+
 /// Convert physical addresses to higher half virtual addresses by adding the higher half direct
 /// map offset
-pub inline fn virtualFromPhysical(physical: u64) u64 {
-    return physical + hhdm_offset;
+pub inline fn virtualFromPhysical(address: u64) u64 {
+    return address + hhdm_offset;
+}
+//might not work
+pub inline fn virtualFromIndex(index: u64) u64 {
+    return virtual_offset + index;
 }
 
 fn hhinit() void {
@@ -43,8 +49,8 @@ pub fn init() void {
 
     for (memory_map_response.entries()) |memory_map_entry| {
         if (memory_map_entry.kind == .usable and (best_memory_region == null or memory_map_entry.length > best_memory_region.?.len)) {
-            //best_memory_region = @as([*]u8, @ptrFromInt(memory_map_entry.base))[0..memory_map_entry.length];
             best_memory_region = @as([*]u8, @ptrFromInt(virtualFromPhysical(memory_map_entry.base)))[0..memory_map_entry.length];
+            virtual_offset = virtualFromPhysical(memory_map_entry.base);
         }
     }
 

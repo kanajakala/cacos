@@ -128,8 +128,8 @@ fn run() void {
     startGame(snake);
 
     //create the score file
-    fs.createDir("snake", fs.root_address);
-    fs.createFile("highscore.snake", fs.addressFromName("snake"));
+    fs.createFile("snake", fs.Type.directory, fs.root_address);
+    fs.createFile("highscore.snake", fs.Type.text, fs.addressFromName("snake"));
     file = fs.addressFromName("highscore.snake");
     //fs.writeData(file, "0");
 

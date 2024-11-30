@@ -25,9 +25,9 @@ pub fn ls() void {
     for (0..fs.number_of_files) |i| {
         const address = fs.addressFromSb(i);
         const name = fs.getName(address);
-        const ftype: u8 = fs.getType(address);
+        const ftype = fs.getType(address);
         if (fs.getParent(address) == fs.current_dir) {
-            if (ftype == 1) {
+            if (ftype == fs.Type.directory) {
                 console.printInfo(name);
             } else {
                 console.print(name);
@@ -40,7 +40,7 @@ pub fn touch() void {
     const offset = "touch ".len;
     const name = db.firstWordOfArray(stream.stdin[offset..]);
     if (fs.fileExists(name)) return console.printErr("File already exists !");
-    fs.createFile(name, fs.current_dir);
+    fs.createFile(name, fs.Type.text, fs.current_dir);
 }
 
 pub fn cd() void {
@@ -51,7 +51,9 @@ pub fn cd() void {
         fs.current_dir = parent_dir;
         return;
     }
+    //error checking
     if (!fs.fileExists(name)) return console.printErr(no_file);
+    if (fs.getType(fs.addressFromName(name)) != fs.Type.directory) return console.printErr("can't cd into file !");
     fs.current_dir = fs.addressFromName(name);
     if (fs.current_dir == 0) fs.current_dir = fs.root_address;
 }
@@ -62,9 +64,11 @@ pub fn mv() void {
     const parent_dir_name: []const u8 = db.firstWordOfArray(stream.stdin[offset + file.len + 1 ..]);
     db.print(parent_dir_name);
     var parent_dir: u64 = fs.addressFromName(parent_dir_name);
+
+    //error checking
     if (!fs.fileExists(file)) return console.printErr(no_file);
     if (db.hashStr(file) == db.hashStr("..")) parent_dir = fs.getParent(fs.current_dir);
-    if (fs.getType(parent_dir) != 1) return console.printErr("Must move to directory");
+    if (fs.getType(parent_dir) != fs.Type.directory) return console.printErr("Must move to directory");
     fs.setParent(fs.addressFromName(file), parent_dir);
 }
 
@@ -72,7 +76,7 @@ pub fn mkdir() void {
     const offset = "mkdir ".len;
     const name: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
     if (fs.fileExists(name)) return console.printErr("File already exists !");
-    fs.createDir(name, fs.current_dir);
+    fs.createFile(name, fs.Type.directory, fs.current_dir);
 }
 
 pub fn pwd() void {
@@ -97,7 +101,11 @@ pub fn write() void {
     db.print("\n-----------Writing Data-----------\n");
     const command_offset = "write ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+
+    //error checking
     if (!fs.fileExists(file_name)) return console.printErr(no_file);
+    if (fs.getType(fs.addressFromName(file_name)) == fs.Type.directory) return console.printErr("can't write to directory !");
+
     const offset = command_offset + file_name.len + 1;
     const in = stream.stdin[offset..];
     const file = fs.addressFromName(file_name);
@@ -107,7 +115,11 @@ pub fn write() void {
 pub fn read() void {
     const command_offset = "read ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+
+    //error checking
     if (!fs.fileExists(file_name)) return console.printErr(no_file);
+    if (fs.getType(fs.addressFromName(file_name)) == fs.Type.directory) return console.printErr("can't read directory !");
+
     const file: fs.File = fs.open(file_name);
     scr.newLine();
     for (0..file.size * fs.block_size) |i| {
@@ -125,6 +137,8 @@ pub fn stat() void {
     var buffer: [10]u8 = undefined;
     console.print("Name: ");
     console.printf(file.name);
+    console.print("Type: ");
+    console.printf(@tagName(file.ftype));
     console.print("Size: ");
     console.printf(db.numberToStringDec(file.size * fs.block_size / 1_000, &buffer));
     console.printf("kb");
