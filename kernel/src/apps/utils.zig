@@ -21,6 +21,8 @@ pub fn echo() void {
 
 const no_file = "No such file";
 
+// FILESYSTEM COMMANDS
+
 pub fn ls() void {
     for (0..fs.number_of_files) |i| {
         const address = fs.addressFromSb(i);
@@ -180,6 +182,15 @@ pub fn append() void {
     fs.appendData(file, in);
 }
 
+//EXECUTABLE COMMANDS
+pub fn run() void {
+    const command_offset = "run ".len;
+    const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
+    const file = fs.addressFromName(file_name);
+    scheduler.execute(file);
+}
+
+//HELP
 pub fn help() void {
     //simple help menu to explain commands
     scr.newLine();
@@ -254,6 +265,9 @@ pub fn help() void {
 
     scr.print("display [file]", scr.primary);
     scr.print(" -> displays the provided image\n", scr.text);
+
+    scr.print("run [executable]", scr.primary);
+    scr.print(" -> runs the provided executable\n", scr.text);
 }
 
 var value: usize = undefined;

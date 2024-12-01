@@ -13,7 +13,6 @@ const cacfetch = @import("../apps/cacfetch.zig");
 const snake = @import("../apps/snake.zig");
 const editor = @import("../apps/editor.zig");
 const dancing_man = @import("../apps/dancing_man.zig");
-const loading = @import("../apps/loading.zig");
 
 const out_color = scr.text;
 
@@ -83,7 +82,7 @@ pub fn execute_command() void {
         db.hashStr("editor") => editor.start(),
         db.hashStr("display") => utils.display(),
         db.hashStr("dance") => dancing_man.start(),
-        db.hashStr("run") => loading.run(),
+        db.hashStr("run") => utils.run(),
         db.hashStr("stop") => {
             db.print("Stopping");
             print("Stopping");

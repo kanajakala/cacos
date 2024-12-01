@@ -137,28 +137,19 @@ pub fn init() void {
     load();
     //set descriptors for various errors
     setDescriptor(0, @intFromPtr(&handleDivisionError), 0);
-    setDescriptor(1, @intFromPtr(&handleDivisionError), 0);
-    setDescriptor(2, @intFromPtr(&handleDebug), 0);
-    setDescriptor(3, @intFromPtr(&handleBreakpoint), 0);
-    setDescriptor(4, @intFromPtr(&handleOverflow), 0);
+    setDescriptor(1, @intFromPtr(&handleDebug), 0);
+    setDescriptor(2, @intFromPtr(&handleBreakpoint), 0);
+    setDescriptor(3, @intFromPtr(&handleOverflow), 0);
     setDescriptor(5, @intFromPtr(&handleBoundRangeExceeded), 0);
     setDescriptor(6, @intFromPtr(&handleInvalidOpcode), 0);
     setDescriptor(7, @intFromPtr(&handleDeviceNotAvailable), 0);
     setDescriptor(8, @intFromPtr(&handleDoubleFault), 0);
-    setDescriptor(9, @intFromPtr(&handleSegmentationFault), 0);
     setDescriptor(10, @intFromPtr(&handleSegmentationFault), 0);
-    setDescriptor(11, @intFromPtr(&handleSegmentationFault), 0);
-    setDescriptor(12, @intFromPtr(&handleGeneralProtectionFault), 0);
-    setDescriptor(13, @intFromPtr(&handlePageFault), 0);
-    setDescriptor(14, @intFromPtr(&handleX87FloatingPointException), 0);
-    setDescriptor(15, @intFromPtr(&handleAlignmentCheck), 0);
-    setDescriptor(16, @intFromPtr(&handleMachineCheck), 0);
-    setDescriptor(17, @intFromPtr(&handleSIMDFloatingPointException), 0);
-    setDescriptor(18, @intFromPtr(&handleVirtualizationException), 0);
-    setDescriptor(19, @intFromPtr(&handleControlProtectionException), 0);
-    setDescriptor(20, @intFromPtr(&handleHypervisorInjectionException), 0);
-    setDescriptor(22, @intFromPtr(&handleVMMCommunicationException), 0);
-    setDescriptor(22, @intFromPtr(&handleSecurityException), 0);
+    setDescriptor(13, @intFromPtr(&handleGeneralProtectionFault), 0);
+    setDescriptor(14, @intFromPtr(&handlePageFault), 0);
+    setDescriptor(17, @intFromPtr(&handleAlignmentCheck), 0);
+    setDescriptor(18, @intFromPtr(&handleMachineCheck), 0);
+    setDescriptor(19, @intFromPtr(&handleSIMDFloatingPointException), 0);
 
     //initialize the PIC
     pic.primary.init(0x20);
@@ -170,12 +161,12 @@ pub fn init() void {
 
 fn handleDivisionError(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("division error");
-    db.panic("division error");
+    db.print("division error");
 }
 
 fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("debug");
-    db.panic("debug");
+    db.print("debug");
 }
 
 fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
@@ -185,32 +176,32 @@ fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
 
 fn handleOverflow(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("overflow");
-    db.panic("overflow");
+    db.print("overflow");
 }
 
 fn handleBoundRangeExceeded(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("bound range exceeded");
-    db.panic("bound range exceeded");
+    db.print("bound range exceeded");
 }
 
 fn handleInvalidOpcode(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("invalid opcode");
-    db.panic("invalid opcode");
+    db.print("invalid opcode");
 }
 
 fn handleDeviceNotAvailable(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("device not available");
-    db.panic("device not available");
+    db.print("device not available");
 }
 
 fn handleDoubleFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("double fault");
-    db.panic("double fault");
+    db.print("double fault");
 }
 
 fn handleSegmentationFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("segmentation fault");
-    db.panic("segmentation fault");
+    db.print("segmentation fault");
 }
 
 fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
@@ -220,50 +211,20 @@ fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.Interrupt) vo
 
 fn handlePageFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("page fault");
-    //db.panic("page fault");
-}
-
-fn handleX87FloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    console.printErr("x87 floating point exception");
-    db.panic("x87 floating point exception");
+    db.print("page fault");
 }
 
 fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("alignment check: {}");
-    db.panic("alignment check: {}");
+    db.print("alignment check: {}");
 }
 
 fn handleMachineCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("machine check");
-    db.panic("machine check");
+    db.print("machine check");
 }
 
 fn handleSIMDFloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
     console.printErr("simd floating point exception");
-    db.panic("simd floating point exception");
-}
-
-fn handleVirtualizationException(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    console.printErr("virtualization exception");
-    db.panic("virtualization exception");
-}
-
-fn handleControlProtectionException(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    console.printErr("control protection exception");
-    db.panic("control protection exception");
-}
-
-fn handleHypervisorInjectionException(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    console.printErr("hypervisor injection exception");
-    db.panic("hypervisor injection exception");
-}
-
-fn handleVMMCommunicationException(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    console.printErr("vmm communication exception");
-    db.panic("vmm communication exception");
-}
-
-fn handleSecurityException(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    console.printErr("security exception");
-    db.panic("security exception");
+    db.print("simd floating point exception");
 }

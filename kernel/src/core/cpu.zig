@@ -1,3 +1,5 @@
+const db = @import("debug.zig");
+
 pub inline fn stop() noreturn {
     while (true) {
         asm volatile ("hlt");
@@ -60,4 +62,71 @@ pub inline fn hang() noreturn {
     while (true) {
         asm volatile ("hlt");
     }
+}
+
+pub fn jump(address: u64) void {
+    db.print("\nJUMPING TO: ");
+    db.printValue(address);
+    db.print("\n");
+    asm volatile (
+        \\jmp *%[address]
+        : // no output
+        : [address] "{rax}" (address),
+        : "rax", "memory"
+    );
+}
+
+pub const Context = struct {
+    ip: u64, //saves the instruction pointer
+    sp: u64, //saves the stack pointer
+
+    pub fn save(self: *Context) void {
+        self.ip = getInstructionPointer();
+        self.sp = getStackPointer();
+        self.debug();
+    }
+
+    pub fn restore(self: *Context) void {
+        //restore stack pointer
+        //const sp = self.sp; //we create consts because inline assembly does't allow struct fields
+        //asm volatile (
+        //    \\mov %[addr], %%rsp  // Restore stack pointer
+        //    :
+        //    : [addr] "r" (sp),
+        //    : "memory"
+        //);
+        db.print("  restored stack pointer\n");
+        self.debug();
+    }
+
+    pub fn debug(self: *Context) void {
+        db.print("\nsaved SP: ");
+        db.printValue(self.sp);
+        db.print("\n-----\n");
+        db.print("real SP: ");
+        db.printValue(getStackPointer());
+        db.print("\n");
+    }
+};
+
+pub var context: Context = Context{ .ip = 0, .sp = 0 };
+
+pub fn getInstructionPointer() u64 {
+    return asm volatile (
+        \\call 1f
+        \\1:
+        \\pop %[ret]
+        : [ret] "=r" (-> u64),
+        :
+        : "memory"
+    );
+}
+
+fn getStackPointer() u64 {
+    return asm volatile (
+        \\mov %%rsp, %[ret]
+        : [ret] "=r" (-> u64),
+        :
+        : "memory"
+    );
 }

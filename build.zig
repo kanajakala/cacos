@@ -56,7 +56,12 @@ pub fn build(b: *std.Build) void {
     kernel.root_module.addImport("limine", limine.module("limine"));
     kernel.setLinkerScriptPath(b.path("kernel/linker.ld"));
 
+    const app_cmd = b.addSystemCommand(&.{ "bash", "scripts/apps.sh" });
+    const app_step = b.step("app", "Assemble all asm apps");
+    app_step.dependOn(&app_cmd.step);
+
     const kernel_step = b.step("kernel", "Build the kernel");
+    kernel_step.dependOn(&app_cmd.step);
     kernel_step.dependOn(&b.addInstallArtifact(kernel, .{
         .dest_dir = .{ .override = .prefix },
     }).step);

@@ -388,7 +388,7 @@ pub fn printMOTD() void {
 }
 
 pub fn printLogo() void {
-    const img = createImagefromFile(@embedFile("assets/caclogo.ppm"), "logo") catch empty_image;
+    const img = createImagefromFile(@embedFile("../filesystem/assets/caclogo.ppm"), "logo") catch empty_image;
     printImage(img);
 }
 
@@ -401,8 +401,7 @@ pub fn init() void {
 
     const framebuffer_response = maybe_framebuffer_response.?;
 
-    font = loadFont(Fonts.psf, @embedFile("assets/font.psf"), 8, 16);
-    //db.print("\nLoaded font!\n");
+    font = loadFont(Fonts.psf, @embedFile("../filesystem/assets/font.psf"), 8, 16);
 
     framebuffers = framebuffer_response.framebuffers();
     framebuffer = framebuffers[0];

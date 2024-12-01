@@ -368,6 +368,11 @@ pub fn getAddressOfNextBlock(address: u64) u64 {
     return db.readFromMem(u64, address + fixed_header_offset);
 }
 
+///load all files into the filesystem
+pub fn loadFiles() void {
+    return;
+}
+
 pub fn init() void {
     super_block = .{pages.empty_page} ** max_files;
     //creation of root
@@ -375,6 +380,9 @@ pub fn init() void {
     const address = addressFromName("/");
     root_address = address;
     current_dir = root_address;
-    loadEmbed("../info.txt", root_address, "info", Type.text);
-    //db.print("\nloaded embed");
+
+    //const files: []const u8 = @embedFile("cacos.fs");
+    loadFiles();
+
+    loadEmbed("../filesystem/info.txt", root_address, "info", Type.text);
 }
