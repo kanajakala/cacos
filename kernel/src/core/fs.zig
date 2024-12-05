@@ -6,6 +6,8 @@ const pages = @import("../memory/pages.zig");
 const memory = @import("../memory/memory.zig");
 const mem = &memory.memory_region;
 
+const fsimg: []const u8 = @embedFile("../cacos.fs");
+
 pub const block_size = pages.page_size;
 
 //The super block contains the start address of each file
@@ -214,7 +216,6 @@ pub fn writeData(file: u64, data: []const u8) void {
     //db.printValueDec(data.len);
 
     const number_of_blocks = data.len / block_size + 1;
-    //db.printValueDec(number_of_blocks);
 
     for (0..number_of_blocks) |i| {
         var block: u64 = undefined;
@@ -318,6 +319,7 @@ pub fn open(file: []const u8) File {
     return File{ .name = file, .size = size, .ftype = ftype, .data = &data };
 }
 
+///deprecated, the file to embed should be put in the filesystem instead
 pub fn loadEmbed(comptime path: []const u8, parent: u64, name: []const u8, ftype: Type) void {
     const file: []const u8 = @embedFile(path);
     createFile(name, ftype, parent);
@@ -370,7 +372,65 @@ pub fn getAddressOfNextBlock(address: u64) u64 {
 
 ///load all files into the filesystem
 pub fn loadFiles() void {
-    return;
+
+    //file header in the filesystem file:
+    // ┌─────┬──────┬─────────────┬──────────┬────────────┬──────┬───────────┬──────────────────┐
+    // │type │ size │ header size │ name len │ parent len │ name │ parent    │ data             │
+    // ├─────┼──────┼─────────────┼──────────┼────────────┼──────┼───────────┼──────────────────┤
+    // │0    │ 1    │ 9           │ 10       │ 11         │ 12   │ 13 + nlen │ 14 + nlen + plen │
+    // ├─────┴──────┴─────────────┴──────────┴────────────┴──────┴───────────┴──────────────────┤
+    // │ tsssssssshnpNPD                                                                        │
+    // └────────────────────────────────────────────────────────────────────────────────────────┘
+
+    const n_of_files = fsimg["CaCOS-fs".len];
+    var offset: usize = "CaCOS-fs".len + 1;
+    for (0..n_of_files) |_| {
+        const ftype: Type = if (fsimg[offset] == 0) Type.directory else Type.text;
+        //db.print("File type: ");
+        //db.printValue(fsimg[offset]);
+        //db.print("\n");
+
+        const size: u64 = db.arrayToU64(fsimg[offset + 1 .. offset + 1 + 8]);
+        //db.print("size: ");
+        //db.printValueDec(db.arrayToU64(fsimg[offset + 1 .. offset + 1 + 8]));
+        //db.print("\n");
+
+        const header_size: u8 = fsimg[offset + 9];
+        //db.print("header size: ");
+        //db.printValue(fsimg[offset + 9]);
+        //db.print("\n");
+
+        const name_length: u8 = fsimg[offset + 10];
+        //db.print("Name length: ");
+        //db.printValue(fsimg[offset + 10]);
+        //db.print("\n");
+
+        const parent_length: u8 = fsimg[offset + 11];
+        //db.print("Parent length: ");
+        //db.printValue(fsimg[offset + 11]);
+        //db.print("\n");
+
+        const name: []const u8 = @constCast(fsimg[offset + 12 .. offset + 12 + name_length]);
+        //db.print("name: ");
+        //db.print(@constCast(fsimg[offset + 12 .. offset + 12 + name_length]));
+        //db.print("\n");
+
+        const parent: []const u8 = @constCast(fsimg[offset + 12 + name_length .. offset + 12 + parent_length + name_length]);
+        //db.print("parent: ");
+        //db.print(@constCast(fsimg[offset + 12 + name_length .. offset + 12 + parent_length + name_length]));
+        //db.print("\n");
+
+        //creating the file
+        //db.print("creating the file\n");
+        createFile(name, ftype, addressFromName(parent));
+        //writing the data to the file
+        //(if file contains data)
+        if (size > 0) {
+            const file = addressFromName(name);
+            writeData(file, fsimg[offset + header_size .. offset + header_size + size]);
+        }
+        offset += header_size + size;
+    }
 }
 
 pub fn init() void {
@@ -383,6 +443,4 @@ pub fn init() void {
 
     //const files: []const u8 = @embedFile("cacos.fs");
     loadFiles();
-
-    loadEmbed("../filesystem/info.txt", root_address, "info", Type.text);
 }

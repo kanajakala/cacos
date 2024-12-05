@@ -388,8 +388,9 @@ pub fn printMOTD() void {
 }
 
 pub fn printLogo() void {
-    const img = createImagefromFile(@embedFile("../filesystem/assets/caclogo.ppm"), "logo") catch empty_image;
-    printImage(img);
+    //const img = createImagefromFile(@embedFile("../filesystem/assets/caclogo.ppm"), "logo") catch empty_image;
+    //printImage(img);
+    printMOTD();
 }
 
 pub fn init() void {

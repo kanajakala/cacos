@@ -12,13 +12,6 @@ const scr = @import("drivers/screen.zig");
 const kb = @import("drivers/keyboard.zig");
 const console = @import("drivers/console.zig");
 
-const apps = @import("apps/init.zig");
-
-const files: []const u8 = @embedFile("cacos.fs");
-
-//load all files into the filesystem
-pub fn loadFiles() void {}
-
 export fn _start() callconv(.C) noreturn {
     //db.print("\nStarted CaCOS loading\n");
 
@@ -32,9 +25,6 @@ export fn _start() callconv(.C) noreturn {
     pages.init();
 
     fs.init();
-    loadFiles();
-
-    apps.init();
 
     console.init();
 

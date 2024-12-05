@@ -92,7 +92,7 @@ pub fn printArray(arr: []const u8) void {
     }
     printChar('}');
 }
-pub fn printArrayFull(arr: []u8) void {
+pub fn printArrayFull(arr: []const u8) void {
     print(".{ ");
     for (arr) |i| {
         printChar(' ');
@@ -153,6 +153,14 @@ pub fn readFromMem(comptime T: type, where: u64) T {
     var out: T = 0;
     for (0..@sizeOf(T)) |i| {
         out += @as(T, mem.memory_region[where + i]) << (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8;
+    }
+    return out;
+}
+
+pub fn arrayToU64(array: []const u8) u64 {
+    var out: u64 = 0;
+    for (0..8) |i| {
+        out += @as(u64, array[i]) << (8 - @as(u6, @truncate(i)) - 1) * 8;
     }
     return out;
 }
