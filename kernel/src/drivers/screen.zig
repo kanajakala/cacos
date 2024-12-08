@@ -69,7 +69,7 @@ pub const errorc = 0xff0000;
 pub const primary = 0x8dfdcc;
 pub const accent = 0xf6aa70;
 
-pub inline fn putpixel(x: usize, y: usize, color: u32) void {
+pub inline fn putPixel(x: usize, y: usize, color: u32) void {
     // Calculate the pixel offset using the framebuffer information we obtained above.
     // We skip `y` scanlines (pitch is provided in bytes) and add `x * 4` to skip `x` pixels forward.
     const pixel_offset = y * framebuffer.pitch + x * 4;
@@ -85,7 +85,7 @@ pub fn drawRect(x: usize, y: usize, w: usize, h: usize, color: u32) void {
     //if (x + w > width or y + h > height) db.panic("Rectangle overflow");
     for (0..dw) |dx| {
         for (0..dh) |dy| {
-            putpixel(x + dx, y + dy, color);
+            putPixel(x + dx, y + dy, color);
         }
     }
 }
@@ -213,7 +213,7 @@ pub fn drawImage(x: usize, y: usize, img: Image) void {
                     if (img.data[d] & mask[i] == 0) {
                         const pixel_x = x + @mod((d * 8 + i), img.width);
                         const pixel_y = y + (d * 8 + i) / img.width;
-                        putpixel(pixel_x, pixel_y, 0xffffff);
+                        putPixel(pixel_x, pixel_y, 0xffffff);
                     }
                 }
             }
@@ -240,7 +240,7 @@ pub fn drawImage(x: usize, y: usize, img: Image) void {
                 const blue = @as(u24, img.data[d + 2]);
                 const color: u32 = (red + green + blue);
                 //we consider pure black as transparent for esthetical reasons
-                if (color >= 0x11111) putpixel(x + imx, y + imy, color);
+                if (color >= 0x11111) putPixel(x + imx, y + imy, color);
                 imx += 1;
             }
         },
@@ -279,7 +279,7 @@ pub fn drawCharacter(char: u8, fg: u32) void {
     manageOwerflow(font.width);
     for (0..font.height) |cy| {
         for (0..font.width) |cx| {
-            if (font.data[glyph_offset + cy] & mask[cx] != 0) putpixel(cx + col, cy + row, fg);
+            if (font.data[glyph_offset + cy] & mask[cx] != 0) putPixel(cx + col, cy + row, fg);
         }
     }
 }
