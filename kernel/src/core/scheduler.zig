@@ -61,22 +61,16 @@ pub fn execute(file: u64) void {
     //which is retrieved here
     const binary: u64 = fs.fileToMem(file)[0];
 
-    db.print("first context save:");
-    cpu.context.save();
-
-    db.print("\njumping to start of binary\n");
+    //this function call calls the binary
+    //by using call in assembly (inside cpu.jump) the address of the next instruction is saved
+    //on the stack, when the program returns it pops the address and jumps to it
+    //allowing the kernel to resume execution
     cpu.jump(mem.virtualFromIndex(binary));
-
-    db.print("returned to kernel\n");
 }
 
 pub fn returnToKernel(_: *idt.InterruptStackFrame) callconv(.C) void {
-    db.print("\n\nReturning to kernel...\n");
-    db.print("\ncontext after interrupt call");
-    cpu.context.debug();
-    db.print("\nattempting to restore kernel:\n");
-    cpu.context.restore();
-    db.print("Restore succesful\n");
+    //Currently does not work
+    db.panic("Not functional return-to-kernel interrupt has been called !");
 }
 
 pub fn init() void {

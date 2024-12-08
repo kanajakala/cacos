@@ -138,8 +138,8 @@ pub fn init() void {
     //set descriptors for various errors
     setDescriptor(0, @intFromPtr(&handleDivisionError), 0);
     setDescriptor(1, @intFromPtr(&handleDebug), 0);
-    setDescriptor(2, @intFromPtr(&handleBreakpoint), 0);
-    setDescriptor(3, @intFromPtr(&handleOverflow), 0);
+    setDescriptor(3, @intFromPtr(&handleBreakpoint), 0);
+    setDescriptor(4, @intFromPtr(&handleOverflow), 0);
     setDescriptor(5, @intFromPtr(&handleBoundRangeExceeded), 0);
     setDescriptor(6, @intFromPtr(&handleInvalidOpcode), 0);
     setDescriptor(7, @intFromPtr(&handleDeviceNotAvailable), 0);
@@ -170,8 +170,8 @@ fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {
 }
 
 fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    scheduler.stopAll();
     console.printErr("breakpoint");
+    db.print("breakpoint");
 }
 
 fn handleOverflow(_: *InterruptStackFrame) callconv(.Interrupt) void {

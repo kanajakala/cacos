@@ -65,11 +65,8 @@ pub inline fn hang() noreturn {
 }
 
 pub fn jump(address: u64) void {
-    db.print("\nJUMPING TO: ");
-    db.printValue(address);
-    db.print("\n");
     asm volatile (
-        \\jmp *%[address]
+        \\call *%[address]
         : // no output
         : [address] "{rax}" (address),
         : "rax", "memory"
