@@ -40,8 +40,9 @@ fn run() void {
     width = (scr.width / scr.font.width);
 
     var allocated_data: [fs.block_size]u8 = .{0} ** fs.block_size;
-    var data: []u8 = allocated_data[0..fs.getSize(file)];
+    var data: []u8 = allocated_data[0 .. fs.getSize(file) * fs.block_size];
     const file_data: []u8 = fs.getData(file);
+    db.print("Copied data\n");
     @memcpy(data[0..file_data.len], file_data);
 
     stream.flush();
@@ -90,7 +91,7 @@ fn run() void {
 }
 
 pub fn start() void {
-    const command_offset = "writer ".len;
+    const command_offset = "editor ".len;
     const file_name = db.firstWordOfArray(stream.stdin[command_offset..]);
     file = fs.addressFromName(file_name);
 

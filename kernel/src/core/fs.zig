@@ -256,16 +256,16 @@ pub fn appendData(file: u64, data: []u8) void {
 
 pub const max_size = 10;
 
+//for now we consider that max_size blocks is the maximum size
+//extremely wastefull (we create a list of 40kb on the stack...)
+var out: [max_size * block_size]u8 = .{0} ** (max_size * block_size);
+
 pub fn getData(file: u64) []u8 {
     //How many blocks do we need to read ?
     const number_of_blocks = getSize(file);
 
     //check if file is too big:
-    if (number_of_blocks > max_size) db.panic("File too biig to read data ! (max size 40kb, I know it'll get fixed...)");
-
-    //for now we consider that max_size blocks is the maximum size
-    //extremely wastefull (we create a list of 40kb on the stack...)
-    var out: [max_size * block_size]u8 = .{0} ** (max_size * block_size);
+    if (number_of_blocks > max_size) db.panic("File too big to read data ! (max size 40kb, I know it'll get fixed...)");
 
     for (0..number_of_blocks) |i| {
         const block = getBlock(file, i);

@@ -31,7 +31,7 @@ pub fn run() void {
                     b = 2 * (a * b) + dy;
                     a = d;
                     if (d > 200) {
-                        scr.putpixel(x, y, @truncate(t * 12));
+                        scr.putPixel(x, y, @truncate(t * 12));
                     }
                 }
             }
