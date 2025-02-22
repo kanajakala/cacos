@@ -23,19 +23,24 @@ const no_file = "No such file";
 
 // FILESYSTEM COMMANDS
 
+///prints all files in provided directory
 pub fn ls() void {
-    for (0..fs.number_of_files) |i| {
-        const address = fs.addressFromSb(i);
+    const nodes = fs.getChilds(fs.current_dir);
+    const n_of_childs = mem.memory_region[nodes.address];
+
+    for (0..n_of_childs) |i| {
+        const address: u64 = db.readFromMem(u64, nodes.address + (i * 8) + 1);
         const name = fs.getName(address);
-        const ftype = fs.getType(address);
-        if (fs.getParent(address) == fs.current_dir) {
-            if (ftype == fs.Type.directory) {
-                console.printInfo(name);
-            } else {
-                console.print(name);
-            }
+        switch (fs.getType(address)) {
+            fs.Type.directory => console.printColor(name, 0xffa300),
+            fs.Type.text => console.printColor(name, 0x00ffff),
+            fs.Type.binary => console.printColor(name, 0xaa00bb),
+            fs.Type.executable => console.printColor(name, 0xbb44ff),
+            fs.Type.image => console.printColor(name, 0xab03fd),
         }
     }
+
+    nodes.free(&pages.pt);
 }
 
 pub fn touch() void {
@@ -281,6 +286,7 @@ pub fn testMem() void {
 
     scr.print("\nAttempting allocation of ", scr.text);
     //this line makes app crash for some reason
+    //TODO: fix this and allow for specified range of pages
     //scr.print(db.numberToStringDec(value, &buffer), scr.errorc);
     scr.print(" pages", scr.text);
     db.print("\n\n\nTesting memory !");
@@ -324,7 +330,7 @@ pub fn testMem() void {
 pub fn testMemStart(parameter: usize) void {
     value = parameter;
     id = scheduler.getFree();
-    const app = scheduler.Process{ .id = id, .function = &testMem };
+    const app = scheduler.Process{ .id = id, .name = "test-memory", .function = &testMem };
     scheduler.append(app);
 }
 

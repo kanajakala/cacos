@@ -42,6 +42,6 @@ pub fn run() void {
 pub fn start(parameter: usize) void {
     precision = parameter;
     id = scheduler.getFree();
-    const app = scheduler.Process{ .id = id, .function = &run };
+    const app = scheduler.Process{ .id = id, .name = "fractal", .function = &run };
     scheduler.append(app);
 }

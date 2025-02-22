@@ -82,14 +82,14 @@ fn handleCrash(snake: pages.Page) void {
     }
 
     fs.writeData(file, db.numberToStringDec(highscore, &buffer));
-    scr.printCenter("Press r to restart, ctrl + c to quit", scr.text);
-    while (scheduler.running[id]) {
-        stream.index = 0;
-        if (stream.stdin[0] == 'r') {
-            startGame(snake);
-            return;
-        }
-    }
+    scr.printCenter("Type snake to restart", scr.text);
+    //when we are done we must free the memory
+    defer snake.free(&pages.pt);
+    snake.free(&pages.pt);
+    //then we stop
+    scheduler.stop(id);
+    stream.captured = false;
+    stream.flush();
 }
 
 fn drawScore() void {
@@ -133,8 +133,6 @@ fn run() void {
     file = fs.addressFromName("highscore.snake");
     //fs.writeData(file, "0");
 
-    //when we are done we must free the memory
-    defer pages.free(snake, &pages.pt);
     stream.captured = true;
 
     //used to slow the game down
@@ -189,11 +187,11 @@ fn run() void {
             slow = slower;
         } else slow -= 1;
     }
-    stream.captured = false;
 }
 
 pub fn start() void {
+    db.print("starting Snake !");
     id = scheduler.getFree();
-    const app = scheduler.Process{ .id = id, .function = &run };
+    const app = scheduler.Process{ .id = id, .name = "snake", .function = &run };
     scheduler.append(app);
 }

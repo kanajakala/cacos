@@ -27,6 +27,14 @@ pub const Page = struct {
     state: States,
     address: usize,
     data: []u8,
+
+    pub fn free(page: *const Page, page_table: *[number_of_pages]bool) void {
+        if (page.address == 0) {
+            page_table[0] = false;
+        } else {
+            page_table[page.address / page_size] = false;
+        }
+    }
 };
 
 pub fn alloc(page_table: *[number_of_pages]bool) !Page {
@@ -48,14 +56,6 @@ pub fn getFreePages(page_table: *[number_of_pages]bool) usize {
         }
     }
     return tot;
-}
-
-pub fn free(page: Page, page_table: *[number_of_pages]bool) void {
-    if (page.address == 0) {
-        page_table[0] = false;
-    } else {
-        page_table[page.address / page_size] = false;
-    }
 }
 
 pub fn clearPage(page: Page) void {

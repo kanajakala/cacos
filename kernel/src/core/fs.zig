@@ -27,6 +27,7 @@ pub const max_path_size = 255;
 pub const fileErrors = error{
     indexOverflow,
     fileNotFound,
+    noMemory,
 };
 
 pub const File = struct {
@@ -96,7 +97,7 @@ fn writeHeader(file: pages.Page, ftype: u8, size: u8, length: u8, parent: u64, n
     file.data[2] = length;
 
     //set the parent
-    db.writeToMem64(u64, file.address + 3, parent);
+    db.writeToMem64(u64, parent, file.address + 3);
     //write the name to the file
     db.writeStringToMem(file.address + 3 + 8, name);
 }
@@ -145,7 +146,7 @@ pub fn addBlock(file: u64) void {
     //add the new block to the first free spot
     const page: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
     const offset = getHeaderSize(file) + ((size - 1) * 8);
-    db.writeToMem64(u64, file + offset, page.address);
+    db.writeToMem64(u64, page.address, file + offset);
 }
 
 pub fn getBlock(file: u64, index: usize) u64 {
@@ -189,19 +190,19 @@ pub fn debugFile(file: u64) void {
 pub fn debugFiles() void {
     db.print("\nALL FILES IN SUPER BLOCK\n");
     for (0..number_of_files) |i| {
-        const file = addressFromSb(i);
+        const file = addressFromSuperBlock(i);
         debugFile(file);
     }
     db.print("\n\n");
 }
 
-pub fn addressFromSb(index: usize) u64 {
+pub fn addressFromSuperBlock(index: usize) u64 {
     return super_block[index].address;
 }
 
 pub fn addressFromName(name: []const u8) u64 {
     for (0..number_of_files) |i| {
-        const address: u64 = addressFromSb(i);
+        const address: u64 = addressFromSuperBlock(i);
         if (db.hashStr(getName(address)) == db.hashStr(name)) {
             return address;
         }
@@ -329,7 +330,7 @@ pub fn loadEmbed(comptime path: []const u8, parent: u64, name: []const u8, ftype
 
 pub fn fileExists(name: []const u8) bool {
     for (0..number_of_files) |i| {
-        const address = addressFromSb(i);
+        const address = addressFromSuperBlock(i);
         if (db.hashStr(name) == db.hashStr(getName(address))) return true;
     }
     return false;
@@ -347,8 +348,27 @@ pub fn getType(file: u64) Type {
 pub fn getParent(file: u64) u64 {
     return db.readFromMem(u64, file + 3);
 }
+
+pub fn getChilds(node: u64) pages.Page {
+    const page: pages.Page = pages.alloc(&pages.pt) catch pages.empty_page;
+
+    //to get how many childs there are we need to check every file and check if their parent
+    //matches this node
+    var number_of_childs: u8 = 0;
+    for (0..number_of_files) |i| {
+        const tested_node = addressFromSuperBlock(i);
+        if (getParent(tested_node) == node) {
+            //we write this file as a child
+            db.writeToMem64(u64, tested_node, page.address + (number_of_childs * 8) + 1);
+            number_of_childs += 1;
+        }
+    }
+    mem.*[page.address] = number_of_childs;
+    return page;
+}
+
 pub fn setParent(file: u64, parent: u64) void {
-    db.writeToMem64(u64, file + 3, parent);
+    db.writeToMem64(u64, parent, file + 3);
 }
 
 pub fn getDataStart(file: u64) u64 {

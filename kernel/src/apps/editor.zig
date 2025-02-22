@@ -98,6 +98,6 @@ pub fn start() void {
     stream.captured = true;
 
     id = scheduler.getFree();
-    const app = scheduler.Process{ .id = id, .function = &run };
+    const app = scheduler.Process{ .id = id, .name = "editor", .function = &run };
     scheduler.append(app);
 }

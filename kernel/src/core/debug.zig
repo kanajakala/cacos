@@ -1,7 +1,10 @@
 const std = @import("std");
 const cpu = @import("cpu.zig");
+const scheduler = @import("scheduler.zig");
+
 const mem = @import("../memory/memory.zig");
 const pages = @import("../memory/pages.zig");
+
 const scr = @import("../drivers/screen.zig");
 const console = @import("../drivers/console.zig");
 const stream = @import("../drivers/stream.zig");
@@ -118,6 +121,31 @@ pub fn printu64(number: u64) void {
         printChar(@as(u8, @truncate(shifted_number)));
     }
 }
+pub fn printPage(page: pages.Page, range: usize) void {
+    print("printing page at: ");
+    printValue(page.address);
+    print("\nPrinting Numerical values\n");
+    for (0..72) |_| print("-");
+    for (0..range) |i| {
+        if (@mod(i, 32) == 0) print("\n");
+        if (@mod(i, 8) == 0) print(" | ");
+        printValue(mem.memory_region[page.address + i]);
+        print(" ");
+    }
+    print("\n");
+    for (0..72) |_| print("-");
+
+    print("\n\nPrinting Numerical values\n");
+    for (0..72) |_| print("-");
+    for (0..range) |i| {
+        if (@mod(i, 32) == 0) print("\n");
+        if (@mod(i, 8) == 0) print(" | ");
+        printChar(mem.memory_region[page.address + i]);
+        print(" ");
+    }
+    print("\n");
+    for (0..72) |_| print("-");
+}
 
 pub fn shiftMem(page: pages.Page, direction: usize, clip: usize) void {
     var temp: [pages.page_size]u8 = undefined;
@@ -128,7 +156,7 @@ pub fn shiftMem(page: pages.Page, direction: usize, clip: usize) void {
 }
 
 //TODO merge these 2 functions
-pub fn writeToMem64(comptime T: type, where: usize, data: T) void {
+pub fn writeToMem64(comptime T: type, data: T, where: usize) void {
     for (0..@sizeOf(T)) |i| {
         mem.memory_region[where + i] = @as(u8, @truncate(data >> (@sizeOf(T) - @as(u6, @truncate(i)) - 1) * 8));
     }
@@ -276,4 +304,14 @@ pub fn stdinToString(in: [stream.stream_size]u8) []const u8 {
         }
     }
     return out;
+}
+
+pub fn printProcesses() void {
+    print("\nRunning processes:");
+    for (0..scheduler.running.len - 1) |i| {
+        if (scheduler.running[i]) {
+            print("\n  ->");
+            print(scheduler.processes[i].name);
+        }
+    }
 }

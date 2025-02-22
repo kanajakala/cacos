@@ -74,6 +74,7 @@ pub fn handleKey(key: kb.KeyEvent) void {
                 codes.key_l => scr.clear(),
                 codes.key_c => {
                     scheduler.stopAll();
+                    db.printProcesses();
                     captured = false;
                     flush();
                 },

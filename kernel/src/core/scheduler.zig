@@ -7,6 +7,7 @@ const mem = @import("../memory/memory.zig");
 
 pub const Process = struct {
     id: usize,
+    name: []const u8,
     function: *const fn () void,
 
     pub fn remove(self: *Process) void {
@@ -20,15 +21,16 @@ pub const Process = struct {
 };
 
 //empy process
-const empty: Process = Process{ .id = 0, .function = undefined };
+const empty: Process = Process{ .id = 0, .name = "", .function = undefined };
+pub const max_processes = 256;
 //list of all processes to be run
-pub var processes: [256]Process = .{empty} ** 256;
+pub var processes: [max_processes]Process = .{empty} ** max_processes;
 //State of all processes (true means that the process is running)
-pub var running: [256]bool = .{false} ** 256;
+pub var running: [max_processes]bool = .{false} ** max_processes;
 
 pub fn append(proc: Process) void {
     if (proc.id == 0) return db.panic("Process 0 is reserved");
-    if (proc.id >= 255) return db.panic("id can't be bigger than 255");
+    if (proc.id >= max_processes - 1) return db.panic("id can't be bigger than 256");
 
     processes[proc.id] = proc;
     running[proc.id] = true;
@@ -43,7 +45,7 @@ pub fn getFree() usize {
 }
 
 pub fn stop(id: usize) void {
-    if (id >= 255) return db.panic("id can't be bigger than 255");
+    if (id >= 255) return db.panic("Scheduler -> stop: id can't be bigger than 255");
     processes[id] = empty;
     running[id] = false;
 }

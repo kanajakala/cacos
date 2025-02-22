@@ -25,6 +25,15 @@ pub fn print(str: []const u8) void {
         }
     }
 }
+pub fn printColor(str: []const u8, color: u24) void {
+    scr.newLine();
+    for (str, 0..str.len) |char, i| {
+        if (char != 0) {
+            stream.stdout[i] = char;
+            scr.printChar(char, color);
+        }
+    }
+}
 pub fn printf(str: []const u8) void {
     for (str, 0..str.len) |char, i| {
         if (char != 0) {

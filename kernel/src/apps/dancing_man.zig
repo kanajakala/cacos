@@ -51,6 +51,6 @@ pub fn run() void {
 pub fn start() void {
     scr.clear();
     id = scheduler.getFree();
-    const app = scheduler.Process{ .id = id, .function = &run };
+    const app = scheduler.Process{ .id = id, .name = "dancing-man", .function = &run };
     scheduler.append(app);
 }
