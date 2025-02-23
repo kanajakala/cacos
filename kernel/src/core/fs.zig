@@ -102,7 +102,7 @@ fn writeHeader(file: pages.Page, ftype: u8, size: u8, length: u8, parent: u64, n
     db.writeStringToMem(file.address + 3 + 8, name);
 }
 
-pub fn createFile(name: []const u8, ftype: Type, parent: u64) void {
+pub fn createFile(name: []const u8, ftype: Type, parent: u64) u64 {
     //convert name.len to u8
     const length: u8 = @truncate(name.len);
 
@@ -119,6 +119,7 @@ pub fn createFile(name: []const u8, ftype: Type, parent: u64) void {
     //add a new block for the data of the file, if the created object is a file;
     if (ftype != Type.directory) addBlock(page.address);
     //debugFile(page.address);
+    return page.address;
 }
 
 pub fn setSize(file: u64, size: u8) void {
@@ -152,6 +153,46 @@ pub fn addBlock(file: u64) void {
 pub fn getBlock(file: u64, index: usize) u64 {
     const hsize = getHeaderSize(file);
     return db.readFromMem(u64, file + hsize + (index * 8));
+}
+
+pub fn copyFile(source_node: u64, dest_name: []const u8, dest_parent: u64) void {
+    //create a new file with a similar header (same type, same size) (different parent, different name)
+    //copy the data blocks of the source file
+    //add the addresses of these source blocks to the new file
+
+    //check for errrors
+    if (fileExists(dest_name)) db.panic("FS: copyFile: file already exists");
+
+    const dest_node: u64 = createFile(dest_name, getType(source_node), dest_parent);
+
+    const size = getSize(source_node);
+
+    for (0..size) |i| {
+        //we copy each data block to a new location, and then write it's address to the dest node
+        const source_block = getBlock(source_node, i);
+        addBlock(dest_node);
+        const dest_block = getBlock(dest_node, i);
+
+        @memcpy(mem.*[dest_block .. dest_block + block_size], mem.*[source_block .. source_block + block_size]);
+    }
+}
+
+pub fn remove(node: u64) void {
+    //free the memory used by the file
+    for (0..getSize(node)) |i| {
+        const block = getBlock(node, i);
+        pages.pt[block / pages.page_size] = false;
+    }
+    //remove the file from the super_block
+    for (0..max_files) |i| {
+        //if the current block is empty
+        if (super_block[i].address == node) {
+            super_block[i] = pages.empty_page;
+            number_of_files -= 1;
+            return;
+        }
+    }
+    return;
 }
 
 pub fn debugFile(file: u64) void {
@@ -284,7 +325,7 @@ pub fn fileToMem(file: u64) [max_size]u64 {
     const number_of_blocks = getSize(file);
 
     //check if file is too big:
-    if (number_of_blocks > max_size) db.panic("File too biig to read data ! (max size 40kb, I know it'll get fixed...)");
+    if (number_of_blocks > max_size) db.panic("File too big to read data ! (max size 40kb, I know it'll get fixed...)");
     //maximum size of 40kb files
     var page_list: [max_size]pages.Page = undefined;
     var address_book: [max_size]u64 = undefined;
@@ -386,10 +427,6 @@ pub fn getSize(file: u64) u8 {
     return mem.*[file + 1];
 }
 
-pub fn getAddressOfNextBlock(address: u64) u64 {
-    return db.readFromMem(u64, address + fixed_header_offset);
-}
-
 ///load all files into the filesystem
 pub fn loadFiles() void {
 
@@ -442,7 +479,7 @@ pub fn loadFiles() void {
 
         //creating the file
         //db.print("creating the file\n");
-        createFile(name, ftype, addressFromName(parent));
+        _ = createFile(name, ftype, addressFromName(parent));
         //writing the data to the file
         //(if file contains data)
         if (size > 0) {
@@ -456,8 +493,7 @@ pub fn loadFiles() void {
 pub fn init() void {
     super_block = .{pages.empty_page} ** max_files;
     //creation of root
-    createFile("/", Type.directory, 0);
-    const address = addressFromName("/");
+    const address = createFile("/", Type.directory, 0);
     root_address = address;
     current_dir = root_address;
 

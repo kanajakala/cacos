@@ -43,11 +43,34 @@ pub fn ls() void {
     nodes.free(&pages.pt);
 }
 
+//prints complete tree of the filesytem
+var recursion_level: usize = 0;
+pub fn tree(start: u64) void {
+    recursion_level += 1;
+    const nodes = fs.getChilds(start);
+    const n_of_childs = mem.memory_region[nodes.address];
+    scr.newLine();
+    for (0..n_of_childs) |i| {
+        const address: u64 = db.readFromMem(u64, nodes.address + (i * 8) + 1);
+        const name = fs.getName(address);
+        for (0..recursion_level) |_| console.printf("    ");
+        if (fs.getType(address) == fs.Type.directory) {
+            console.printColorf(name, 0xffa300);
+            tree(address);
+            recursion_level -= 1;
+        } else {
+            console.printColorf(name, 0x00ffff);
+            scr.newLine();
+        }
+    }
+    nodes.free(&pages.pt);
+}
+
 pub fn touch() void {
     const offset = "touch ".len;
     const name = db.firstWordOfArray(stream.stdin[offset..]);
     if (fs.fileExists(name)) return console.printErr("File already exists !");
-    fs.createFile(name, fs.Type.text, fs.current_dir);
+    _ = fs.createFile(name, fs.Type.text, fs.current_dir);
 }
 
 pub fn cd() void {
@@ -70,20 +93,42 @@ pub fn mv() void {
     const file: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
     const parent_dir_name: []const u8 = db.firstWordOfArray(stream.stdin[offset + file.len + 1 ..]);
     db.print(parent_dir_name);
-    var parent_dir: u64 = fs.addressFromName(parent_dir_name);
 
+    //if the paarent doesn't exist we rename the file
+
+    if (!fs.fileExists(parent_dir_name)) {
+        db.print("changing name\n");
+        fs.copyFile(fs.addressFromName(file), parent_dir_name, fs.current_dir);
+        //fs.remove(fs.addressFromName(file));
+        return;
+    }
+    var parent_dir: u64 = fs.addressFromName(parent_dir_name);
     //error checking
     if (!fs.fileExists(file)) return console.printErr(no_file);
     if (db.hashStr(file) == db.hashStr("..")) parent_dir = fs.getParent(fs.current_dir);
     if (fs.getType(parent_dir) != fs.Type.directory) return console.printErr("Must move to directory");
+    //move the file
     fs.setParent(fs.addressFromName(file), parent_dir);
+}
+
+pub fn cp() void {
+    const offset = "cp ".len;
+    const source_node: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
+    const dest_node: []const u8 = db.firstWordOfArray(stream.stdin[offset + source_node.len + 1 ..]);
+    fs.copyFile(fs.addressFromName(source_node), dest_node, fs.current_dir);
+}
+
+pub fn rm() void {
+    const offset = "rm ".len;
+    const node: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
+    fs.remove(fs.addressFromName(node));
 }
 
 pub fn mkdir() void {
     const offset = "mkdir ".len;
     const name: []const u8 = db.firstWordOfArray(stream.stdin[offset..]);
     if (fs.fileExists(name)) return console.printErr("File already exists !");
-    fs.createFile(name, fs.Type.directory, fs.current_dir);
+    _ = fs.createFile(name, fs.Type.directory, fs.current_dir);
 }
 
 pub fn pwd() void {

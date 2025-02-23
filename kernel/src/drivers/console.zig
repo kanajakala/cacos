@@ -34,6 +34,14 @@ pub fn printColor(str: []const u8, color: u24) void {
         }
     }
 }
+pub fn printColorf(str: []const u8, color: u24) void {
+    for (str, 0..str.len) |char, i| {
+        if (char != 0) {
+            stream.stdout[i] = char;
+            scr.printChar(char, color);
+        }
+    }
+}
 pub fn printf(str: []const u8) void {
     for (str, 0..str.len) |char, i| {
         if (char != 0) {
@@ -82,7 +90,10 @@ pub fn execute_command() void {
         db.hashStr("mkdir") => utils.mkdir(),
         db.hashStr("cd") => utils.cd(),
         db.hashStr("mv") => utils.mv(),
+        db.hashStr("cp") => utils.cp(),
+        db.hashStr("rm") => utils.rm(),
         db.hashStr("pwd") => utils.pwd(),
+        db.hashStr("tree") => utils.tree(fs.current_dir),
         db.hashStr("write") => utils.write(),
         db.hashStr("read") => utils.read(),
         db.hashStr("readhex") => utils.readhex(),
