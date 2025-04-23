@@ -1,46 +1,50 @@
-# CaCOS
+# CacOS
+```
+ ____                     _____   ____       
+/\  _`\                  /\  __`\/\  _`\     
+\ \ \/\_\     __      ___\ \ \/\ \ \,\L\_\   
+ \ \ \/_/_  /'__`\   /'___\ \ \ \ \/_\__ \   
+  \ \ \L\ \/\ \L\.\_/\ \__/\ \ \_\ \/\ \L\ \ 
+   \ \____/\ \__/.\_\ \____\\ \_____\ `\____\
+    \/___/  \/__/\/_/\/____/ \/_____/\/_____/
+                                             
+                                             
+
+```
+
 
 ## Coherent and Cohesive Operating System
 
 (It is absolutely none of these words :D )
-![Picure of the OS](./screenshots/1.png)
-![Picure of the OS](./screenshots/2.png)
-![Picure of the OS](./screenshots/3.png)
 
-### Features ?
-
- You can edit files (not persistent), type characters do very basic commands and play snake.
 
 ## The Plan
     
  Rewrite
 
-============================ => STAGE 0 (bootloader)
+============================ => STAGE 0 (bootloader) ✔️
 
- -> custom zig bootloader
-    |> load the kernel
-    |> pass the framebuffer
-    |> pass the memorymap
-    |> IDT and GDT ?
+    |> Implement Bootboot protocol ✔️
 
-============================ => STAGE 1 (core-functionnality)
- 
+============================ => STAGE 1 (core-functionnality) `kernel/core`
+
  -> framebuffer
-    |> display font
+    |> basic functions (put, square, ...)                     `core/display`
+    |> display font                                           `core/font`
  
  -> memory
-    |> page allocation
-    |> segfaults
+    |> page allocation                                        `core/alloc`
+    |> page protection                                        `core/alloc`
  
  -> interrupts
-    |> IDT
-    |> GDT
+    |> IDT                                                    `core/idt`
+    |> GDT                                                    `core/gdt`
 
  -> error handling
 
  -> Process management
 
- -> Filesystem
+ -> Filesystem                                                `core/fs`
     |> rootfs
         * use zig structures for everything
         * create file
@@ -68,8 +72,8 @@
 
 ### Dependecies
 
- To run this project you will need zig 13, a linker and Qemu
+ To run this project you will need zig 13, the ld linker, git, and qemu-system-x86_64
  
 ### How to run ?
 
- Simply run `$ zig build run-iso` to execute
+ Simply run `$ zig build run` to execute, dependecies should be downloaded automatically
