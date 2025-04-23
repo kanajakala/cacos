@@ -31,7 +31,6 @@ fn getFeatureMod(comptime arch: std.Target.Cpu.Arch) FeatureMod {
 
 pub fn build(b: *std.Build) void {
     const feature_mod = getFeatureMod(kernel_config.arch);
-    const limine = b.dependency("limine", .{});
     //const limine_raw = b.dependency("limine_raw", .{});
     const target: std.Build.ResolvedTarget = b.resolveTargetQuery(.{
         .cpu_arch = kernel_config.arch,
@@ -43,49 +42,59 @@ pub fn build(b: *std.Build) void {
 
     const kernel_optimize = b.standardOptimizeOption(.{});
 
+    //build steps
+
+    //Compile the kernel to an elf file
     const kernel = b.addExecutable(.{
-        .name = "kernel",
-        .root_source_file = b.path("kernel/src/main.zig"),
+        .name = "cacos.elf",
+        .root_source_file = b.path("kernel/src/cacos.zig"),
         .target = target,
         .optimize = kernel_optimize,
         .code_model = .kernel,
         .pic = true,
+        .strip = true,
     });
 
-    //kernel.pie = false;
-    kernel.root_module.addImport("limine", limine.module("limine"));
-    kernel.setLinkerScriptPath(b.path("kernel/linker.ld"));
+    kernel.setLinkerScriptPath(b.path("kernel/link.ld"));
 
-    const app_cmd = b.addSystemCommand(&.{ "bash", "scripts/apps.sh" });
-    const app_step = b.step("app", "Assemble all asm apps");
-    app_step.dependOn(&app_cmd.step);
-
-    const kernel_step = b.step("kernel", "Build the kernel");
-    kernel_step.dependOn(&app_cmd.step);
-    kernel_step.dependOn(&b.addInstallArtifact(kernel, .{
-        .dest_dir = .{ .override = .prefix },
+    const compile_step = b.step("compile", "Build the kernel");
+    compile_step.dependOn(&b.addInstallArtifact(kernel, .{
+        .dest_dir = .{
+            .override = .{ .custom = "../kernel/img/src/initrd" },
+        },
     }).step);
 
-    const limine_cmd = b.addSystemCommand(&.{ "bash", "scripts/limine.sh" });
-    const limine_step = b.step("limine", "Download and build limine bootloader");
-    limine_step.dependOn(&limine_cmd.step);
+    //generate an image using mkbootimg, a bootboot utility
+    const gen_cmd = b.addSystemCommand(&.{ "bash", "scripts/image.sh" });
+    const gen_step = b.step("image", "Generate the cacos image");
+    gen_step.dependOn(compile_step);
+    gen_step.dependOn(&gen_cmd.step);
 
-    const iso_cmd = b.addSystemCommand(&.{ "bash", "scripts/iso.sh" });
-    iso_cmd.step.dependOn(limine_step);
-    iso_cmd.step.dependOn(kernel_step);
-    const iso_step = b.step("iso", "Build an iso file");
-    iso_step.dependOn(&iso_cmd.step);
+    //run the kernel in quemu
+    const run_command = b.addSystemCommand(&.{
+        "qemu-system-x86_64",
+        "-s", //enable debugging
+        "-drive",
+        "format=raw,file=kernel/img/cacos.img",
+    });
 
-    const run_iso_cmd = b.addSystemCommand(&.{ "bash", "scripts/run_iso.sh" });
-    run_iso_cmd.step.dependOn(iso_step);
-    const run_iso_step = b.step("run-iso", "Run ISO file in emulator");
-    run_iso_step.dependOn(&run_iso_cmd.step);
+    const run = b.step("run", "Run Cacos");
+    run.dependOn(gen_step);
+    run.dependOn(&run_command.step);
 
+    //extras
+
+    //build the mkbootimg utility
+    const setup_cmd = b.addSystemCommand(&.{ "bash", "scripts/setup_mkbootimg.sh" });
+    const setup_step = b.step("setup", "Download and build the mkbootimg utility");
+    setup_step.dependOn(&setup_cmd.step);
+
+    //clean the directory
     const clean_cmd = b.addSystemCommand(&.{
         "rm",
         "-f",
-        "cacos.iso",
         "-r",
+        "cacos.bin",
         "zig-cache",
         "zig-out",
     });

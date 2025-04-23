@@ -11,30 +11,60 @@
 
  You can edit files (not persistent), type characters do very basic commands and play snake.
 
-### TODO:
+## The Plan
+    
+ Rewrite
 
- 🟧 Not done, 🟨 in progress, ⬜ done,
+============================ => STAGE 0 (bootloader)
 
- ⬜ Startup  
- ⬜ IDT & GDT  
- ⬜ Screen  
- ⬜ Keyboard  
- ⬜ Basic memory allocator  
- ⬜ PIC  
- ⬜ interrupt based kb driver  
- ⬜ stdin & out  
- ⬜ Scrolling  
- ⬜ Displaying PBM images  
- ⬜ App interrupt   
- 🟨 Scheduler  
- 🟨 Filesystem  
- 🟨 Binaries  
- 🟧 timer  
- 🟧 kernel error handling  
- 🟧 Optimized memory allocator  
- 🟧 integrate build system into build.zig  
- 🟧 GUI  
- 🟧 Raytracer  
+ -> custom zig bootloader
+    |> load the kernel
+    |> pass the framebuffer
+    |> pass the memorymap
+    |> IDT and GDT ?
+
+============================ => STAGE 1 (core-functionnality)
+ 
+ -> framebuffer
+    |> display font
+ 
+ -> memory
+    |> page allocation
+    |> segfaults
+ 
+ -> interrupts
+    |> IDT
+    |> GDT
+
+ -> error handling
+
+ -> Process management
+
+ -> Filesystem
+    |> rootfs
+        * use zig structures for everything
+        * create file
+        * delete file
+        * set data
+        * append data
+        * change file attributes
+
+ -> Load binaries
+
+============================ => STAGE 2 (drivers and processes)
+
+ -> Keyboard
+ -> Console
+
+============================ => STAGE 3 (apps)
+
+ -> Filesystem utils (cd mv rm touch cat pwd ls)
+ -> Base commands (echo uname ps...)
+ -> ...
+
+
+
+
 
 ### Dependecies
 
