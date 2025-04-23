@@ -66,8 +66,8 @@ pub fn build(b: *std.Build) void {
 
     //generate an image using mkbootimg, a bootboot utility
     const gen_cmd = b.addSystemCommand(&.{ "bash", "scripts/image.sh" });
+    gen_cmd.step.dependOn(compile_step);
     const gen_step = b.step("image", "Generate the cacos image");
-    gen_step.dependOn(compile_step);
     gen_step.dependOn(&gen_cmd.step);
 
     //run the kernel in quemu
@@ -77,9 +77,9 @@ pub fn build(b: *std.Build) void {
         "-drive",
         "format=raw,file=kernel/img/cacos.img",
     });
+    run_command.step.dependOn(gen_step);
 
     const run = b.step("run", "Run Cacos");
-    run.dependOn(gen_step);
     run.dependOn(&run_command.step);
 
     //extras
