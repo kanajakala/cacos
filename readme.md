@@ -37,8 +37,8 @@
     |> page protection                                        `core/alloc`
  
  -> interrupts
-    |> IDT                                                    `core/idt`
-    |> GDT                                                    `core/gdt`
+    |> IDT                                                    `cpu/idt`
+    |> GDT                                                    `cpu/gdt`
 
  -> error handling
 

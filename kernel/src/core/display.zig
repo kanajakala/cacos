@@ -18,13 +18,7 @@ pub fn init() !void {
     fb = @ptrCast(@alignCast(&framebuffer));
 
     //remove later...
-    while (true) {
-        try rect(200, 200, w - 200, h - 200, 0x280800);
-        try rect(200, 200, w - 200, h - 200, 0xff00ff);
-
-        try rect(10, 10, 20, 20, 0xff0000);
-        try copy(10, 10, 20, 20, 30, 30);
-    }
+    try rect(0, 0, w, h, 0x280800);
 }
 
 const errors = error{
@@ -50,6 +44,7 @@ pub inline fn copyLine(x: usize, y: usize, rw: usize, to_x: usize, to_y: usize) 
     const dest = fb[(to_x * 4 + (s * to_y)) / @sizeOf(u32) .. ((to_x + rw) * 4 + (s * to_y)) / @sizeOf(u32)];
     @memcpy(dest, source);
 }
+
 pub inline fn copy(x: usize, y: usize, rw: usize, rh: usize, to_x: usize, to_y: usize) !void {
     //overflow check
     if (x + rw > w or y + rh > h) return errors.overflow;
