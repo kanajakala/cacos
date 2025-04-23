@@ -1,7 +1,7 @@
 const BOOTBOOT = @import("../bootboot.zig").BOOTBOOT;
 const dsp = @import("display.zig");
 
-const fontData = @embedFile("font.psf");
+const fontData = @embedFile("../assets/font.psf");
 
 const PsfFont = packed struct {
     magic: u32, // magic bytes to identify PSF

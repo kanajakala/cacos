@@ -72,7 +72,7 @@
 
 ### Dependecies
 
- To run this project you will need zig 13, the ld linker, git, and qemu-system-x86_64
+ To run this project you will need zig 13, the ld linker, git, and qemu
  
 ### How to run ?
 
