@@ -1,16 +1,16 @@
-const BOOTBOOT = @import("bootboot.zig").BOOTBOOT;
 const dsp = @import("core/display.zig");
+const ramfs = @import("core/ramfs.zig");
 const font = @import("core/font.zig");
 const gdt = @import("cpu/gdt.zig");
 const idt = @import("cpu/idt.zig");
 
 // imported virtual addresses, see linker script
-extern var bootboot: BOOTBOOT; // see bootboot.zig
 extern var environment: [4096]u8; // configuration, UTF-8 text key=value pairs
 
 fn init() !void {
     try dsp.init();
     try font.init();
+    try ramfs.init();
     gdt.init();
 }
 

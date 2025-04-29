@@ -55,3 +55,15 @@ pub inline fn hang() noreturn {
         asm volatile ("hlt");
     }
 }
+
+///output character to debug console
+pub inline fn printChar(char: u8) void {
+    outb(0xe9, char);
+}
+
+///print to debug console
+pub inline fn print(string: []const u8) void {
+    for (string) |char| {
+        printChar(char);
+    }
+}

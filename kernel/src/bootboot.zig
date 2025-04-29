@@ -65,16 +65,16 @@ pub const MMapEnt = extern struct {
 
 pub const MMapType = enum(u4) {
     /// don't use. Reserved or unknown regions
-    MMAP_USED = 0,
+    used = 0,
 
     /// usable memory
-    MMAP_FREE = 1,
+    free = 1,
 
     /// acpi memory, volatile and non-volatile as well
-    MMAP_ACPI = 2,
+    acpi = 2,
 
     /// memory mapped IO region
-    MMAP_MMIO = 3,
+    mmio = 3,
 };
 
 pub const INITRD_MAXSIZE = 16; // Mb
