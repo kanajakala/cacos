@@ -11,12 +11,11 @@ var n_nodes: usize = undefined; //either the actual number of pages in the syste
 //pub const max_nodes: [max_n_nodes]Node = empty_node ** max_n_nodes; //list of all node
 //pub const nodes: []Node = undefined; //list of all node
 
-//the list of nodes is stored in ram
+//the list of nodes is stored in ram in a stack
 //it is a list of pointer to the node struct
 //currently we allocate a single page so there can be 4096 / 8 = 512 nodes in the filesystem
 //each node writes data in blocks which are of size one page
-//the addresses of these blocks and the owner of the blocks are stored in a global blocklist of one page
-//the combined size of all node can be of (4096 / (8 + "Size of the node id in bytes") ) * 4096 ~= 1.6Mb
+//the addresses of these blocks are stored in a stack
 
 pub var node_list: *[512]u64 = undefined;
 pub var block_list: *[512]u64 = undefined;
@@ -62,10 +61,6 @@ pub fn init() !void {
     n_nodes = mem.n_pages;
 
     //we have to convert the slice of u8 a slice of u64
-    var page: []u8 = mem.alloc() catch mem.mmap[0..0];
+    const page: []u8 = mem.alloc() catch mem.mmap[0..0];
     node_list = @alignCast(@ptrCast(page));
-
-    //same for teh block list
-    page = mem.alloc() catch mem.mmap[0..4096]; //here we allocate a new page
-
 }

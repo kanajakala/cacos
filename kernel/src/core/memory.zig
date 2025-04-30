@@ -102,6 +102,17 @@ pub const Stack = struct {
         return page[@mod(index, 4096)];
     }
 
+    ///reads a slice from the stack NOTE: the start and end index must be on the same page
+    pub fn readSlice(self: *Stack, i_start: usize, i_end: usize) ![]u8 {
+        //checks
+        if (i_start >= self.size or i_end >= self.size) return errors.outsideBounds;
+
+        //get the address of the page which needs to be read
+        const page_index = @divFloor(@min(i_start, i_end), 4096);
+        const page: *[4096]u8 = @ptrFromInt(self.stack_address_list[page_index]);
+        return page[@mod(@min(i_start, i_end), 4096)..@mod(@max(i_start, i_end), 4096)];
+    }
+
     ///push the data on top of the stack
     pub fn push(self: *Stack, data: u8) !void {
         //check if we need to allocate a new page for the stack
@@ -117,7 +128,25 @@ pub const Stack = struct {
 
         self.size += 1;
     }
-    // pub fn pop(self: *Stack) !void {}
+
+    ///push a slice on top of the stack
+    pub fn pushSlice(self: *Stack, data: []u8) !void {
+        //check if we need to allocate a new page for the stack
+        if (@rem(self.size, 4096) == 0) {
+            const page: []u8 = try alloc();
+            self.stack_address_list[@divFloor(self.size, 4096)] = @intFromPtr(@as(*[4096]u8, @alignCast(@ptrCast(page))));
+        }
+
+        //get the address of the page which needs to be written to
+        const page_index = @divFloor(self.size, 4096);
+        const page: *[4096]u8 = @ptrFromInt(self.stack_address_list[page_index]);
+        @memcpy(page[@mod(self.size, 4096) .. @mod(self.size, 4096) + data.len], data);
+
+        self.size += data.len;
+    }
+
+    //TODO: pub fn pop(self: *Stack) !void {}
+    //TODO: pub fn clear(self: *Stack) !void {} //clears the whole stack
 };
 
 pub fn init() !void {
@@ -130,7 +159,7 @@ pub fn init() !void {
 
     //the memory can be accessed as an array ( write -> mmap[index] = value  | read -> print(mmap[index]))
     mmap = @as([*]u8, @ptrFromInt(bootboot.mmap.getPtr()))[0..n_bytes];
-    //update the block list and node list to be the correct size
+    //update the node list to be the correct size
     pages = max_pages[0..n_pages];
 
     //alocate pages for the stack
