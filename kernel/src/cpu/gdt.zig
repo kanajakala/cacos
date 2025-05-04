@@ -98,7 +98,7 @@ pub noinline fn flushGdt() void {
     );
 }
 
-pub fn init() void {
+pub fn init() !void {
     const gdtr = Gdtr{
         .base = @intFromPtr(&GDT[0]),
         .limit = @sizeOf(@TypeOf(GDT)) - 1,

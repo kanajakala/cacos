@@ -8,10 +8,11 @@ const idt = @import("cpu/idt.zig");
 extern var environment: [4096]u8; // configuration, UTF-8 text key=value pairs
 
 fn init() !void {
+    try gdt.init();
+    try idt.init();
     try dsp.init();
     try font.init();
     try ramfs.init();
-    gdt.init();
 }
 
 //entry point

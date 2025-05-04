@@ -2,6 +2,7 @@
 const cpu = @import("cpu.zig");
 const pic = @import("pic.zig");
 const gdt = @import("gdt.zig");
+const db = @import("../utils/debug.zig");
 
 /// IDTEntry is an entry in the interrupt descriptor table
 const IDTEntry = packed struct(u128) {
@@ -129,7 +130,7 @@ pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callco
     setDescriptor(irq + 32, @intFromPtr(&lambda.interruptRequestEntry), 0);
 }
 
-pub fn init() void {
+pub fn init() !void {
     load();
     //set descriptors for various errors
     setDescriptor(0, @intFromPtr(&handleDivisionError), 0);
@@ -155,30 +156,58 @@ pub fn init() void {
     pic.primary.enable(pic.cascade_irq);
 }
 
-fn handleDivisionError(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleDivisionError(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: DivisionError\n");
+}
 
-fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: Debug\n");
+}
 
-fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: Breakpoint\n");
+}
 
-fn handleOverflow(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleOverflow(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: Overflow\n");
+}
 
-fn handleBoundRangeExceeded(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleBoundRangeExceeded(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: BoundRangeExceeded\n");
+}
 
-fn handleInvalidOpcode(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleInvalidOpcode(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: InvalidOpcode\n");
+}
 
-fn handleDeviceNotAvailable(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleDeviceNotAvailable(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: DeviceNotAvailable\n");
+}
 
-fn handleDoubleFault(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleDoubleFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: DoubleFault\n");
+}
 
-fn handleSegmentationFault(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleSegmentationFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: SegmentationFault\n");
+}
 
-fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: GeneralProtectionFault\n");
+}
 
-fn handlePageFault(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handlePageFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: PageFault\n");
+}
 
-fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: AlignmentCheck\n");
+}
 
-fn handleMachineCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleMachineCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: MachineCheck\n");
+}
 
-fn handleSIMDFloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {}
+fn handleSIMDFloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
+    db.print("ERROR: SIMDFloatingPointException\n");
+}
