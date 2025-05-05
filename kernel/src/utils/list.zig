@@ -1,38 +1,15 @@
-const db = @import("../utils/debug.zig");
 const mem = @import("../core/memory.zig");
 
-//lists
-//scheme of how a list works in memory
-//                      ┌──────────────────────────────────────────────────┐
-//                      │                                                  │
-// ┌page──────────────┐ │ ┌page───────────┐ ┌page───────────┐       ┌page──▼────────┐
-// │                  │ │ │               │ │               │       │               │
-// │┌subpage┐┌subpage┐│ │ │╔data═════════╗│ │╔data═════════╗│       │╔data═════════╗│
-// ││       ││       ││ │ │║             ║│ │║             ║│       │║             ║│
-// ││ ──────────────────┘ │║             ║│ │║             ║│       │║             ║│
-// ││       ││       ││   │║             ║│ │║             ║│       │╚═════════════╝│
-// │└───────┘└───────┘│   │║             ║│ │║             ║│  ...  │               │
-// │┌subpage┐┌subpage┐│   │║             ║│ │║             ║│       │               │
-// ││       ││       ││   │║             ║│ │╚═════════════╝│       │               │
-// ││       ││ │ │   ││   │║             ║│ │               │       │               │
-// ││       ││ │ │   ││   │║             ║│ │               │       │               │
-// │└───────┘└─│─│───┘│   │╚═════════════╝│ │               │       │               │
-// └───────────│─│────┘   └▲──────────────┘ └▲──────────────┘       └───────────────┘
-//             └─│─────────┘                 │
-//               └───────────────────────────┘
+const db = @import("../utils/debug.zig");
 
 //errors
-const list_errors = error{
+const errors = error{
     outsideBounds,
+    overflow,
 };
 
-pub const lists_per_page = 128; //each page contains n lists, must be a power of 2
-pub const list_size = 4096 / lists_per_page;
-
-//each page allocated for a list is split
-//we need to keep track of how full the the current page is
-pub var current_subpage: u8 = 0;
-pub var current_page: *[4096]u8 = undefined;
+//the number of pages a list can use
+pub const list_size: usize = 16;
 
 pub fn List(comptime T: type) type {
     return struct {
@@ -40,77 +17,95 @@ pub fn List(comptime T: type) type {
         const page_size = 4096 / @sizeOf(T);
 
         size: usize, //the size of the list in elements
-        address_list: *[list_size / @sizeOf(T)]T, //where the lists are stored
+        n_pages: usize, //the number of pages storing the data
+        address_list: [list_size]*[page_size]T, //where the lists are stored
 
         ///creates and initializes a new list
         pub fn init() !Self {
-            //assign the address_list to the correct sub-page, if there is no space left on the current page, assign a new page
-
-            //check if we need to assign a new page for the subpages
-            if (current_subpage >= lists_per_page) {
-                current_page = @ptrCast(try mem.alloc());
-                current_subpage = 0;
-            }
-
-            const address_list: *[list_size / @sizeOf(T)]T = @alignCast(@ptrCast(current_page[(current_subpage) * list_size .. (current_subpage + 1) * list_size]));
-
-            return Self{ .size = 0, .address_list = address_list };
+            return Self{ .size = 0, .n_pages = 0, .address_list = .{undefined} ** list_size };
         }
 
         ///read content of the list at an index
         pub fn read(self: Self, index: usize) !T {
             //checks
-            if (index >= self.size) return list_errors.outsideBounds;
+            if (index > self.size) return errors.outsideBounds;
             //get the address of the page which needs to be read
             const page_index = @divFloor(index, page_size);
-            const page: *[page_size]T = @ptrFromInt(self.address_list[page_index]);
+            const page: *[page_size]T = self.address_list[page_index];
             return page[@mod(index, page_size)];
         }
 
         ///reads a slice from the list NOTE: the start and end index must be on the same page
         pub fn readSlice(self: Self, i_start: usize, i_end: usize) ![]T {
             //checks
-            if (i_start >= self.size or i_end >= self.size) return list_errors.outsideBounds;
+            if (i_start >= self.size or i_end >= self.size) return errors.outsideBounds;
 
             //get the address of the page which needs to be read
             const page_index = @divFloor(@min(i_start, i_end), page_size);
-            const page: *[page_size]T = @ptrFromInt(self.address_list[page_index]);
+            const page: *[page_size]T = self.address_list[page_index];
             return page[@mod(@min(i_start, i_end), page_size)..@mod(@max(i_start, i_end), page_size)];
+        }
+
+        ///creates room for n more elements
+        pub fn expand(self: *Self, n: usize) !void {
+            for (0..n) |_| {
+                //check if we need to allocate a new page for the list
+                if (@rem(self.size, page_size) == 0) {
+                    //checks
+                    if (self.n_pages >= list_size) return errors.overflow;
+                    const page: []u8 = try mem.alloc();
+                    self.address_list[@divFloor(self.size, page_size)] = @as(*[page_size]T, @alignCast(@ptrCast(page)));
+                    self.n_pages += 1;
+                }
+                self.size += 1;
+            }
+        }
+
+        pub fn write(self: *Self, data: T, index: usize) !void {
+            //allocate space if the list is too short
+            if (index >= self.size) {
+                try self.expand(index - self.size + 1);
+            }
+
+            //get the address of the page which needs to be written to
+            const page_index = @divFloor(index, page_size);
+            const page: *[page_size]T = self.address_list[page_index];
+            page[@rem(index, page_size)] = data;
         }
 
         ///put data at the end of the list
         pub fn append(self: *Self, data: T) !void {
-            //check if we need to allocate a new page for the list
-            if (@rem(self.size, page_size) == 0) {
-                const page: []u8 = try mem.alloc();
-                self.address_list[@divFloor(self.size, page_size)] = @intFromPtr(@as(*[page_size]T, @alignCast(@ptrCast(page))));
-            }
-
-            //get the address of the page which needs to be written to
-            const page_index = @divFloor(self.size, page_size);
-            const page: *[page_size]T = @ptrFromInt(self.address_list[page_index]);
-            page[@mod(self.size, page_size)] = data;
-
-            self.size += 1;
+            _ = data;
+            _ = self;
         }
 
         ///put a slice at the end of the list
-        pub fn pushSlice(self: *Self, data: []T) !void {
-            //check if we need to allocate a new page for the list
-            if (@rem(self.size, page_size) == 0) {
-                const page: []u8 = try mem.alloc();
-                self.address_list[@divFloor(self.size, page_size)] = @intFromPtr(@as(*[page_size]T, @alignCast(@ptrCast(page))));
+        pub fn appendSlice(self: *Self, data: []T) !void {
+            _ = data;
+            _ = self;
+        }
+
+        ///moves a chunk of data of a width at an index by an offset
+        pub fn move(self: *Self, index: usize, width: usize, offset: usize) !void {
+            //checks
+            if (index > self.size) return errors.outsideBounds;
+            if (index == self.size) return self.append(0);
+
+            //add room for the elements
+            try self.expand(offset + width);
+
+            //naive approach, TODO: optimize by copying chunks of memory
+            for (index..self.size) |i_reverse| {
+                const i = self.size - index - i_reverse;
+                _ = i;
             }
+        }
 
-            //get the address of the page which needs to be written to
-            const page_index = @divFloor(self.size, page_size);
-            const page: *[page_size]T = @ptrFromInt(self.address_list[page_index]);
-
-            //copy the slice to the page
-            //we could write each element of the slice one by one but it is much faster this way
-            @memcpy(page[@mod(self.size, page_size) .. @mod(self.size, page_size) + data.len], data);
-
-            self.size += data.len;
+        pub fn insert(self: *Self, data: T, index: usize) !void {
+            //checks
+            _ = self;
+            _ = data;
+            _ = index;
         }
 
         //TODO: pub fn pop(self: *List) !void {}
@@ -119,5 +114,15 @@ pub fn List(comptime T: type) type {
 }
 
 pub fn init() !void {
-    current_page = @ptrCast(try mem.alloc());
+    var test_list = try List(u8).init();
+    try test_list.write('D', 0);
+    try test_list.write('A', 1);
+    try test_list.write('C', 2);
+    //try test_list.insert('E', 3);
+
+    db.print("\nReading values:\n");
+    for (0..3) |i| {
+        const data: u8 = try test_list.read(i);
+        db.printChar(data);
+    }
 }

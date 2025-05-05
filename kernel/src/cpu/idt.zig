@@ -157,57 +157,57 @@ pub fn init() !void {
 }
 
 fn handleDivisionError(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: DivisionError\n");
+    db.panic("ERROR: DivisionError\n");
 }
 
 fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: Debug\n");
+    db.panic("ERROR: Debug\n");
 }
 
 fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: Breakpoint\n");
+    db.panic("ERROR: Breakpoint\n");
 }
 
 fn handleOverflow(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: Overflow\n");
+    db.panic("ERROR: Overflow\n");
 }
 
 fn handleBoundRangeExceeded(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: BoundRangeExceeded\n");
+    db.panic("ERROR: BoundRangeExceeded\n");
 }
 
 fn handleInvalidOpcode(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: InvalidOpcode\n");
+    db.panic("ERROR: InvalidOpcode\n");
 }
 
 fn handleDeviceNotAvailable(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: DeviceNotAvailable\n");
+    db.panic("ERROR: DeviceNotAvailable\n");
 }
 
 fn handleDoubleFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: DoubleFault\n");
+    db.panic("ERROR: DoubleFault\n");
 }
 
 fn handleSegmentationFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: SegmentationFault\n");
+    db.panic("ERROR: SegmentationFault\n");
 }
 
 fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: GeneralProtectionFault\n");
+    db.panic("ERROR: GeneralProtectionFault\n");
 }
 
 fn handlePageFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: PageFault\n");
+    db.panic("ERROR: PageFault\n");
 }
 
 fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: AlignmentCheck\n");
+    db.panic("ERROR: AlignmentCheck\n");
 }
 
 fn handleMachineCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: MachineCheck\n");
+    db.panic("ERROR: MachineCheck\n");
 }
 
 fn handleSIMDFloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
-    db.print("ERROR: SIMDFloatingPointException\n");
+    db.panic("ERROR: SIMDFloatingPointException\n");
 }

@@ -13,6 +13,22 @@ pub inline fn print(string: []const u8) void {
     }
 }
 
+///print errors to console to debug console
+pub inline fn printerr(string: []const u8) void {
+    //color output in yellow
+    print("\u{001b}[32m");
+    print(string);
+    print("\u{001B}[0m");
+}
+
+pub inline fn panic(string: []const u8) void {
+    //color output in red
+    print("\u{001b}[34m");
+    print(string);
+    print("\u{001B}[0m");
+    cpu.hang();
+}
+
 pub fn printValue(n: u128) void {
     var buffer: [32]u8 = undefined;
     print(std.fmt.bufPrint(&buffer, "{X}", .{n}) catch buffer[0..0]);

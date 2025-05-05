@@ -1,7 +1,5 @@
 const bootboot_zig = @import("../bootboot.zig");
-
-//DEBUG: TODO: remove after debug
-const db = @import("../utils/debug.zig");
+const list = @import("../utils/list.zig");
 
 //Memory variables
 //used to get the memory map
@@ -53,4 +51,7 @@ pub fn init() !void {
     mmap = @as([*]u8, @ptrFromInt(bootboot.mmap.getPtr()))[0..n_bytes];
     //update the node list to be the correct size
     pages = max_pages[0..n_pages];
+
+    //initialize the lists system
+    try list.init();
 }
