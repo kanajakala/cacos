@@ -94,13 +94,13 @@ pub fn List(comptime T: type) type {
         }
 
         ///copies data to a temporary page to avoid copy copy superposition issues
+        ///it can expand the list
         inline fn copyChunkBackwards(self: *Self, index: usize, width: usize, dest: usize) !void {
+            //TODO: allow for bigger buffer sizes
             if (width >= page_size) return errors.copyBackwardsOverflow;
 
             //make space for the copied data:
             if (dest + width >= self.size) try self.expand(width - (self.size - dest));
-
-            db.print("\nCopying backwards!");
 
             //allocate a page as the buffer
             const buffer: *[page_size]T = @alignCast(@ptrCast(try mem.alloc()));
@@ -117,9 +117,6 @@ pub fn List(comptime T: type) type {
             } else {
                 @memcpy(buffer[0..width], self.address_list[index / page_size][index .. index + width]);
             }
-
-            db.print("\nstatte of buffer after data fill:");
-            db.debugPage(buffer, 1);
 
             //buffer is now full, we can copy to the destination
             if (width + @rem(dest, page_size) >= page_size) {
@@ -143,7 +140,6 @@ pub fn List(comptime T: type) type {
 
                 //naive approach, TODO: optimize by copying chunks of memory
                 for (index..index + width) |i| {
-                    db.print("\ncopying");
                     try self.copy(i, dest + i);
                 }
             }
@@ -157,23 +153,4 @@ pub fn List(comptime T: type) type {
 
         //TODO: pub fn clear(self: *List) !void {} //clears the whole list
     };
-}
-
-pub fn init() !void {
-    var test_list = try List(u8).init();
-    try test_list.write('a', 0);
-    try test_list.write('c', 1);
-    try test_list.write('d', 2);
-    try test_list.write('e', 3);
-    try test_list.write('f', 4);
-    try test_list.write('g', 5);
-
-    try test_list.insert('b', 1);
-
-    db.print("\nReading values:\n");
-    for (0..test_list.size) |i| {
-        const data: u8 = try test_list.read(i);
-        db.printChar(data);
-        if (data == 0) db.printChar('X');
-    }
 }

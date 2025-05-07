@@ -30,12 +30,14 @@ CaCOS is a hobby OS, currently in rewrite. It's goal is to be functional, as wel
 
 * Filesystem
    * rootfs ->`core/fs`
-        * leverage structures for nodes
-        * create file
+        * leverage structures for nodes ✔️
+        * create file✔️
         * delete file
-        * set data
-        * append data
+        * set data✔️
+        * append data✔️
         * change file attributes
+
+ * Syscalls
 
  * Load binaries and execute them
 

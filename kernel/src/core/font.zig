@@ -16,9 +16,14 @@ const PsfFont = packed struct {
 
 var font: PsfFont = undefined;
 
+pub var w: usize = undefined;
+pub var h: usize = undefined;
+
 pub fn init() !void {
     font = @bitCast(fontData[0..@sizeOf(PsfFont)].*);
     try printString("Welcome to Cacos! This is a very long string to test line warping!!!!!!!!!!!!!!!!!", 0, 0, 0x0000ff);
+    w = font.width;
+    h = font.height;
 }
 
 ///display a character on screen at (x,y)

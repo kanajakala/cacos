@@ -5,28 +5,17 @@ extern var framebuffer: u8; // linear framebuffer mapped, linked in link.ld
 extern var bootboot: BOOTBOOT;
 
 //global variables
+//these variables are initialized at runtime
 pub var s: u32 = undefined;
 pub var w: u32 = undefined;
 pub var h: u32 = undefined;
 var fb: [*]u32 = undefined;
-
-//these variables are initialized at runtime
-pub fn init() !void {
-    s = bootboot.fb_scanline;
-    w = bootboot.fb_width;
-    h = bootboot.fb_height;
-    fb = @ptrCast(@alignCast(&framebuffer));
-
-    //remove later...
-    try rect(0, 0, w, h, 0x280800);
-}
 
 const errors = error{
     overflow,
 };
 
 pub inline fn put(x: usize, y: usize, color: u32) !void {
-
     //check for overflow
     if (x > w or y > h) return errors.overflow;
 
@@ -68,4 +57,11 @@ pub fn rect(x: usize, y: usize, rw: usize, rh: usize, color: u32) !void {
     for (0..rh - 1) |i| {
         try copyLine(x, y + i, rw, x, y + i + 1);
     }
+}
+
+pub fn init() !void {
+    s = bootboot.fb_scanline;
+    w = bootboot.fb_width;
+    h = bootboot.fb_height;
+    fb = @ptrCast(@alignCast(&framebuffer));
 }

@@ -1,6 +1,5 @@
-const dsp = @import("core/display.zig");
+const console = @import("interface/console.zig");
 const ramfs = @import("core/ramfs.zig");
-const font = @import("core/font.zig");
 const gdt = @import("cpu/gdt.zig");
 const idt = @import("cpu/idt.zig");
 const db = @import("utils/debug.zig");
@@ -11,9 +10,8 @@ extern var environment: [4096]u8; // configuration, UTF-8 text key=value pairs
 fn init() !void {
     try gdt.init();
     try idt.init();
-    try dsp.init();
-    try font.init();
     try ramfs.init();
+    try console.init();
 }
 
 //entry point
