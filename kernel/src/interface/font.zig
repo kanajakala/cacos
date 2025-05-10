@@ -1,5 +1,5 @@
 const BOOTBOOT = @import("../bootboot.zig").BOOTBOOT;
-const dsp = @import("display.zig");
+const dsp = @import("../core/display.zig");
 
 const fontData = @embedFile("../assets/font.psf");
 
@@ -21,7 +21,6 @@ pub var h: usize = undefined;
 
 pub fn init() !void {
     font = @bitCast(fontData[0..@sizeOf(PsfFont)].*);
-    try printString("Welcome to Cacos! This is a very long string to test line warping!!!!!!!!!!!!!!!!!", 0, 0, 0x0000ff);
     w = font.width;
     h = font.height;
 }

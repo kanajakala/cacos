@@ -2,6 +2,7 @@ const cpu = @import("../cpu/cpu.zig");
 const idt = @import("../cpu/idt.zig");
 const pic = @import("../cpu/pic.zig");
 const console = @import("../interface/console.zig");
+const db = @import("../utils/debug.zig");
 
 const command_port = 0x64;
 const data_port = 0x60;
@@ -188,7 +189,9 @@ fn interrupt(_: *idt.InterruptStackFrame) callconv(.C) void {
     if (key.state == KeyEvent.State.pressed and key.code == KeyEvent.Code.control) control = true;
     if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.control) control = false;
 
-    console.handle(key);
+    console.handle(key) catch |err| {
+        db.printErr(@errorName(err));
+    };
 }
 
 pub fn init() void {

@@ -1,6 +1,7 @@
 const dsp = @import("../core/display.zig");
 const kb = @import("../drivers/keyboard.zig");
-const font = @import("../core/font.zig");
+const font = @import("../interface/font.zig");
+const db = @import("../utils/debug.zig");
 
 //the console is split into two parts:
 //-> one for the commands
@@ -21,7 +22,7 @@ const font = @import("../core/font.zig");
 
 //appearance variables
 const ratio = 3; // must be a wole number, sets the separation
-const border_out = 20; //the size of the border on the outside of the screen
+const border = 20; //the size of the border on the outside of the screen
 
 //colors
 const text_color: u32 = 0xffffff;
@@ -32,17 +33,38 @@ const Coords = struct {
     y: u64,
 };
 
-var cursor: Coords = Coords{ .x = border_out, .y = border_out };
+var cursor: Coords = Coords{ .x = border, .y = border };
 
-pub fn handle(key: kb.KeyEvent) void {
-    if (key.state == kb.KeyEvent.State.pressed and key.char != 0) {
-        font.drawChar(key.char, cursor.x, cursor.y, 0xffffff) catch {
-            return;
-        };
+pub fn scroll() !void {
+    try dsp.copyChunk(dsp.w * font.h, dsp.w * dsp.h - 2 * dsp.w * font.h, 0);
+    cursor.x = border;
+    defer dsp.rect(border, dsp.h - font.h - border, dsp.w - 2 * border, font.h, background) catch {};
+}
+
+pub fn newLine() !void {
+    if (cursor.y + font.h + border >= dsp.h - border) {
+        return scroll();
+    }
+    cursor.y += font.h;
+    cursor.x = border;
+}
+
+fn handleSpecial(key: kb.KeyEvent) !void {
+    try switch (key.code) {
+        kb.KeyEvent.Code.enter => newLine(),
+        else => {},
+    };
+}
+
+pub fn handle(key: kb.KeyEvent) !void {
+    if (key.state == kb.KeyEvent.State.pressed) {
+        if (key.char == 0) {
+            try handleSpecial(key);
+        }
+        try font.drawChar(key.char, cursor.x, cursor.y, text_color);
         cursor.x += font.w;
-        if (cursor.x >= dsp.w / ratio - border_out) {
-            cursor.y += font.h;
-            cursor.x = border_out;
+        if (cursor.x >= dsp.w / ratio - border) {
+            try newLine();
         }
     }
 }
@@ -53,5 +75,5 @@ pub fn init() !void {
     try font.init();
 
     //draw background rectangle
-    try dsp.rect(0, 0, dsp.w, dsp.h, 0x280800);
+    try dsp.fill(background);
 }

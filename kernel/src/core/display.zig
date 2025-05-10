@@ -1,5 +1,5 @@
 const BOOTBOOT = @import("../bootboot.zig").BOOTBOOT;
-const pow = @import("std").math.pow;
+const db = @import("../utils/debug.zig");
 
 extern var framebuffer: u8; // linear framebuffer mapped, linked in link.ld
 extern var bootboot: BOOTBOOT;
@@ -23,12 +23,18 @@ pub inline fn put(x: usize, y: usize, color: u32) !void {
     fb[((s * y) + x * 4) / @sizeOf(u32)] = color;
 }
 
+pub inline fn copyChunk(start: usize, width: usize, where: usize) !void {
+    //overflow check
+    if (start + width > w * h * 4) return errors.overflow;
+
+    @memcpy(fb[where..(where + width)], fb[start..(start + width)]);
+}
+
 pub inline fn copyLine(x: usize, y: usize, rw: usize, to_x: usize, to_y: usize) !void {
     //overflow check
     if (x + rw > w or y + 1 > h) return errors.overflow;
     if (to_x + rw > w or to_y + 1 > h) return errors.overflow;
 
-    //we have to copy line by line to the destination
     const source = fb[(x * 4 + (s * y)) / @sizeOf(u32) .. ((x + rw) * 4 + (s * y)) / @sizeOf(u32)];
     const dest = fb[(to_x * 4 + (s * to_y)) / @sizeOf(u32) .. ((to_x + rw) * 4 + (s * to_y)) / @sizeOf(u32)];
     @memcpy(dest, source);
@@ -45,9 +51,9 @@ pub inline fn copy(x: usize, y: usize, rw: usize, rh: usize, to_x: usize, to_y: 
     }
 }
 
-pub fn rect(x: usize, y: usize, rw: usize, rh: usize, color: u32) !void {
+pub inline fn rect(x: usize, y: usize, rw: usize, rh: usize, color: u32) !void {
     //check for overflow
-    if (x + rw > w or y + rh > h) return errors.overflow;
+    if (x + rw > w * 4 or y + rh > h * 4) return errors.overflow;
 
     //fill first line
     for (0..rw) |i| {
@@ -56,6 +62,15 @@ pub fn rect(x: usize, y: usize, rw: usize, rh: usize, color: u32) !void {
     //copy the line over and over again
     for (0..rh - 1) |i| {
         try copyLine(x, y + i, rw, x, y + i + 1);
+    }
+}
+
+pub inline fn fill(color: u32) !void {
+    //put the first pixel
+    try put(0, 0, color);
+    var i: usize = 1;
+    while (i * 2 <= (w * h)) : (i *= 2) {
+        try copyChunk(0, i * 4, (i * 2 - 1));
     }
 }
 

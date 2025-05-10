@@ -85,6 +85,8 @@ pub fn build(b: *std.Build) void {
         ".cache/logs",
         "-d",
         "int",
+        //"-icount", //slow machine down
+        //"0,align=on", //by a factor 10
     });
     run_command.step.dependOn(gen_step);
 

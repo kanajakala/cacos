@@ -18,7 +18,7 @@ fn init() !void {
 export fn _start() callconv(.C) noreturn {
     _ = init() catch |err| {
         //on error, print it
-        db.printerr(@errorName(err));
+        db.printErr(@errorName(err));
     };
 
     //hang

@@ -14,7 +14,7 @@ pub inline fn print(string: []const u8) void {
 }
 
 ///print errors to console to debug console
-pub inline fn printerr(string: []const u8) void {
+pub inline fn printErr(string: []const u8) void {
     //color output in yellow
     print("\u{001b}[31m");
     print(string);
