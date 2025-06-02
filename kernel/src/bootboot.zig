@@ -77,7 +77,7 @@ pub const MMapType = enum(u4) {
     mmio = 3,
 };
 
-pub const INITRD_MAXSIZE = 16; // Mb
+pub const INITRD_MAXSIZE = 32; // Mb
 
 pub const BOOTBOOT = extern struct {
     magic: [4]u8 align(1),

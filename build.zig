@@ -77,7 +77,7 @@ pub fn build(b: *std.Build) void {
         "-drive", //the file to run
         "format=raw,file=kernel/img/cacos.img",
         "-m", //the amount of ram
-        "2G",
+        "4G",
         "-debugcon", //send debug console output to stdio
         "stdio",
         "--no-reboot", //don't reboot, usefull for debugging

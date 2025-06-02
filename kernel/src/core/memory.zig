@@ -7,6 +7,7 @@ extern var bootboot: bootboot_zig.BOOTBOOT;
 pub const max_n_pages = 4096;
 pub var n_pages: usize = undefined;
 pub var n_bytes: usize = undefined;
+pub var used_pages: usize = 0;
 
 //a page is a 4096 byte chunk of memory
 //the page table lists wether each block is currently written or not.
@@ -28,6 +29,7 @@ pub fn alloc() ![]u8 {
     for (1..n_pages - 1) |i| {
         if (!pages[i]) {
             pages[i] = true;
+            used_pages += 1;
             return mmap[i * 4096 .. (i + 1) * 4096];
         }
     }
@@ -35,6 +37,7 @@ pub fn alloc() ![]u8 {
 }
 
 pub fn free(page: []u8) !void {
+    used_pages -= 1;
     pages[@intFromPtr(page) / 4096] = false;
 }
 

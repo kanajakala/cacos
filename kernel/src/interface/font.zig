@@ -1,5 +1,6 @@
 const BOOTBOOT = @import("../bootboot.zig").BOOTBOOT;
 const dsp = @import("../core/display.zig");
+const db = @import("../utils/debug.zig");
 
 const fontData = @embedFile("../assets/font.psf");
 
@@ -18,12 +19,6 @@ var font: PsfFont = undefined;
 
 pub var w: usize = undefined;
 pub var h: usize = undefined;
-
-pub fn init() !void {
-    font = @bitCast(fontData[0..@sizeOf(PsfFont)].*);
-    w = font.width;
-    h = font.height;
-}
 
 ///display a character on screen at (x,y)
 pub fn drawChar(char: u8, x: usize, y: usize, color: u32) !void {
@@ -59,4 +54,10 @@ pub fn printString(string: []const u8, dcol: usize, dline: usize, color: u32) !v
         try drawChar(char, col * font.width, line * font.height, color);
         col += 1;
     }
+}
+
+pub fn init() void {
+    font = @bitCast(fontData[0..@sizeOf(PsfFont)].*);
+    w = font.width;
+    h = font.height;
 }

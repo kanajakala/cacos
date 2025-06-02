@@ -1,5 +1,5 @@
 const cpu = @import("../cpu/cpu.zig");
-const idt = @import("../cpu/idt.zig");
+const int = @import("../cpu/int.zig");
 const pic = @import("../cpu/pic.zig");
 const console = @import("../interface/console.zig");
 const db = @import("../utils/debug.zig");
@@ -177,7 +177,7 @@ pub inline fn map(scancode: u8) KeyEvent {
     };
 }
 
-fn interrupt(_: *idt.InterruptStackFrame) callconv(.C) void {
+fn keyboard_handler(_: *int.InterruptStackFrame) callconv(.C) void {
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
     //We get the key from the key input port and convert it to a keyEvent
@@ -190,6 +190,7 @@ fn interrupt(_: *idt.InterruptStackFrame) callconv(.C) void {
     if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.control) control = false;
 
     console.handle(key) catch |err| {
+        db.printErr("error in keyboard:");
         db.printErr(@errorName(err));
     };
 }
@@ -198,12 +199,11 @@ pub fn init() void {
     //diable keyboard to prevent weird things from happening
     disable();
 
-    //enable the keyboard interrupt in the pic
     pic.primary.enable(1);
-
     //set the function used to handle keypresses
-    idt.handle(1, interrupt);
+    int.handle(1, keyboard_handler);
+    db.print("\n added keyboard handler");
 
     enable();
-    asm volatile ("int $33");
+    db.print("\nenabled keyboard");
 }

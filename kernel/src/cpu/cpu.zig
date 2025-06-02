@@ -41,12 +41,17 @@ pub inline fn lidt(idtr: u80) void {
 }
 
 /// Perform a short I/O delay.
-pub fn wait() void {
+pub inline fn wait() void {
     // port 0x80 was wired to a hex display in the past and
     // is now mostly unused. Writing garbage data to port 0x80
     // allegedly takes long enough to make everything work on most
     // hardware.
     outb(0x80, 0);
+}
+
+pub inline fn wait_long() void {
+    @setEvalBranchQuota(10_000);
+    inline for (0..3000) |_| wait();
 }
 
 ///wait for interrupt

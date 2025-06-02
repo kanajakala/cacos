@@ -1,6 +1,8 @@
 const dsp = @import("../core/display.zig");
 const kb = @import("../drivers/keyboard.zig");
 const font = @import("../interface/font.zig");
+const fs = @import("../core/ramfs.zig");
+const mem = @import("../core/memory.zig");
 const db = @import("../utils/debug.zig");
 
 //the console is split into two parts:
@@ -36,9 +38,10 @@ const Coords = struct {
 var cursor: Coords = Coords{ .x = border, .y = border };
 
 pub fn scroll() !void {
-    try dsp.copyChunk(dsp.w * font.h, dsp.w * dsp.h - 2 * dsp.w * font.h, 0);
+    try dsp.copyChunk(dsp.w * font.h, dsp.w * dsp.h - (2 * dsp.w * font.h), 0);
+    //db.print("\nbut this works???");
     cursor.x = border;
-    defer dsp.rect(border, dsp.h - font.h - border, dsp.w - 2 * border, font.h, background) catch {};
+    dsp.rect(border, dsp.h - font.h - border, dsp.w - 2 * border, font.h, background) catch {};
 }
 
 pub fn newLine() !void {
@@ -56,24 +59,45 @@ fn handleSpecial(key: kb.KeyEvent) !void {
     };
 }
 
+pub fn print(char: u8) !void {
+    try font.drawChar(char, cursor.x, cursor.y, text_color);
+    cursor.x += font.w;
+    if (cursor.x >= dsp.w / ratio - border) {
+        try newLine();
+    }
+}
+
 pub fn handle(key: kb.KeyEvent) !void {
     if (key.state == kb.KeyEvent.State.pressed) {
         if (key.char == 0) {
             try handleSpecial(key);
         }
-        try font.drawChar(key.char, cursor.x, cursor.y, text_color);
-        cursor.x += font.w;
-        if (cursor.x >= dsp.w / ratio - border) {
-            try newLine();
-        }
+        try print(key.char);
     }
 }
 
 pub fn init() !void {
-    kb.init();
+    db.print("\nstatring console");
     try dsp.init();
-    try font.init();
+    db.print("\nstatring console");
+    font.init();
+    db.print("\nstatring console");
+    kb.init();
+    db.print("\nstatred keyboard");
 
     //draw background rectangle
     try dsp.fill(background);
+    db.print("\ndone filling screen");
+    //print the motd
+    db.printErr("\ndebugging Node inside console");
+    const root = try fs.open(0);
+    //const data = "The data will be different ?";
+    //try root.data.appendSlice(@constCast(data[0..]));
+    //db.printErr("\nDebugging root at console time");
+    db.debugNode(root);
+    // for (0..motd.data.size) |i| {
+    //     try print(try motd.data.read(i));
+    //     db.printChar(try motd.data.read(i));
+    // }
+    //  db.print("done printing motd, in theory");
 }

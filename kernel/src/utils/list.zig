@@ -1,12 +1,12 @@
 const mem = @import("../core/memory.zig");
-
+const time = @import("../cpu/time.zig");
 const db = @import("../utils/debug.zig");
 
 //errors
 const errors = error{
-    outsideBounds,
-    overflow,
-    copyBackwardsOverflow,
+    list_outside_bounds,
+    list_overflow,
+    list_copybackwards_overflow,
 };
 
 //the number of pages a list can use
@@ -29,17 +29,27 @@ pub fn List(comptime T: type) type {
         ///read content of the list at an index
         pub inline fn read(self: Self, index: usize) !T {
             //checks
-            if (index > self.size) return errors.outsideBounds;
+            if (index > self.size) return errors.list_outside_bounds;
             //get the address of the page which needs to be read
             const page_index = @divFloor(index, page_size);
             const page: *[page_size]T = self.address_list[page_index];
             return page[@mod(index, page_size)];
         }
 
+        ///return a pointer to the content of the list at an index
+        pub inline fn read_pointer(self: Self, index: usize) !*T {
+            //checks
+            if (index > self.size) return errors.list_outside_bounds;
+            //get the address of the page which needs to be read
+            const page_index = @divFloor(index, page_size);
+            const page: *[page_size]T = self.address_list[page_index];
+            return &page[@mod(index, page_size)];
+        }
+
         ///reads a slice from the list NOTE: the start and end index must be on the same page
         pub fn readSlice(self: Self, i_start: usize, i_end: usize) ![]T {
             //checks
-            if (i_start >= self.size or i_end >= self.size) return errors.outsideBounds;
+            if (i_start >= self.size or i_end >= self.size) return errors.list_outside_bounds;
 
             //get the address of the page which needs to be read
             const page_index = @divFloor(@min(i_start, i_end), page_size);
@@ -53,7 +63,10 @@ pub fn List(comptime T: type) type {
                 //check if we need to allocate a new page for the list
                 if (@rem(self.size, page_size) == 0) {
                     //checks
-                    if (self.n_pages >= list_size) return errors.overflow;
+                    if (self.n_pages >= list_size) {
+                        db.printErr("no space left on list");
+                        return errors.list_overflow;
+                    }
                     const page: []u8 = try mem.alloc();
                     self.address_list[@divFloor(self.size, page_size)] = @as(*[page_size]T, @alignCast(@ptrCast(page)));
                     self.n_pages += 1;
@@ -76,12 +89,13 @@ pub fn List(comptime T: type) type {
 
         ///put data at the end of the list
         pub inline fn append(self: *Self, data: T) !void {
-            try self.write(data, self.size + 1);
+            try self.write(data, self.size);
         }
 
         ///put a slice at the end of the list
-        pub inline fn appendSlice(self: *Self, data: []T) !void {
-            inline for (0..data.len) |i| {
+        pub fn appendSlice(self: *Self, data: []T) !void {
+            //db.debug("value of \"data size\"", data.len, 1);
+            for (0..data.len) |i| {
                 try self.append(data[i]);
             }
         }
@@ -97,7 +111,7 @@ pub fn List(comptime T: type) type {
         ///it can expand the list
         inline fn copyChunkBackwards(self: *Self, index: usize, width: usize, dest: usize) !void {
             //TODO: allow for bigger buffer sizes
-            if (width >= page_size) return errors.copyBackwardsOverflow;
+            if (width >= page_size) return errors.list_copybackwards_overflow;
 
             //make space for the copied data:
             if (dest + width >= self.size) try self.expand(width - (self.size - dest));
@@ -133,7 +147,7 @@ pub fn List(comptime T: type) type {
         ///moves a chunk of data of a width at an index by an offset
         pub inline fn copyChunk(self: *Self, index: usize, width: usize, dest: usize) !void {
             //checks
-            if (index > self.size) return errors.outsideBounds;
+            if (index > self.size) return errors.list_outside_bounds;
             if (index + width > dest) {
                 try self.copyChunkBackwards(index, width, dest);
             } else {
@@ -146,7 +160,7 @@ pub fn List(comptime T: type) type {
         }
 
         pub fn insert(self: *Self, data: T, index: usize) !void {
-            if (index > self.size) return errors.outsideBounds;
+            if (index > self.size) return errors.list_outside_bounds;
             try self.copyChunk(index, self.size - index, index + 1);
             try self.write(data, index);
         }

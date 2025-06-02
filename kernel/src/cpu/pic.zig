@@ -97,7 +97,7 @@ pub fn disable(pic: PIC, irq: u3) void {
 }
 
 pub fn enable(pic: PIC, irq: u3) void {
-    const mask = @as(u8, 1) << irq;
+    const mask: u8 = @as(u8, 1) << irq;
 
     var val = cpu.inb(pic.mask);
     val &= ~mask;
