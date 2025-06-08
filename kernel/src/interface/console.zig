@@ -3,6 +3,7 @@ const kb = @import("../drivers/keyboard.zig");
 const font = @import("../interface/font.zig");
 const fs = @import("../core/ramfs.zig");
 const mem = @import("../core/memory.zig");
+const stream = @import("../interface/stream.zig");
 const db = @import("../utils/debug.zig");
 
 //the console is split into two parts:
@@ -30,12 +31,41 @@ const border = 20; //the size of the border on the outside of the screen
 const text_color: u32 = 0xffffff;
 const background: u32 = 0x280800;
 
-const Coords = struct {
+const Cursor = struct {
     x: u64,
     y: u64,
+
+    pub fn next(self: *Cursor) !void {
+        if (self.x + font.w >= dsp.w / ratio - border) {
+            try newLine();
+        }
+        self.x += font.w;
+    }
+
+    pub fn previous(self: *Cursor) !void {
+        if (self.x - font.w <= border) {
+            if (self.y - font.h <= border) return;
+            self.y -= font.h;
+            self.x = dsp.w / ratio + border;
+            return;
+        }
+        self.x -= font.w;
+    }
+
+    pub fn draw(self: *Cursor) !void {
+        try dsp.rect(self.x, self.y, font.w, font.h, 0xff00ff);
+    }
+
+    pub fn remove(self: *Cursor) !void {
+        try erase(self.x, self.y);
+    }
 };
 
-var cursor: Coords = Coords{ .x = border, .y = border };
+var cursor: Cursor = Cursor{ .x = border, .y = border };
+
+pub fn erase(x: usize, y: usize) !void {
+    try dsp.rect(x, y, font.w, font.h, background);
+}
 
 pub fn scroll() !void {
     try dsp.copyChunk(dsp.w * font.h, dsp.w * dsp.h - (2 * dsp.w * font.h), 0);
@@ -45,59 +75,64 @@ pub fn scroll() !void {
 }
 
 pub fn newLine() !void {
+    db.print("\\n");
     if (cursor.y + font.h + border >= dsp.h - border) {
         return scroll();
     }
     cursor.y += font.h;
     cursor.x = border;
-}
-
-fn handleSpecial(key: kb.KeyEvent) !void {
-    try switch (key.code) {
-        kb.KeyEvent.Code.enter => newLine(),
-        else => {},
-    };
+    //try cursor.draw();
 }
 
 pub fn print(char: u8) !void {
-    try font.drawChar(char, cursor.x, cursor.y, text_color);
-    cursor.x += font.w;
-    if (cursor.x >= dsp.w / ratio - border) {
-        try newLine();
+    try handle_char(char);
+    try stream.chars.append(char);
+}
+
+pub fn handle_char(char: u8) !void {
+    switch (char) {
+        0 => {
+            db.print("UNKNOWN");
+        },
+        '\n' => try newLine(),
+        else => {
+            try font.drawChar(char, cursor.x, cursor.y, text_color);
+            try cursor.next();
+        },
     }
 }
 
 pub fn handle(key: kb.KeyEvent) !void {
+    //remove the cursor
+    try cursor.remove();
+    //handle logic
     if (key.state == kb.KeyEvent.State.pressed) {
-        if (key.char == 0) {
-            try handleSpecial(key);
-        }
-        try print(key.char);
+        try switch (key.code) {
+            kb.KeyEvent.Code.enter => {
+                try newLine();
+                try stream.chars.data.clear();
+                try stream.chars.update();
+                try db.tree();
+            },
+            else => print(key.char),
+        };
     }
+    //update cursors position
+    try cursor.draw();
 }
 
 pub fn init() !void {
-    db.print("\nstatring console");
     try dsp.init();
-    db.print("\nstatring console");
     font.init();
-    db.print("\nstatring console");
     kb.init();
-    db.print("\nstatred keyboard");
+    try stream.init();
 
     //draw background rectangle
     try dsp.fill(background);
-    db.print("\ndone filling screen");
+
     //print the motd
-    db.printErr("\ndebugging Node inside console");
-    const root = try fs.open(0);
-    //const data = "The data will be different ?";
-    //try root.data.appendSlice(@constCast(data[0..]));
-    //db.printErr("\nDebugging root at console time");
-    db.debugNode(root);
-    // for (0..motd.data.size) |i| {
-    //     try print(try motd.data.read(i));
-    //     db.printChar(try motd.data.read(i));
-    // }
-    //  db.print("done printing motd, in theory");
+    const motd = try fs.open(try fs.idFromName("motd.txt"));
+    for (0..motd.data.size) |i| {
+        try print(try motd.data.read(i));
+    }
 }

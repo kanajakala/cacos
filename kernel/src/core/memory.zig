@@ -1,4 +1,5 @@
 const bootboot_zig = @import("../bootboot.zig");
+const db = @import("../utils/debug.zig");
 
 //Memory variables
 //used to get the memory map
@@ -38,7 +39,8 @@ pub fn alloc() ![]u8 {
 
 pub fn free(page: []u8) !void {
     used_pages -= 1;
-    pages[@intFromPtr(page) / 4096] = false;
+    pages[@intFromPtr(page.ptr) / 4096] = false;
+    db.debug("value of \"@intFromPtr(page)\"", @intFromPtr(page.ptr), 0);
 }
 
 pub fn init() !void {

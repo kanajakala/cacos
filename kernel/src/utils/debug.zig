@@ -163,23 +163,27 @@ pub fn debugNode(node: fs.Node) void {
     print("\u{001b}[34m");
     debugList(node.data, 1);
     print("\u{001B}[0m");
-    print("\n----Information about ");
-    print(node.name);
-    print("in the node list----");
-    const node_in_list = fs.node_list.read(node.id) catch fs.root;
-    print("\naccessed node in list");
-
-    const size = node_in_list.data.size;
-    print("\nread size");
-    debug(" -> size", size, 1);
-    debug(" -> address of the Node", @intFromPtr(&node_in_list), 0);
-    debug(" -> address of the data list", @intFromPtr(&node_in_list.data), 0);
-    debug(" -> address of the name string", @intFromPtr(node_in_list.name.ptr), 0);
-    print("\n -> data:");
-    print("\u{001b}[34m");
-    debugList(node_in_list.data, 1);
-    print("\u{001B}[0m");
     print("\n------------------------------------------------------------------");
+}
+
+pub fn tree() !void {
+    for (0..fs.node_list.size) |i| {
+        const node = try fs.node_list.read(i);
+        switch (node.ftype) {
+            fs.Ftype.dir => print("\u{001b}[34m"),
+            fs.Ftype.text => print("\u{001b}[33m"),
+            else => print("\u{001b}[35m"),
+        }
+        print("\n");
+        print(node.name);
+        debug(" -> size", node.data.size, 1);
+        debug(" -> value of \"parent_id\"", node.parent, 0);
+        const name: []const u8 = (try fs.open(node.parent)).name;
+        //debugNode(parent);
+        print("\n -> parent: ");
+        print(name);
+        print("\u{001B}[0m\n");
+    }
 }
 
 pub fn memOverview() void {

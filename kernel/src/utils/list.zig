@@ -10,7 +10,7 @@ const errors = error{
 };
 
 //the number of pages a list can use
-pub const list_size: usize = 16;
+pub const list_size: usize = 8;
 
 pub fn List(comptime T: type) type {
     return struct {
@@ -64,18 +64,25 @@ pub fn List(comptime T: type) type {
                 if (@rem(self.size, page_size) == 0) {
                     //checks
                     if (self.n_pages >= list_size) {
-                        db.printErr("no space left on list");
+                        db.printErr("no space left on list: ");
+                        db.print("\n  number of pages allocated for the list: ");
+                        db.printValueDec(self.n_pages);
+                        db.print("\n  list size: ");
+                        db.printValueDec(list_size);
                         return errors.list_overflow;
                     }
                     const page: []u8 = try mem.alloc();
                     self.address_list[@divFloor(self.size, page_size)] = @as(*[page_size]T, @alignCast(@ptrCast(page)));
                     self.n_pages += 1;
+                    //db.printErr("\nALLOCATING NEW PAGE FOR LIST");
+                    //db.print("\nmemory overview: ");
+                    //db.memOverview();
                 }
                 self.size += 1;
             }
         }
 
-        pub inline fn write(self: *Self, data: T, index: usize) !void {
+        pub inline fn write(self: *Self, index: usize, data: T) !void {
             //allocate space if the list is too short
             if (index >= self.size) {
                 try self.expand(index - self.size + 1);
@@ -89,7 +96,7 @@ pub fn List(comptime T: type) type {
 
         ///put data at the end of the list
         pub inline fn append(self: *Self, data: T) !void {
-            try self.write(data, self.size);
+            try self.write(self.size, data);
         }
 
         ///put a slice at the end of the list
@@ -104,7 +111,7 @@ pub fn List(comptime T: type) type {
         ///NOTE: it can expand the list if needed
         ///NOTE: it will owerwrite what was written at dest
         pub inline fn copy(self: *Self, source: usize, dest: usize) !void {
-            try self.write(try self.read(source), dest);
+            try self.write(dest, try self.read(source));
         }
 
         ///copies data to a temporary page to avoid copy copy superposition issues
@@ -162,9 +169,17 @@ pub fn List(comptime T: type) type {
         pub fn insert(self: *Self, data: T, index: usize) !void {
             if (index > self.size) return errors.list_outside_bounds;
             try self.copyChunk(index, self.size - index, index + 1);
-            try self.write(data, index);
+            try self.write(index, data);
         }
 
-        //TODO: pub fn clear(self: *List) !void {} //clears the whole list
+        ///clears the whole list
+        pub fn clear(self: *Self) !void {
+            //get the address of the page which needs to be written to
+            self.size = 0;
+            for (0..self.n_pages) |i| {
+                const page = self.address_list[i];
+                try mem.free(&page.*);
+            }
+        }
     };
 }

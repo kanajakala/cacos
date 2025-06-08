@@ -2,6 +2,7 @@ const fs = @import("../core/ramfs.zig");
 const db = @import("../utils/debug.zig");
 const time = @import("../cpu/time.zig");
 const cpu = @import("../cpu/cpu.zig");
+const strings = @import("../utils/strings.zig");
 const std = @import("std");
 
 const BOOTBOOT = @import("../bootboot.zig").BOOTBOOT;
@@ -62,9 +63,10 @@ pub fn unpack() !void {
     while (offset + 2048 < bootboot.initrd_size - 1024) : (i += 1) { //the end of the file is signified with two blocks of 521bytes filled with zeroes
 
         //we need to get the data of the current file
-        const name = find_name(@ptrCast(initrd[offset .. offset + 100]));
+        const name_full = find_name(@ptrCast(initrd[offset .. offset + 100]));
         const size: u32 = oct2bin(initrd[offset + 124 .. offset + 135]);
-        if (std.mem.eql(u8, name, "cacos.elf")) {
+        const right: strings.Directions = strings.Directions.right;
+        if (strings.equal(name_full, "cacos.elf") or strings.equal(strings.take('/', name_full, right), "..") or strings.equal(strings.take('/', name_full, right), ".")) {
             offset += (((size + 511) / 512) + 1) * 512;
             continue;
         } //we don't need to load the kernel into the kernel
@@ -73,23 +75,23 @@ pub fn unpack() !void {
             5 => fs.Ftype.dir,
             else => fs.Ftype.text,
         };
+        db.print("\n\nFull name: ");
+        db.print(name_full);
 
-        _ = data;
+        const parent_name = strings.take('/', strings.cut('/', name_full, right), right); //we remove the name of the file and take the first name
+        db.print("\n -> parent name: ");
+        db.print(parent_name);
+
+        const name = strings.take('/', name_full, right);
+
+        const parent_id = fs.idFromName(parent_name) catch 0;
+
         //then we create the corresponding file in the fs
-        try fs.Node.create(name, ftype, null);
+        var node: fs.Node = try fs.Node.create(name, ftype, parent_id);
 
-        //var persistent_node: fs.Node = try fs.node_list.read(fs.count);
-        //try (try fs.open(fs.count - 1)).data.appendSlice(data);
-
-        //db.print("\nWROTE DATA\n");
-
-        //db.printErr("\ndebugging at persistent node time\n");
-        //db.debugNode(try fs.open(fs.count - 1));
+        try node.appendSlice(data);
 
         //we go to the next file
         offset += (((size + 511) / 512) + 1) * 512;
     }
-    db.print("\nunpacked initrd, starting wait");
-    cpu.wait_long();
-    db.print("\nwait done");
 }

@@ -3,11 +3,9 @@
 const mem = @import("memory.zig");
 const List = @import("../utils/list.zig").List(u8);
 const NodeList = @import("../utils/list.zig").List(Node);
-const std = @import("std");
-
+const strings = @import("../utils/strings.zig");
 //TODO: remove later
 const db = @import("../utils/debug.zig");
-const time = @import("../cpu/time.zig");
 
 //filesystem
 //the filesystem is organized in nodes, a node can be any type of file, eg: a text file, an executable but also a directory or a ram page.
@@ -42,30 +40,56 @@ pub const Node = struct {
     name: []const u8,
     data: List, //the data stored in the node
     ftype: Ftype, //the type of the node
-    parent: ?*Node, //the parent of the node in the filesystem tree, for root the parent is null
+    parent: usize, //the parent of the node in the filesystem tree, for root the parent is null
 
-    pub fn create(name: []const u8, ftype: Ftype, parent: ?*Node) !void {
+    pub fn create(name: []const u8, ftype: Ftype, parent: usize) !Node {
         const data = try List.init();
         const node = Node{ .id = count, .name = name, .data = data, .ftype = ftype, .parent = parent };
 
-        try node_list.write(node, count);
+        try node_list.write(count, node);
 
         n_nodes += 1;
         count += 1;
+        return node;
+    }
+
+    pub fn write(self: *Node, index: usize, data: u8) !void {
+        try self.data.write(index, data);
+        try self.update();
+    }
+
+    pub fn append(self: *Node, data: u8) !void {
+        try self.data.append(data);
+        try self.update();
+    }
+
+    pub fn appendSlice(self: *Node, data: []u8) !void {
+        try self.data.appendSlice(data);
+        try self.update();
     }
 
     pub fn update(self: Node) !void {
-        try node_list.write(self, self.id);
+        try node_list.write(self.id, self);
     }
 };
+
+pub fn idFromName(name: []const u8) !usize {
+    //return a node corresponding to a name
+    //we search through all the files and when we hit the right node we return it
+    for (0..n_nodes) |i| {
+        const current_node: Node = try node_list.read(i);
+        if (strings.equal(current_node.name, name)) {
+            return current_node.id;
+        }
+    }
+    return errors.nodeNotFound;
+}
 
 pub fn open(id: usize) !Node {
     //return a node corresponding to an id
     //we search through all the files and when we hit the right node we return it
     for (0..n_nodes) |i| {
         const current_node: Node = try node_list.read(i);
-        db.print(current_node.name);
-        //db.debug("node address", try node_list.read(i), 0);
         if (current_node.id == id) {
             return current_node;
         }
@@ -79,12 +103,5 @@ pub fn init() !void {
     //we initialize the node list
     node_list = try NodeList.init();
 
-    try Node.create("/", Ftype.dir, null);
-    const data = "test data inside root to see if I can read it from another place";
-    root = (try open(0));
-    db.print("\ncreated root");
-    try root.data.appendSlice(@constCast(data[0..]));
-    try root.update();
-    db.print("\nappendedn root");
-    db.debugNode(root);
+    root = try Node.create("/", Ftype.dir, 0);
 }
