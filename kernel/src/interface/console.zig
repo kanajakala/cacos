@@ -4,6 +4,7 @@ const font = @import("../interface/font.zig");
 const fs = @import("../core/ramfs.zig");
 const mem = @import("../core/memory.zig");
 const stream = @import("../interface/stream.zig");
+const elf = @import("../core/elf.zig");
 const db = @import("../utils/debug.zig");
 
 //the console is split into two parts:
@@ -129,6 +130,13 @@ pub fn init() !void {
 
     //draw background rectangle
     try dsp.fill(background);
+
+    const bin = try fs.idFromName("app.elf");
+    try elf.load(bin);
+    db.print("\nallocating 3 pages...");
+    db.memOverview();
+    _ = try mem.allocm(3);
+    db.memOverview();
 
     //print the motd
     const motd = try fs.open(try fs.idFromName("motd.txt"));

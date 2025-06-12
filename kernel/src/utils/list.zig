@@ -7,10 +7,11 @@ const errors = error{
     list_outside_bounds,
     list_overflow,
     list_copybackwards_overflow,
+    list_buffer_too_small,
 };
 
 //the number of pages a list can use
-pub const list_size: usize = 8;
+pub const list_size: usize = 32;
 
 pub fn List(comptime T: type) type {
     return struct {
@@ -54,6 +55,7 @@ pub fn List(comptime T: type) type {
             //get the address of the page which needs to be read
             const page_index = @divFloor(@min(i_start, i_end), page_size);
             const page: *[page_size]T = self.address_list[page_index];
+
             return page[@mod(@min(i_start, i_end), page_size)..@mod(@max(i_start, i_end), page_size)];
         }
 
@@ -152,7 +154,7 @@ pub fn List(comptime T: type) type {
         }
 
         ///moves a chunk of data of a width at an index by an offset
-        pub inline fn copyChunk(self: *Self, index: usize, width: usize, dest: usize) !void {
+        pub fn copyChunk(self: *Self, index: usize, width: usize, dest: usize) !void {
             //checks
             if (index > self.size) return errors.list_outside_bounds;
             if (index + width > dest) {

@@ -51,14 +51,14 @@ const kernel_data = SegmentDescriptor{
 const user_code = SegmentDescriptor{
     .access = .{
         .is_code = true,
-        .ring = 3,
+        .ring = 0,
     },
 };
 
 const user_data = SegmentDescriptor{
     .access = .{
         .is_code = false,
-        .ring = 3,
+        .ring = 0,
     },
 };
 

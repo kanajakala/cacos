@@ -61,6 +61,25 @@ pub fn debug(string: []const u8, value: usize, mode: u1) void {
     }
 }
 
+pub fn debugPtr(ptr: anytype) void {
+    print("\nDebbugging pointer:");
+    debug(" -> value of pointer", @intFromPtr(ptr), 0);
+}
+
+pub fn debugStruct(object: anytype) void {
+    print("\n------------------------------------------------------------------");
+    print("\nDebugging struct: ");
+    print(@typeName(@TypeOf(object)));
+    inline for (std.meta.fields(@TypeOf(object))) |field| {
+        print("\n -> ");
+        print(field.name);
+        print(" = ");
+        printValue(@as(field.type, @field(object, field.name)));
+        //printValue(object);
+    }
+    print("\n------------------------------------------------------------------");
+}
+
 pub fn debugPage(page: []u8, format: u1) void {
     print("\n----debugging page------\n");
     print("informations about the page:\n");
@@ -105,7 +124,6 @@ pub fn debugPage(page: []u8, format: u1) void {
         print("\n");
     }
 }
-
 pub fn dumpPage(page: []u8) void {
     for (0..page.len) |i| {
         const value = page[i];
@@ -192,7 +210,7 @@ pub fn memOverview() void {
     print("\npage overview:\n");
     for (0..mem.n_pages) |i| {
         const value = mem.pages[i];
-        if (value) {
+        if (value == 1) {
             //color output in red
             print("\u{001b}[34m");
             printChar('u');

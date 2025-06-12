@@ -55,12 +55,30 @@ pub fn build(b: *std.Build) void {
         .strip = true,
     });
 
-    kernel.setLinkerScriptPath(b.path("kernel/link.ld"));
+    //Compile the apps to elf files
+    const apps = b.addExecutable(.{
+        .name = "app.elf",
+        .root_source_file = b.path("kernel/apps/test.zig"),
+        .target = target,
+        .optimize = kernel_optimize,
+        .code_model = .kernel,
+        .pic = true,
+        .strip = true,
+    });
+
+    kernel.setLinkerScript(b.path("kernel/link.ld"));
 
     const compile_step = b.step("compile", "Build the kernel");
     compile_step.dependOn(&b.addInstallArtifact(kernel, .{
         .dest_dir = .{
             .override = .{ .custom = "../kernel/img/src/initrd" },
+        },
+    }).step);
+
+    const compile_apps_step = b.step("compile-apps", "Build the apps");
+    compile_apps_step.dependOn(&b.addInstallArtifact(apps, .{
+        .dest_dir = .{
+            .override = .{ .custom = "../kernel/img/src/initrd/bin" },
         },
     }).step);
 
@@ -77,7 +95,7 @@ pub fn build(b: *std.Build) void {
         "-drive", //the file to run
         "format=raw,file=kernel/img/cacos.img",
         "-m", //the amount of ram
-        "4G",
+        "16G",
         "-debugcon", //send debug console output to stdio
         "stdio",
         "--no-reboot", //don't reboot, usefull for debugging
