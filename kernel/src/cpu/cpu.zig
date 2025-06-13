@@ -60,3 +60,8 @@ pub inline fn hang() noreturn {
         asm volatile ("hlt");
     }
 }
+
+pub fn jump(address: u64) void {
+    const func: *const fn () callconv(.C) void = @ptrFromInt(address);
+    func();
+}

@@ -61,8 +61,8 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("kernel/apps/test.zig"),
         .target = target,
         .optimize = kernel_optimize,
-        .code_model = .kernel,
-        .pic = true,
+        .code_model = .small,
+        //.pic = true,
         .strip = true,
     });
 

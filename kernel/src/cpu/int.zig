@@ -50,12 +50,7 @@ pub const InterruptStackFrame = extern struct {
     stack_segment: u32,
 };
 
-/// Offset by the amount of traps in the Interrupt Descriptor Table
-pub inline fn offset(irq: u8) u8 {
-    return irq + 32;
-}
-
-/// Handle specific interrupt request (the interrupt number is offsetted by `offset` function)
+/// Handle specific interrupt request
 /// taken from https://github.com/yhyadev/yos/blob/master/src/kernel/arch/x86_64/cpu.zig
 pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callconv(.C) void) void {
     const lambda = struct {
@@ -147,6 +142,9 @@ pub fn init() !void {
     setDescriptor(17, @intFromPtr(&handleAlignmentCheck), 0);
     setDescriptor(18, @intFromPtr(&handleMachineCheck), 0);
     setDescriptor(19, @intFromPtr(&handleSIMDFloatingPointException), 0);
+
+    //interrupt redirected for debugging
+    setDescriptor(9, @intFromPtr(&db.debugContextInterrupt), 0);
 
     //initialize the PIC
     pic.primary.init(0x20);

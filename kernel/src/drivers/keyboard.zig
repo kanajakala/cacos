@@ -202,8 +202,6 @@ pub fn init() void {
     pic.primary.enable(1);
     //set the function used to handle keypresses
     int.handle(1, keyboard_handler);
-    db.print("\n added keyboard handler");
 
     enable();
-    db.print("\nenabled keyboard");
 }

@@ -1,8 +1,10 @@
 const cpu = @import("../cpu/cpu.zig");
+const int = @import("../cpu/int.zig");
 const mem = @import("../core/memory.zig");
 const List = @import("../utils/list.zig").List(u8);
 const fs = @import("../core/ramfs.zig");
 const std = @import("std");
+const console = @import("../interface/console.zig");
 const BOOTBOOT = @import("../bootboot.zig").BOOTBOOT;
 extern var bootboot: BOOTBOOT;
 
@@ -80,50 +82,67 @@ pub fn debugStruct(object: anytype) void {
     print("\n------------------------------------------------------------------");
 }
 
+pub fn printValueFormat(value: u8, format: u1) void {
+    if (format == 0) {
+        if (value < 0xf) { //usefull for formating
+            print("0");
+            printValue(value);
+        } else {
+            printValue(value);
+        }
+    } else {
+        switch (value) {
+            0 => {
+                //color output in red
+                print("\u{001b}[34m");
+                printChar('0');
+                print("\u{001B}[0m");
+            },
+            '\n' => {
+                //color output in red
+                print("\u{001b}[35m");
+                printChar('N');
+                print("\u{001B}[0m");
+            },
+            ' ' => {
+                //color output in yellow
+                print("\u{001b}[33m");
+                printChar('_');
+                print("\u{001B}[0m");
+            },
+            else => printChar(value),
+        }
+    }
+    print(" ");
+}
+
 pub fn debugPage(page: []u8, format: u1) void {
     print("\n----debugging page------\n");
     print("informations about the page:\n");
     debug(" -> length of the page", page.len, 1);
-    debug(" -> address of the page", @intFromPtr(@as(*[4096]u8, @alignCast(@ptrCast(page)))), 0);
+    debug(" -> address of the page", @intFromPtr(page.ptr), 0);
     print("\ncontent of the page\n");
     for (0..page.len / 64) |i| {
         for (0..64) |j| {
             const value = page[i * 64 + j];
-            if (format == 0) {
-                if (value < 0xf) { //usefull for formating
-                    print("0");
-                    printValue(value);
-                } else {
-                    printValue(value);
-                }
-            } else {
-                switch (value) {
-                    0 => {
-                        //color output in red
-                        print("\u{001b}[34m");
-                        printChar('0');
-                        print("\u{001B}[0m");
-                    },
-                    '\n' => {
-                        //color output in red
-                        print("\u{001b}[35m");
-                        printChar('N');
-                        print("\u{001B}[0m");
-                    },
-                    ' ' => {
-                        //color output in yellow
-                        print("\u{001b}[33m");
-                        printChar('_');
-                        print("\u{001B}[0m");
-                    },
-                    else => printChar(value),
-                }
-            }
-            print(" ");
+            printValueFormat(value, format);
         }
-        print("\n");
+    }
+    print("\n");
+}
+
+pub fn debugMem(index: usize, width: usize, format: u1) void {
+    print("\n------------------------------------------------------------------");
+    print("\nDebugging memory: ");
+    debug(" -> value of \"width\"", width, 0);
+    debug(" -> value of \"index\"", index, 0);
+    print("\n");
+    for (0..width) |i| {
+        const value = mem.mmap[index + i];
+        printValueFormat(value, format);
     }
 }
+
 pub fn dumpPage(page: []u8) void {
     for (0..page.len) |i| {
         const value = page[i];
@@ -131,7 +150,7 @@ pub fn dumpPage(page: []u8) void {
     }
 }
 
-pub fn debugList(list: List, mode: u1) void {
+pub fn debugList(list: List, format: u1) void {
     print("\n----debugging List------\n");
     print("informations about the page:\n");
     //debug(" -> length of the list", list.size, 1);
@@ -140,31 +159,7 @@ pub fn debugList(list: List, mode: u1) void {
     print("\u{001b}[32m");
     for (0..list.size) |j| {
         const value = list.read(j) catch 0;
-        if (mode == 0) {
-            if (value < 0xf) { //usefull for formating
-                print("0");
-                printValue(value);
-            } else {
-                printValue(value);
-            }
-            print(" ");
-        } else {
-            switch (value) {
-                0 => {
-                    //color output in red
-                    print("\u{001b}[34m");
-                    printChar('0');
-                    print("\u{001B}[0m");
-                },
-                '\n' => {
-                    //color output in red
-                    print("\u{001b}[35m");
-                    printChar('N');
-                    print("\u{001B}[0m");
-                },
-                else => printChar(value),
-            }
-        }
+        printValueFormat(value, format);
     }
     print("\u{001B}[0m");
 }
@@ -211,15 +206,26 @@ pub fn memOverview() void {
     for (0..mem.n_pages) |i| {
         const value = mem.pages[i];
         if (value == 1) {
+            print("\nused page at:");
+
             //color output in red
             print("\u{001b}[34m");
-            printChar('u');
+            printValueDec(i);
             print("\u{001B}[0m");
-        } else {
-            printChar('f');
         }
-        print(" ");
     }
+}
+
+///prints the current context
+pub fn debugContextInterrupt(context: *int.InterruptStackFrame) callconv(.Interrupt) void {
+    print("\n------------------------------------------------------------------");
+    print("\nDebugging context:");
+    debugStruct(context.*);
+}
+
+///trigger the interrupt calling the context debug function
+pub fn debugContext() void {
+    asm volatile ("int $9");
 }
 
 pub fn sysInfo() void {

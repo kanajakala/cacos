@@ -8,6 +8,7 @@ extern var bootboot: bootboot_zig.BOOTBOOT;
 pub var n_pages: usize = undefined;
 pub var n_bytes: usize = undefined;
 pub var used_pages: usize = 0;
+pub var offset: usize = 0;
 
 //a page is a 4096 byte chunk of memory
 //the page table lists wether each block is currently written or not.
@@ -45,18 +46,14 @@ pub fn checkRegion(start: usize, width: usize) bool {
     //we need to find which blocks correspond to this region
     const block_start = start / 4096;
     const block_end = (start + width) / 4096;
-    const n = block_end - block_start;
-    var found: bool = false;
 
     //check for a continous slice
-    for (0..n) |j| {
-        found = true;
-        if (pages[block_start + j] == 1) {
-            found = false;
-            break;
+    for (block_start..block_end) |j| {
+        if (pages[j] == 1) {
+            return false;
         }
     }
-    return found;
+    return true;
 }
 
 ///sets the page from start to start+n to be state (free or not)
@@ -98,9 +95,6 @@ pub fn valloc(address: usize, width: usize) ![]u8 {
     const block_start = address / 4096;
     const block_end = (address + width) / 4096;
 
-    db.print("\naddress to allocate:");
-    db.debug("value of \"address\"", address, 0);
-    db.debug("value of \"n_bytes\"", n_bytes, 0);
     //check for overflow:
     if (address >= n_bytes or address + width >= n_bytes) return errors.mem_outside_bounds;
 
@@ -108,7 +102,7 @@ pub fn valloc(address: usize, width: usize) ![]u8 {
     if (!checkRegion(address, width)) return errors.mem_region_not_free;
 
     //we set these blocks as used
-    try setState(1, block_start, block_start - block_end);
+    try setState(1, block_start, block_start - block_end + 1);
 
     //we return the region
     return mmap[address .. address + width];
@@ -118,6 +112,14 @@ pub fn free(page: []u8) !void {
     used_pages -= 1;
     pages[@intFromPtr(page.ptr) / 4096] = 0;
     db.debug("value of \"@intFromPtr(page)\"", @intFromPtr(page.ptr), 0);
+}
+
+pub fn physicalFromVirtual(address: u64) u64 {
+    return address + offset;
+}
+
+pub fn virtualFromPhysical(address: u64) u64 {
+    return address - offset;
 }
 
 pub fn init() !void {
@@ -142,15 +144,14 @@ pub fn init() !void {
     n_bytes = mmap_ent.getSizeInBytes();
 
     //the start is not 0 because the first part is used to store which pages are used
-    mem_start = n_pages / 8;
+    mem_start = n_pages;
 
     //the memory can be accessed as a slice
-    mmap = @as([*]u8, @ptrFromInt(mmap_ent.getPtr()))[mem_start..n_bytes];
+    offset = mmap_ent.getPtr();
+    mmap = @as([*]u8, @ptrFromInt(offset))[0..n_bytes];
 
     //we create the bitmap controlling the page allocation
-    pages = @as([*]u1, @ptrFromInt(mmap_ent.getPtr()))[0..mem_start];
-
-    db.print("\ntrying to read from memory");
-    db.debug("value of \"mmap[1]\"", mmap[2], 1);
-    db.print("\ndone");
+    pages = @as([*]u1, @ptrFromInt(offset))[0..mem_start];
+    //we set the first pages as used because they are used to store the pages themselves
+    try setState(1, 0, mem_start / 4096);
 }

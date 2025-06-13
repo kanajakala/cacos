@@ -75,12 +75,8 @@ pub fn unpack() !void {
             5 => fs.Ftype.dir,
             else => fs.Ftype.text,
         };
-        db.print("\n\nFull name: ");
-        db.print(name_full);
 
         const parent_name = strings.take('/', strings.cut('/', name_full, right), right); //we remove the name of the file and take the first name
-        db.print("\n -> parent name: ");
-        db.print(parent_name);
 
         const name = strings.take('/', name_full, right);
 

@@ -70,13 +70,11 @@ pub fn erase(x: usize, y: usize) !void {
 
 pub fn scroll() !void {
     try dsp.copyChunk(dsp.w * font.h, dsp.w * dsp.h - (2 * dsp.w * font.h), 0);
-    //db.print("\nbut this works???");
     cursor.x = border;
     dsp.rect(border, dsp.h - font.h - border, dsp.w - 2 * border, font.h, background) catch {};
 }
 
 pub fn newLine() !void {
-    db.print("\\n");
     if (cursor.y + font.h + border >= dsp.h - border) {
         return scroll();
     }
@@ -113,7 +111,6 @@ pub fn handle(key: kb.KeyEvent) !void {
                 try newLine();
                 try stream.chars.data.clear();
                 try stream.chars.update();
-                try db.tree();
             },
             else => print(key.char),
         };
@@ -133,10 +130,6 @@ pub fn init() !void {
 
     const bin = try fs.idFromName("app.elf");
     try elf.load(bin);
-    db.print("\nallocating 3 pages...");
-    db.memOverview();
-    _ = try mem.allocm(3);
-    db.memOverview();
 
     //print the motd
     const motd = try fs.open(try fs.idFromName("motd.txt"));
