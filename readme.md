@@ -24,7 +24,7 @@ CaCOS is a hobby OS, currently in rewrite. It's goal is to be functional, as wel
   * IDT  ->  `cpu/idt` ✔️
   * GDT -> `cpu/gdt` ✔️
 
-* error handling
+* error handling ✔️
 
 * Process management
 
@@ -39,18 +39,25 @@ CaCOS is a hobby OS, currently in rewrite. It's goal is to be functional, as wel
 
  * Syscalls
 
- * Load binaries and execute them
+ * Load binaries and execute them ✔️
 
-### STAGE 2: drivers and processes
+### STAGE 2: drivers and processes ✔️
 
- * Keyboard
- * Console
+ * Keyboard ✔️
+ * Console ✔️
 
 ### STAGE 3: apps
 
 * Filesystem utils (cd mv rm touch cat pwd ls)
  * Base commands (echo uname ps...)
  * ...
+
+### STAGE 4: Beyond
+
+* threads and multitasking
+* GUI
+* GPU support
+* mouse support
 
 # Running the OS
 > **NOTE:** the OS is currently in heavy development and the process to run the OS is not streamlined yet  
@@ -65,7 +72,7 @@ you can then run the following the command if you are on linux (or mac?)
 > **NOTE:** the build process is very unlikely to run on non-unix system, it may work on mac with some tweaking
 
 you will need the following dependencies:
-* [zig 13](https://ziglang.org/download/)
+* [zig 14](https://ziglang.org/download/)
 * [qemu-system-x86_6](https://www.qemu.org/download/#linux)
 * [git](https://git-scm.com/)
 
@@ -74,6 +81,7 @@ running the following the following command will compile everything for you and 
 
 you can customize the build process by running specific steps:
 * `zig build compile` generate an elf executable of the kernel
+* `zig build compile-apps` creates executables for the kernel apps
 * `zig build setup` dowloads and build mkbootimg, bootboots utility program to generate bootable images
 * `zig build gen` create a bootable image using mkbootimg
 * `zig build run` run the previous steps and run the image in qemu
