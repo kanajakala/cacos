@@ -28,7 +28,6 @@ fn getFeatureMod(comptime arch: std.Target.Cpu.Arch) FeatureMod {
 
     return mod;
 }
-
 pub fn build(b: *std.Build) void {
     const feature_mod = getFeatureMod(kernel_config.arch);
     //const limine_raw = b.dependency("limine_raw", .{});
@@ -55,19 +54,9 @@ pub fn build(b: *std.Build) void {
         .strip = true,
     });
 
-    //Compile the apps to elf files
-    const apps = b.addExecutable(.{
-        .name = "app.elf",
-        .root_source_file = b.path("kernel/apps/test.zig"),
-        .target = target,
-        .optimize = kernel_optimize,
-        .code_model = .small,
-        //.pic = true,
-        .strip = true,
-    });
-
     kernel.setLinkerScript(b.path("kernel/link.ld"));
 
+    //step to build the kernel
     const compile_step = b.step("compile", "Build the kernel");
     compile_step.dependOn(&b.addInstallArtifact(kernel, .{
         .dest_dir = .{
@@ -75,13 +64,42 @@ pub fn build(b: *std.Build) void {
         },
     }).step);
 
+    //Compile all apps to elf files
+    var apps_dir = std.fs.cwd().openDir(
+        "kernel/apps",
+        .{ .iterate = true },
+    ) catch |err| {
+        std.debug.print("Failed to open apps directory: {}\n", .{err});
+        return;
+    };
+    defer apps_dir.close();
+
     const compile_apps_step = b.step("compile-apps", "Build the apps");
-    compile_apps_step.dependOn(&b.addInstallArtifact(apps, .{
-        .dest_dir = .{
-            .override = .{ .custom = "../kernel/img/src/initrd/bin" },
-        },
-    }).step);
     compile_apps_step.dependOn(compile_step);
+
+    var iterator = apps_dir.iterate();
+    while (iterator.next() catch null) |entry| {
+        if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".zig")) {
+            const app_name = entry.name[0 .. entry.name.len - 4]; // Remove .zig extension
+            const app_path = b.fmt("kernel/apps/{s}", .{entry.name});
+
+            const app = b.addExecutable(.{
+                .name = b.fmt("{s}.elf", .{app_name}),
+                .root_source_file = b.path(app_path),
+                .target = target,
+                .optimize = kernel_optimize,
+                .code_model = .small,
+                //.pic = true,
+                .strip = true,
+            });
+
+            compile_apps_step.dependOn(&b.addInstallArtifact(app, .{
+                .dest_dir = .{
+                    .override = .{ .custom = "../kernel/img/src/initrd/bin" },
+                },
+            }).step);
+        }
+    }
 
     //generate an image using mkbootimg, a bootboot utility
     const gen_cmd = b.addSystemCommand(&.{ "bash", "scripts/image.sh" });

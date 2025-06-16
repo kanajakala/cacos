@@ -128,8 +128,10 @@ pub fn init() !void {
     //draw background rectangle
     try dsp.fill(background);
 
-    const bin = try fs.idFromName("app.elf");
-    try elf.load(bin);
+    const testelf = try fs.idFromName("test.elf");
+    try elf.load(testelf);
+    const framebuffer = try fs.idFromName("framebuffer.elf");
+    try elf.load(framebuffer);
 
     //print the motd
     const motd = try fs.open(try fs.idFromName("motd.txt"));

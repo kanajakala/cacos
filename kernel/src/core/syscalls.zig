@@ -17,7 +17,6 @@ pub const Syscalls = enum(u64) {
 };
 
 fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
-    db.print("\ncalled Syscall!");
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
 
@@ -25,11 +24,8 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
     var value: u64 = 0;
 
     const syscall: Syscalls = @enumFromInt(stack_frame.r8);
-    db.debug("value of \"syscall\"", stack_frame.r8, 0);
     const arg0: u64 = stack_frame.r9;
-    db.debug("value of \"arg0\"", arg0, 0);
     const arg1: u64 = stack_frame.r10;
-    db.debug("value of \"arg1\"", arg1, 0);
     //const arg2: u64 = stack_frame.r11;
 
     switch (syscall) {
