@@ -81,10 +81,11 @@ pub fn build(b: *std.Build) void {
             .override = .{ .custom = "../kernel/img/src/initrd/bin" },
         },
     }).step);
+    compile_apps_step.dependOn(compile_step);
 
     //generate an image using mkbootimg, a bootboot utility
     const gen_cmd = b.addSystemCommand(&.{ "bash", "scripts/image.sh" });
-    gen_cmd.step.dependOn(compile_step);
+    gen_cmd.step.dependOn(compile_apps_step);
     const gen_step = b.step("image", "Generate the cacos image");
     gen_step.dependOn(&gen_cmd.step);
 

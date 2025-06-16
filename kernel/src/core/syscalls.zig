@@ -5,52 +5,53 @@ const pic = @import("../cpu/pic.zig");
 const mem = @import("../core/memory.zig");
 
 pub const Syscalls = enum(u64) {
-    open,
-    read,
-    write,
-    alloc,
-    malloc,
-    valloc,
-    load,
-    exec,
+    open, //0
+    read, //1
+    write, //2
+    alloc, //3
+    malloc, //4
+    valloc, //5
+    load, //6
+    exec, //7
+    debug, //8
 };
 
-///trigger a system interrupt using these arguments and returns a value
-pub fn syscall(stype: Syscalls, arg0: u64, arg1: u64, arg2: u64) u64 {
-    //push the arguments on the stack
-    asm volatile (
-    //pass the arguments
-    //trigger the syscall interrupt
-        \\int $34        
-        : //no output parameters
-        : [syscall] "{r8}" (@intFromEnum(stype)),
-          [arg0] "{r9}" (arg0),
-          [arg1] "{r10}" (arg1),
-          [arg2] "{r11}" (arg2),
-    );
-    return 0;
-}
-
-pub fn dummy() void {
-    db.print("\nentering syscall");
-    _ = syscall(Syscalls.open, 0xDEDEDEDEDE, 0xABABABAB, 0xCDCDCDCD);
-    const value: u64 = asm volatile ("movq %r12, %[ret]"
-        : [ret] "=r" (-> u64), // output operand: put result in `result`
-    );
-    db.printValue(value);
-    db.print("\nsyscall done");
-}
-
 fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
+    db.print("\ncalled Syscall!");
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
 
-    //return value
-    if (stack_frame.r9 == 0xDEDEDEDEDE) {
-        asm volatile (
-            \\mov $0xCACACACACA, %r12
-        );
+    //the return value will be passed to the caller
+    var value: u64 = 0;
+
+    const syscall: Syscalls = @enumFromInt(stack_frame.r8);
+    db.debug("value of \"syscall\"", stack_frame.r8, 0);
+    const arg0: u64 = stack_frame.r9;
+    db.debug("value of \"arg0\"", arg0, 0);
+    const arg1: u64 = stack_frame.r10;
+    db.debug("value of \"arg1\"", arg1, 0);
+    //const arg2: u64 = stack_frame.r11;
+
+    switch (syscall) {
+        .open => value = 0xbaba,
+        .read => value = 0xfafa,
+        .write => value = 0xcac,
+        .debug => {
+            //in this context:
+            // arg0 -> pointer to a string
+            // arg1 -> length of the string
+            db.print(@as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg0)))[0..arg1]);
+        },
+        else => value = 0xdada,
     }
+
+    //return value
+    asm volatile (
+        \\mov %[value], %r12
+        : //no output
+        : [value] "m" (value),
+        : "memory"
+    );
 }
 
 pub fn init() void {
@@ -59,6 +60,4 @@ pub fn init() void {
 
     //set the function used to handle syscalls
     isr.handle(2, handler);
-
-    dummy();
 }
