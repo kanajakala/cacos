@@ -1,5 +1,5 @@
 const cpu = @import("../cpu/cpu.zig");
-const int = @import("../cpu/int.zig");
+const isr = @import("../cpu/isr.zig");
 const mem = @import("../core/memory.zig");
 const List = @import("../utils/list.zig").List(u8);
 const fs = @import("../core/ramfs.zig");
@@ -217,7 +217,7 @@ pub fn memOverview() void {
 }
 
 ///prints the current context
-pub fn debugContextInterrupt(context: *int.InterruptStackFrame) callconv(.Interrupt) void {
+pub fn debugContextInterrupt(context: *isr.InterruptStackFrame) callconv(.Interrupt) void {
     print("\n------------------------------------------------------------------");
     print("\nDebugging context:");
     debugStruct(context.*);

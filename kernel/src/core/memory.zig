@@ -111,7 +111,6 @@ pub fn valloc(address: usize, width: usize) ![]u8 {
 pub fn free(page: []u8) !void {
     used_pages -= 1;
     pages[@intFromPtr(page.ptr) / 4096] = 0;
-    db.debug("value of \"@intFromPtr(page)\"", @intFromPtr(page.ptr), 0);
 }
 
 pub fn physicalFromVirtual(address: u64) u64 {

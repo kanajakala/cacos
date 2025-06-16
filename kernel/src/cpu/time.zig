@@ -1,4 +1,4 @@
-const int = @import("../cpu/int.zig");
+const isr = @import("../cpu/isr.zig");
 const pic = @import("../cpu/pic.zig");
 const db = @import("../utils/debug.zig");
 
@@ -44,7 +44,7 @@ pub fn sleep(time: usize) void {
     sleep_ticks(time * ticks_per_second);
 }
 
-fn time_handler(_: *int.InterruptStackFrame) callconv(.C) void {
+fn time_handler(_: *isr.InterruptStackFrame) callconv(.C) void {
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
     ticks += 1;
@@ -55,5 +55,5 @@ pub fn init() !void {
     pic.primary.enable(0);
 
     //set the function used to handle keypresses
-    int.handle(0, time_handler);
+    isr.handle(0, time_handler);
 }

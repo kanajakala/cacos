@@ -25,7 +25,7 @@ const db = @import("../utils/debug.zig");
 // ╰────────────────────────────────────────────╯
 
 //appearance variables
-const ratio = 3; // must be a wole number, sets the separation
+const ratio = 1; // must be a wole number, sets the separation
 const border = 20; //the size of the border on the outside of the screen
 
 //colors

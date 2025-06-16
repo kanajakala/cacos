@@ -1,5 +1,5 @@
 const cpu = @import("../cpu/cpu.zig");
-const int = @import("../cpu/int.zig");
+const isr = @import("../cpu/isr.zig");
 const pic = @import("../cpu/pic.zig");
 const console = @import("../interface/console.zig");
 const db = @import("../utils/debug.zig");
@@ -177,7 +177,7 @@ pub inline fn map(scancode: u8) KeyEvent {
     };
 }
 
-fn keyboard_handler(_: *int.InterruptStackFrame) callconv(.C) void {
+fn keyboard_handler(_: *isr.InterruptStackFrame) callconv(.C) void {
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
     //We get the key from the key input port and convert it to a keyEvent
@@ -201,7 +201,7 @@ pub fn init() void {
 
     pic.primary.enable(1);
     //set the function used to handle keypresses
-    int.handle(1, keyboard_handler);
+    isr.handle(1, keyboard_handler);
 
     enable();
 }
