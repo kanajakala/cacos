@@ -46,7 +46,7 @@ pub fn build(b: *std.Build) void {
     //Compile the kernel to an elf file
     const kernel = b.addExecutable(.{
         .name = "cacos.elf",
-        .root_source_file = b.path("kernel/src/cacos.zig"),
+        .root_source_file = b.path("cacos/kernel/cacos.zig"),
         .target = target,
         .optimize = kernel_optimize,
         .code_model = .kernel,
@@ -54,19 +54,19 @@ pub fn build(b: *std.Build) void {
         .strip = true,
     });
 
-    kernel.setLinkerScript(b.path("kernel/link.ld"));
+    kernel.setLinkerScript(b.path("cacos/link.ld"));
 
     //step to build the kernel
     const compile_step = b.step("compile", "Build the kernel");
     compile_step.dependOn(&b.addInstallArtifact(kernel, .{
         .dest_dir = .{
-            .override = .{ .custom = "../kernel/img/src/initrd" },
+            .override = .{ .custom = "../cacos/img/src/initrd" },
         },
     }).step);
 
     //Compile all apps to elf files
     var apps_dir = std.fs.cwd().openDir(
-        "kernel/apps",
+        "cacos/apps",
         .{ .iterate = true },
     ) catch |err| {
         std.debug.print("Failed to open apps directory: {}\n", .{err});
@@ -81,7 +81,7 @@ pub fn build(b: *std.Build) void {
     while (iterator.next() catch null) |entry| {
         if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".zig")) {
             const app_name = entry.name[0 .. entry.name.len - 4]; // Remove .zig extension
-            const app_path = b.fmt("kernel/apps/{s}", .{entry.name});
+            const app_path = b.fmt("cacos/apps/{s}", .{entry.name});
 
             const app = b.addExecutable(.{
                 .name = b.fmt("{s}.elf", .{app_name}),
@@ -95,7 +95,7 @@ pub fn build(b: *std.Build) void {
 
             compile_apps_step.dependOn(&b.addInstallArtifact(app, .{
                 .dest_dir = .{
-                    .override = .{ .custom = "../kernel/img/src/initrd/bin" },
+                    .override = .{ .custom = "../cacos/img/src/initrd/bin" },
                 },
             }).step);
         }
@@ -112,7 +112,7 @@ pub fn build(b: *std.Build) void {
         "qemu-system-x86_64",
         "-s", //enable debugging
         "-drive", //the file to run
-        "format=raw,file=kernel/img/cacos.img",
+        "format=raw,file=cacos/img/cacos.img",
         "-m", //the amount of ram
         "16G",
         "-debugcon", //send debug console output to stdio
