@@ -1,13 +1,14 @@
 pub const Syscalls = enum(u64) {
-    open, //0
-    read, //1
-    write, //2
-    alloc, //3
-    malloc, //4
-    valloc, //5
-    load, //6
-    exec, //7
-    debug, //8
+    print,
+    open,
+    read,
+    write,
+    alloc,
+    malloc,
+    valloc,
+    load,
+    exec,
+    debug,
 };
 
 ///trigger a system interrupt using these arguments and returns a value
@@ -30,6 +31,10 @@ fn syscall(stype: Syscalls, arg0: u64, arg1: u64, arg2: u64) u64 {
 
 pub fn dummy() void {
     _ = syscall(Syscalls.open, 0xDEDEDEDEDE, 0xABABABAB, 0xCDCDCDCD);
+}
+
+pub fn print(string: []const u8) void {
+    _ = syscall(Syscalls.print, @intFromPtr(string.ptr), string.len, 0);
 }
 
 pub fn debug(string: []const u8) void {

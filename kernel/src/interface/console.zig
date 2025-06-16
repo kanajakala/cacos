@@ -3,7 +3,6 @@ const kb = @import("../drivers/keyboard.zig");
 const font = @import("../interface/font.zig");
 const fs = @import("../core/ramfs.zig");
 const mem = @import("../core/memory.zig");
-const stream = @import("../interface/stream.zig");
 const elf = @import("../core/elf.zig");
 const db = @import("../utils/debug.zig");
 
@@ -32,9 +31,12 @@ const border = 20; //the size of the border on the outside of the screen
 const text_color: u32 = 0xffffff;
 const background: u32 = 0x280800;
 
+var stream: fs.Node = undefined;
+
 const Cursor = struct {
     x: u64,
     y: u64,
+    enabled: u1 = 1,
 
     pub fn next(self: *Cursor) !void {
         if (self.x + font.w >= dsp.w / ratio - border) {
@@ -53,8 +55,8 @@ const Cursor = struct {
         self.x -= font.w;
     }
 
-    pub fn draw(self: *Cursor) !void {
-        try dsp.rect(self.x, self.y, font.w, font.h, 0xff00ff);
+    pub fn draw(self: Cursor) !void {
+        if (self.enabled == 1) try dsp.rect(self.x, self.y, font.w, font.h, 0xff00ff);
     }
 
     pub fn remove(self: *Cursor) !void {
@@ -83,9 +85,13 @@ pub fn newLine() !void {
     //try cursor.draw();
 }
 
-pub fn print(char: u8) !void {
+pub fn printChar(char: u8) !void {
     try handle_char(char);
-    try stream.chars.append(char);
+    try stream.append(char);
+}
+
+pub fn print(string: []const u8) !void {
+    for (string) |char| try printChar(char);
 }
 
 pub fn handle_char(char: u8) !void {
@@ -109,10 +115,10 @@ pub fn handle(key: kb.KeyEvent) !void {
         try switch (key.code) {
             kb.KeyEvent.Code.enter => {
                 try newLine();
-                try stream.chars.data.clear();
-                try stream.chars.update();
+                try stream.data.clear();
+                try stream.update();
             },
-            else => print(key.char),
+            else => printChar(key.char),
         };
     }
     //update cursors position
@@ -120,22 +126,16 @@ pub fn handle(key: kb.KeyEvent) !void {
 }
 
 pub fn init() !void {
+    //inittialise required components
     try dsp.init();
     font.init();
     kb.init();
-    try stream.init();
+    stream = try fs.Node.create("stream", fs.Ftype.text, 0);
 
     //draw background rectangle
     try dsp.fill(background);
 
-    const testelf = try fs.idFromName("test.elf");
-    try elf.load(testelf);
-    const framebuffer = try fs.idFromName("framebuffer.elf");
-    try elf.load(framebuffer);
-
-    //print the motd
-    const motd = try fs.open(try fs.idFromName("motd.txt"));
-    for (0..motd.data.size) |i| {
-        try print(try motd.data.read(i));
-    }
+    //load the test elf file
+    const motd = try fs.idFromName("motd.elf");
+    try elf.load(motd);
 }

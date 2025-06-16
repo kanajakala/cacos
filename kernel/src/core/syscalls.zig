@@ -3,17 +3,19 @@ const db = @import("../utils/debug.zig");
 const isr = @import("../cpu/isr.zig");
 const pic = @import("../cpu/pic.zig");
 const mem = @import("../core/memory.zig");
+const console = @import("../interface/console.zig");
 
 pub const Syscalls = enum(u64) {
-    open, //0
-    read, //1
-    write, //2
-    alloc, //3
-    malloc, //4
-    valloc, //5
-    load, //6
-    exec, //7
-    debug, //8
+    print,
+    open,
+    read,
+    write,
+    alloc,
+    malloc,
+    valloc,
+    load,
+    exec,
+    debug,
 };
 
 fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
@@ -29,6 +31,12 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
     //const arg2: u64 = stack_frame.r11;
 
     switch (syscall) {
+        .print => {
+            //in this context:
+            // arg0 -> pointer to a string
+            // arg1 -> length of the string
+            console.print(@as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg0)))[0..arg1]) catch {};
+        },
         .open => value = 0xbaba,
         .read => value = 0xfafa,
         .write => value = 0xcac,
