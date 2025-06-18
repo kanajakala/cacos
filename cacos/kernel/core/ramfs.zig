@@ -16,7 +16,7 @@ const db = @import("../utils/debug.zig");
 pub var node_list: NodeList = undefined;
 
 pub var n_nodes: usize = 0; //the number of nodes in the filesystem
-pub var count: usize = 0; //counts all created files in the filesystem
+pub var count: u16 = 0; //counts all created files in the filesystem
 
 pub const errors = error{
     outsideBounds,
@@ -36,13 +36,13 @@ pub const Ftype = enum(u8) {
 
 //The filesystem is entirely made of these
 pub const Node = struct {
-    id: usize, //the id of the node, is garantied to be unique
+    id: u16, //the id of the node, is garantied to be unique
     name: []const u8,
     data: List, //the data stored in the node
     ftype: Ftype, //the type of the node
-    parent: usize, //the parent of the node in the filesystem tree, for root the parent is null
+    parent: u16, //the parent of the node in the filesystem tree, for root the parent is null
 
-    pub fn create(name: []const u8, ftype: Ftype, parent: usize) !Node {
+    pub fn create(name: []const u8, ftype: Ftype, parent: u16) !Node {
         const data = try List.init();
         const node = Node{ .id = count, .name = name, .data = data, .ftype = ftype, .parent = parent };
 
@@ -73,7 +73,7 @@ pub const Node = struct {
     }
 };
 
-pub fn idFromName(name: []const u8) !usize {
+pub fn idFromName(name: []const u8) !u16 {
     //return a node corresponding to a name
     //we search through all the files and when we hit the right node we return it
     for (0..n_nodes) |i| {

@@ -79,5 +79,4 @@ pub fn init() !void {
     w = bootboot.fb_width;
     h = bootboot.fb_height;
     fb = @ptrCast(@alignCast(&framebuffer));
-    db.print("\nDisplay initialized!");
 }

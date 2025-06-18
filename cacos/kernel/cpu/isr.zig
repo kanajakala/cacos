@@ -45,6 +45,7 @@ pub fn load() void {
 pub const InterruptStackFrame = extern struct {
     stack_pointer: u64,
     stack_segment: u64,
+    r12: u64,
     r11: u64,
     r10: u64,
     r9: u64,
@@ -69,6 +70,7 @@ pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callco
                 \\push %r9
                 \\push %r10
                 \\push %r11
+                \\push %r12
                 \\mov %ds, %rax
                 \\push %rax
                 \\mov %es, %rax
@@ -98,10 +100,13 @@ pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callco
                 \\mov %rax, %es
                 \\pop %rax
                 \\mov %rax, %ds
+                \\pop %r12
                 \\pop %r11
                 \\pop %r10
                 \\pop %r9
-                \\pop %r8
+                // we don't pop r8 as it is used for returns
+                // we do a dummy pop instead
+                \\pop %rsi
                 \\pop %rsi
                 \\pop %rdi
                 \\pop %rdx

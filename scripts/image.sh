@@ -17,7 +17,7 @@ echo "=================="
 echo "building the image"
 echo "=================="
 
-cd kernel/img
+cd cacos/img
 ./../../.cache/mkbootimg ../bootboot.json cacos.img
 
 echo "done"
