@@ -1,7 +1,7 @@
 <h1 align=center>CaCOS</h1>
 <h4 align=center>coherent and cohesive operating system</h4>
 
-CaCOS is a hobby OS, currently in rewrite. It's goal is to be functional, as well as written in elegant zig code, as much as possible. In the current rewrite there is font displaying and basic memory management. 
+CaCOS is a hobby OS, currently in rewrite. It's goal is to be functional, as well as written in elegant zig code, as much as possible. In the current rewrite there is text display, a basic file system, and userland applications as well as libraries to support them.
 
 
 # The Plan
@@ -37,7 +37,7 @@ CaCOS is a hobby OS, currently in rewrite. It's goal is to be functional, as wel
         * append data✔️
         * change file attributes
 
- * Syscalls
+ * Syscalls ✔️
 
  * Load binaries and execute them ✔️
 
