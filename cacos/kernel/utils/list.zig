@@ -50,7 +50,7 @@ pub fn List(comptime T: type) type {
         ///reads a slice from the list NOTE: the start and end index must be on the same page
         pub fn readSlice(self: Self, i_start: usize, i_end: usize) ![]T {
             //checks
-            if (i_start >= self.size or i_end >= self.size) return errors.list_outside_bounds;
+            if (i_start > self.size or i_end > self.size) return errors.list_outside_bounds;
 
             //get the address of the page which needs to be read
             const page_index = @divFloor(@min(i_start, i_end), page_size);

@@ -1,18 +1,22 @@
+//this is an enum describing all possible syscalls
+//later a script will automaticaly import it into the lib-syscall
 pub const Syscalls = enum(u64) {
-    print,
-    open,
-    read,
-    readBuf,
-    write,
-    writeBuf,
-    alloc,
-    malloc,
-    valloc,
-    free,
-    load,
-    exec,
-    debug,
-    debugValue,
+    print, //print a string to screen
+    print_char, //print a char, usefull when the string is not hard-coded
+    create, //create a new node
+    open, //return a File struct describing the file
+    read, //read from a node
+    read_to_buffer, //read to a buffer provided by the caller
+    write, //write to a node
+    write_from_buffer, //write from a buffer provided by the caller
+    alloc, //allocate a page
+    malloc, //allocate multiple contigous pages
+    valloc, //allocate n bytes at ann address
+    free, //free a page
+    load, //load an elf file
+    exec, //execute an elf file
+    debug, //print a string to the debug console
+    debug_value, //debug ann integer value
 };
 
 ///trigger a system interrupt using these arguments and returns a value

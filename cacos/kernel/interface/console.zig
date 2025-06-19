@@ -97,7 +97,8 @@ pub fn print(string: []const u8) !void {
 pub fn handle_char(char: u8) !void {
     switch (char) {
         0 => {
-            db.print("UNKNOWN");
+            try font.drawChar('?', cursor.x, cursor.y, text_color);
+            try cursor.next();
         },
         '\n' => try newLine(),
         else => {

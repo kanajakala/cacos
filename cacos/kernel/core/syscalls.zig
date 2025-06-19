@@ -5,24 +5,27 @@ const isr = @import("../cpu/isr.zig");
 const pic = @import("../cpu/pic.zig");
 const mem = @import("../core/memory.zig");
 const console = @import("../interface/console.zig");
+const std = @import("std");
 
 //this is an enum describing all possible syscalls
 //later a script will automaticaly import it into the lib-syscall
 pub const Syscalls = enum(u64) {
-    print,
-    open,
-    read,
-    readBuf,
-    write,
-    writeBuf,
-    alloc,
-    malloc,
-    valloc,
-    free,
-    load,
-    exec,
-    debug,
-    debugValue,
+    print, //print a string to screen
+    print_char, //print a char, usefull when the string is not hard-coded
+    create, //create a new node
+    open, //return a File struct describing the file
+    read, //read from a node
+    read_to_buffer, //read to a buffer provided by the caller
+    write, //write to a node
+    write_from_buffer, //write from a buffer provided by the caller
+    alloc, //allocate a page
+    malloc, //allocate multiple contigous pages
+    valloc, //allocate n bytes at ann address
+    free, //free a page
+    load, //load an elf file
+    exec, //execute an elf file
+    debug, //print a string to the debug console
+    debug_value, //debug ann integer value
 };
 
 fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
@@ -45,6 +48,11 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
             // arg1 -> length of the string
             console.print(@as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg0)))[0..arg1]) catch {};
         },
+        .print_char => {
+            //in this context:
+            // arg0 -> a char
+            console.printChar(@truncate(arg0)) catch {};
+        },
         .open => {
             //in this context:
             // arg0 -> pointer to the name of the file
@@ -58,13 +66,10 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
                 size: u16, //size of the node in bytes
                 parent: u16, //id of the parent of the node
             };
-            db.print("\nentering open syscall");
             const id = fs.idFromName(@as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg0)))[0..arg1]) catch 0;
             const Node = fs.open(id) catch fs.root;
             const file = File{ .id = id, .ftype = @intFromEnum(Node.ftype), .size = @truncate(Node.data.size), .parent = Node.parent };
-            db.debugStruct(file);
             value = @as(u64, @bitCast(file));
-            db.debug("value of \"value\"", value, 0);
         },
         .read => {
             //in this context
@@ -73,25 +78,36 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
             const Node = fs.open(arg1) catch fs.root;
             value = Node.data.read(arg0) catch 0;
         },
-        .readBuf => {
+        .read_to_buffer => {
             //in this context
             // arg0 -> index in the file
-            // arg1 -> pointer to a buffer
-            // arg2 -> length of the buffer
+            // arg1 -> length of the data to  copy
+            // arg2 -> pointer to a buffer
             // arg3 -> id of the node
             const Node = fs.open(arg3) catch fs.root;
-            const data = Node.data.readSlice(arg0, arg0 + arg2) catch @as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg0)))[0..arg2];
-            const buffer = @as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg0)))[0..arg2];
+            const data = Node.data.readSlice(arg0, arg0 + arg1) catch {
+                db.printErr("couldn't read slice !!!");
+                unreachable;
+            };
+            const buffer = @as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg2)))[0..arg1];
             @memcpy(buffer, data);
         },
         .write => value = 0xcac,
+        .alloc => {
+            //in this context
+            // arg0 -> number of bytes to allocate
+            const Allocation = packed struct(u64) { address: u48, length: u16 }; //we assume the address and length fit in their respective integer representations
+            const page = mem.allocm(std.math.divCeil(u64, arg0, 4096) catch 1) catch unreachable;
+            const allocation = Allocation{ .address = @truncate(@intFromPtr(page.ptr)), .length = @truncate(page.len) };
+            value = @bitCast(allocation);
+        },
         .debug => {
             //in this context:
             // arg0 -> pointer to a string
             // arg1 -> length of the string
             db.print(@as([*]u8, @ptrFromInt(mem.physicalFromVirtual(arg0)))[0..arg1]);
         },
-        .debugValue => {
+        .debug_value => {
             //in this context:
             // arg0 -> value
             // arg1 -> mode

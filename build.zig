@@ -123,7 +123,7 @@ pub fn build(b: *std.Build) void {
         "-d",
         "int",
         //"-icount", //slow machine down
-        //"0,align=on", //by a factor 10
+        //"5,align=on", //by a factor 3
     });
     run_command.step.dependOn(gen_step);
 

@@ -5,5 +5,5 @@ pub fn print(string: []const u8) void {
 }
 
 pub fn debugValue(value: u64, mode: u8) void {
-    _ = sc.syscall(sc.Syscalls.debugValue, value, mode, 0, 0);
+    _ = sc.syscall(sc.Syscalls.debug_value, value, mode, 0, 0);
 }

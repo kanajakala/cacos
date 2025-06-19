@@ -10,6 +10,11 @@ const Node = packed struct(u64) {
     pub fn read(self: Node, index: u64) u8 {
         return @truncate(sc.syscall(sc.Syscalls.read, index, self.id, 0, 0));
     }
+
+    pub fn readToBuffer(self: Node, index: u64, size: u64, buffer: []u8) void {
+        if (buffer.len > size) return;
+        _ = sc.syscall(sc.Syscalls.read_to_buffer, index, size, @intFromPtr(buffer.ptr), self.id);
+    }
 };
 
 pub fn open(name: []const u8) Node {
