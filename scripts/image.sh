@@ -13,12 +13,6 @@ fi
 
 #now we are sure that there is a binary of mkbootimg in .cache
 
-echo "=================="
-echo "building the image"
-echo "=================="
-
 cd cacos/img
 ./../../.cache/mkbootimg ../bootboot.json cacos.img
-
-echo "done"
 
