@@ -98,6 +98,11 @@ pub fn print(string: []const u8) !void {
     for (string) |char| try printChar(char, text_color);
 }
 
+pub fn printColor(string: []const u8,color: u32) !void {
+    try cac_in.appendSlice(@constCast(string));
+    for (string) |char| try printChar(char, color);
+}
+
 pub fn printErr(string: []const u8) !void {
     try cac_err.appendSlice(@constCast(string));
     for (string) |char| try printChar(char, 0xff0000);
@@ -125,7 +130,8 @@ pub fn handle(key: kb.KeyEvent) !void {
         try switch (key.code) {
             kb.KeyEvent.Code.enter => {
                 try newLine();
-                try exec(); //execute the command which was typed
+                if (cac_in.data.size > 0) try exec(); //execute the command which was typed if there was something typed
+                            try prompt();
 
                 //clear the different data streams
                 try cac_in.data.clear();
@@ -143,19 +149,21 @@ pub fn handle(key: kb.KeyEvent) !void {
     try cursor.draw();
 }
 
+pub fn prompt() !void {
+    try newLine();
+    try printColor(" CaCOS", 0x00ff00);
+    try printColor("> ", 0x00ffff);
+}
+
 pub fn exec() !void {
     //get the name of the process to execute
     const name: []const u8 = try cac_in.data.readSlice(0, cac_in.data.size);
-    db.print(name);
-    db.print("\nlength of the string: ");
-    db.printValueDec(name.len);
     const executable = fs.idFromName(name) catch {
-        try printErr("\nno such file!");
+        try printErr("no such file!");
         return;
     };
-    db.print("\nwe got so far");
     elf.load(executable) catch {
-        try printErr("\nthe file is not executable");
+        try printErr("the file is not executable");
         return;
     };
 }
