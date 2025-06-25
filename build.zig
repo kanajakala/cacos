@@ -89,7 +89,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = kernel_optimize,
                 .code_model = .small,
-                //.pic = true,
+                .pic = true,
                 .strip = true,
             });
 
@@ -114,7 +114,7 @@ pub fn build(b: *std.Build) void {
         "-drive", //the file to run
         "format=raw,file=cacos/img/cacos.img",
         "-m", //the amount of ram
-        "16G",
+        "4G",
         "-debugcon", //send debug console output to stdio
         "stdio",
         "--no-reboot", //don't reboot, usefull for debugging

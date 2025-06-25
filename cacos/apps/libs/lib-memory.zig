@@ -11,6 +11,6 @@ pub fn alloc(n_bytes: u64) []u8 {
 
 pub fn free(page: []u8) void {
     _ = page;
-    const message = "Freed memory";
+    const message = "\nFreed memory";
     _ = sc.syscall(sc.Syscalls.debug, @intFromPtr(message.ptr), message.len, 0, 0);
 }

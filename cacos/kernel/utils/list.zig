@@ -8,18 +8,19 @@ const errors = error{
     list_overflow,
     list_copybackwards_overflow,
     list_buffer_too_small,
+    list_index_not_on_same_page,
 };
 
 //the number of pages a list can use
-pub const list_size: usize = 32;
+pub const list_size: usize = 16;
 
 pub fn List(comptime T: type) type {
     return struct {
         const Self = @This();
         const page_size = 4096 / @sizeOf(T);
 
-        size: usize, //the size of the list in elements
-        n_pages: usize, //the number of pages storing the data
+        size: u64, //the size of the list in elements
+        n_pages: u64, //the number of pages storing the data
         address_list: [list_size]*[page_size]T, //where the lists are stored
 
         ///creates and initializes a new list
@@ -28,7 +29,7 @@ pub fn List(comptime T: type) type {
         }
 
         ///read content of the list at an index
-        pub inline fn read(self: Self, index: usize) !T {
+        pub fn read(self: Self, index: usize) !T {
             //checks
             if (index > self.size) return errors.list_outside_bounds;
             //get the address of the page which needs to be read
@@ -37,20 +38,11 @@ pub fn List(comptime T: type) type {
             return page[@mod(index, page_size)];
         }
 
-        ///return a pointer to the content of the list at an index
-        pub inline fn read_pointer(self: Self, index: usize) !*T {
-            //checks
-            if (index > self.size) return errors.list_outside_bounds;
-            //get the address of the page which needs to be read
-            const page_index = @divFloor(index, page_size);
-            const page: *[page_size]T = self.address_list[page_index];
-            return &page[@mod(index, page_size)];
-        }
-
         ///reads a slice from the list NOTE: the start and end index must be on the same page
         pub fn readSlice(self: Self, i_start: usize, i_end: usize) ![]T {
             //checks
             if (i_start > self.size or i_end > self.size) return errors.list_outside_bounds;
+            if (i_start / page_size != i_end / page_size) return errors.list_index_not_on_same_page;
 
             //get the address of the page which needs to be read
             const page_index = @divFloor(@min(i_start, i_end), page_size);
@@ -66,11 +58,12 @@ pub fn List(comptime T: type) type {
                 if (@rem(self.size, page_size) == 0) {
                     //checks
                     if (self.n_pages >= list_size) {
-                        db.printErr("no space left on list: ");
-                        db.print("\n  number of pages allocated for the list: ");
+                        db.printErr("\nList full !: ");
+                        db.printErr("\n  number of pages allocated for the list: ");
                         db.printValueDec(self.n_pages);
-                        db.print("\n  list size: ");
+                        db.printErr("\n  list size: ");
                         db.printValueDec(list_size);
+                        db.print("\n");
                         return errors.list_overflow;
                     }
                     const page: []u8 = try mem.alloc();

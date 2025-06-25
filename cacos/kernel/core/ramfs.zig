@@ -75,7 +75,7 @@ pub const Node = struct {
     }
 };
 
-pub fn idFromName(name: []const u8) !u16 {
+pub inline fn idFromName(name: []const u8) !u16 {
     //return a node corresponding to a name
     //we search through all the files and when we hit the right node we return it
     for (0..n_nodes) |i| {

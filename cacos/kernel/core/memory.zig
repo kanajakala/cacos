@@ -113,10 +113,19 @@ pub fn free(page: []u8) !void {
     pages[@intFromPtr(page.ptr) / 4096] = 0;
 }
 
+///a physical address are the one zig uses
+///as the memory is identity mapped, physical and cpu-virtual addresses are the same and are reffered to as physical
+///the virtual addresses are the indexes into the memory region which has been chosen
+///the memory region is at physical address 'offset'
+///to get the the physical from a virtual we need to remove add offset
+///so for exemple index 1, is at physical address 1 + offset because this is where the second byte in the memory map is located
 pub fn physicalFromVirtual(address: u64) u64 {
     return address + offset;
 }
 
+///to get the the virtual from a physical we need to remove remove offset
+///so for exemple index 1, is at physical address 1 + offset because this is where the second byte in the memory map is located
+///so to get the virtual addres we do (1 + offset) - offset
 pub fn virtualFromPhysical(address: u64) u64 {
     return address - offset;
 }
@@ -127,12 +136,12 @@ pub fn init() !void {
 
     //we try to find the best one
     var mmap_ent: bootboot_zig.MMapEnt = entries[0];
-    const n_entries = 6;
+    const n_entries = (bootboot.size - 128) / 16;
     var best: usize = 0;
     var best_size: usize = mmap_ent.getSizeInBytes();
     for (0..n_entries) |i| {
         mmap_ent = entries[i];
-        if (mmap_ent.getSizeInBytes() >= best_size and mmap_ent.isFree() and mmap_ent.getType() == bootboot_zig.MMapType.free) {
+        if (mmap_ent.isFree() and @intFromEnum(mmap_ent.getType()) == 1 and mmap_ent.getSizeInBytes() >= best_size) {
             best = i;
             best_size = mmap_ent.getSizeInBytes();
         }
@@ -141,6 +150,9 @@ pub fn init() !void {
     //we update the number of available nodes
     n_pages = mmap_ent.getSizeIn4KiBPages();
     n_bytes = mmap_ent.getSizeInBytes();
+    db.print("memory region:");
+    db.debug(" size of memory region", n_bytes, 1);
+    db.debug("pointer to the memory region", mmap_ent.getPtr(), 0);
 
     //the start is not 0 because the first part is used to store which pages are used
     mem_start = n_pages;

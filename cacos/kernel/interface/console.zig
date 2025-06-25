@@ -28,14 +28,17 @@ const ratio = 1; // must be a wole number, sets the separation
 const border = 20; //the size of the border on the outside of the screen
 
 //colors
-const text_color: u32 = 0xffffff;
-const background: u32 = 0x280800;
+pub const text_color: u32 = 0xffeeff;
+pub const background: u32 = 0x280800;
 
-var stream: fs.Node = undefined;
+var cac_in: fs.Node = undefined;
+var cac_err: fs.Node = undefined;
+var cac_keys: fs.Node = undefined;
 
-const Cursor = struct {
+const Cursor = packed struct {
     x: u64,
     y: u64,
+    color: u32 = 0xff00ff,
     enabled: u1 = 1,
 
     pub fn next(self: *Cursor) !void {
@@ -56,7 +59,7 @@ const Cursor = struct {
     }
 
     pub fn draw(self: Cursor) !void {
-        if (self.enabled == 1) try dsp.rect(self.x, self.y, font.w, font.h, 0xff00ff);
+        if (self.enabled == 1) try dsp.rect(self.x, self.y, font.w, font.h, self.color);
     }
 
     pub fn remove(self: *Cursor) !void {
@@ -85,24 +88,30 @@ pub fn newLine() !void {
     //try cursor.draw();
 }
 
-pub fn printChar(char: u8) !void {
-    try handle_char(char);
-    try stream.append(char);
+pub fn printChar(char: u8, color: u32) !void {
+    try handle_char(char, color);
+    try cac_in.append(char);
 }
 
 pub fn print(string: []const u8) !void {
-    for (string) |char| try printChar(char);
+    try cac_in.appendSlice(@constCast(string));
+    for (string) |char| try printChar(char, text_color);
 }
 
-pub fn handle_char(char: u8) !void {
+pub fn printErr(string: []const u8) !void {
+    try cac_err.appendSlice(@constCast(string));
+    for (string) |char| try printChar(char, 0xff0000);
+}
+
+pub fn handle_char(char: u8, color: u32) !void {
     switch (char) {
         0 => {
-            try font.drawChar('?', cursor.x, cursor.y, text_color);
+            try font.drawChar('?', cursor.x, cursor.y, color);
             try cursor.next();
         },
         '\n' => try newLine(),
         else => {
-            try font.drawChar(char, cursor.x, cursor.y, text_color);
+            try font.drawChar(char, cursor.x, cursor.y, color);
             try cursor.next();
         },
     }
@@ -116,14 +125,39 @@ pub fn handle(key: kb.KeyEvent) !void {
         try switch (key.code) {
             kb.KeyEvent.Code.enter => {
                 try newLine();
-                try stream.data.clear();
-                try stream.update();
+                try exec(); //execute the command which was typed
+
+                //clear the different data streams
+                try cac_in.data.clear();
+                try cac_err.data.clear();
+                try cac_keys.data.clear();
+
+                try cac_in.update();
+                try cac_err.update();
+                try cac_keys.update();
             },
-            else => printChar(key.char),
+            else => printChar(key.char, text_color),
         };
     }
     //update cursors position
     try cursor.draw();
+}
+
+pub fn exec() !void {
+    //get the name of the process to execute
+    const name: []const u8 = try cac_in.data.readSlice(0, cac_in.data.size);
+    db.print(name);
+    db.print("\nlength of the string: ");
+    db.printValueDec(name.len);
+    const executable = fs.idFromName(name) catch {
+        try printErr("\nno such file!");
+        return;
+    };
+    db.print("\nwe got so far");
+    elf.load(executable) catch {
+        try printErr("\nthe file is not executable");
+        return;
+    };
 }
 
 pub fn init() !void {
@@ -131,7 +165,10 @@ pub fn init() !void {
     try dsp.init();
     font.init();
     kb.init();
-    stream = try fs.Node.create("stream", fs.Ftype.text, 0);
+
+    cac_in = try fs.Node.create("/sys/cac-in", fs.Ftype.text, 0);
+    cac_err = try fs.Node.create("/sys/cac-err", fs.Ftype.text, 0);
+    cac_keys = try fs.Node.create("/sys/cac_in", fs.Ftype.text, 0);
 
     //draw background rectangle
     try dsp.fill(background);
@@ -139,4 +176,5 @@ pub fn init() !void {
     //load the test elf file
     const motd = try fs.idFromName("motd.elf");
     try elf.load(motd);
+    try cac_in.data.clear(); //we need to clear the polluted cac_in
 }

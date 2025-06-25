@@ -51,7 +51,7 @@ pub const Program_Header = packed struct(u448) {
     segment_type: Seg_type,
     flags: u32,
     file_data_offset: u64,
-    virtual_address: u64,
+    mem_address: u64,
     physical_address: u64,
     file_segment_size: u64,
     mem_segment_size: u64,
@@ -94,13 +94,12 @@ pub fn load(id: usize) !void {
             //the data to be loaded is at p_offset in the file and is of size p_filesz
             //if p_memsz is bigger than p_filesz we must pad with zeroes
 
-            const region = try mem.valloc(prog_header.virtual_address, prog_header.mem_segment_size);
+            const region = try mem.valloc(mem.virtualFromPhysical(prog_header.mem_address), prog_header.mem_segment_size);
 
             //we copy the data
             const data = (try elf.readSlice(prog_header.file_data_offset, prog_header.file_data_offset + prog_header.file_segment_size));
             @memcpy(region, data);
         }
     }
-    cpu.jump(mem.physicalFromVirtual(elf_header.entry_address));
-    return;
+    cpu.jump(elf_header.entry_address);
 }
