@@ -103,10 +103,14 @@ pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callco
                 \\pop %r12
                 \\pop %r11
                 \\pop %r10
-                \\pop %r9
                 // we don't pop r8 as it is used for returns
-                // we do a dummy pop instead
+                // we also don't pop r9 as it is used for errors
+                // we do a dummy pops instead so that the values stay correct
+                //first dummy pop
+                \\pop %rsi 
+                //second dummy pop
                 \\pop %rsi
+                //real pop this time
                 \\pop %rsi
                 \\pop %rdi
                 \\pop %rdx

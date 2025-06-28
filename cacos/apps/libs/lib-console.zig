@@ -5,6 +5,10 @@ pub fn print(string: []const u8) void {
     _ = sc.syscall(sc.Syscalls.print, @intFromPtr(string.ptr), string.len, 0, 0);
 }
 
+pub fn printErr(string: []const u8) void {
+    _ = sc.syscall(sc.Syscalls.print_err, @intFromPtr(string.ptr), string.len, 0, 0);
+}
+
 pub fn printChar(value: u8) void {
     _ = sc.syscall(sc.Syscalls.print_char, value, 0, 0, 0);
 }

@@ -10,31 +10,44 @@ const std = @import("std");
 //this is an enum describing all possible syscalls
 //later a script will automaticaly import it into the lib-syscall
 pub const Syscalls = enum(u64) {
+    //console:
     print, //print a string to screen
     print_char, //print a char, usefull when the string is not hard-coded
+    print_err, //prints an error
+
+    //filesystem:
     create, //create a new node
     open, //return a File struct describing the file
     read, //read from a node
     read_to_buffer, //read to a buffer provided by the caller
     write, //write to a node
     write_from_buffer, //write from a buffer provided by the caller
+    getChilds, //get all the childs of a node in a memory page
+
+    //memory:
     alloc, //allocate a page
-    malloc, //allocate multiple contigous pages
     valloc, //allocate n bytes at ann address
     free, //free a page
+
+    //executables:
     load, //load an elf file
     exec, //execute an elf file
+
+    //debug:
     debug, //print a string to the debug console
     debug_value, //debug ann integer value
 };
 
+//these are the erros that a syscall can return
 pub const sys_err = error {
     failed_to_print,
     no_such_file,
     index_overflow,
+    unknown_syscall,
+    invalid_debug_value_mode,
 };
 
-fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64) !u64 {
+fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64) sys_err!u64 {
 
     switch (syscall) {
         .print => {
@@ -43,7 +56,16 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
             // arg0 -> pointer to a string
             // arg1 -> length of the string
             console.print(@as([*]u8, @ptrFromInt(arg0))[0..arg1]) catch {
-                db.printErr("Print syscall: failed to print string, debugging context:");
+                db.printErr("[Print syscall] failed to print string, debugging context:");
+            };
+        },
+        .print_err => {
+            db.print("\n[SYSCALL] print error");
+            //in this context:
+            // arg0 -> pointer to a string
+            // arg1 -> length of the string
+            console.printErr(@as([*]u8, @ptrFromInt(arg0))[0..arg1]) catch {
+                db.printErr("[Print err syscall]  failed to print string, debugging context:");
             };
         },
         .print_char => {
@@ -70,7 +92,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
             const name: []const u8 = @as([*]u8, @ptrFromInt(arg0))[0..arg1];
             const id: u16 = fs.idFromName(name) catch 
                 blk: {
-                    db.printErr("\nOpen syscall: failed to open node");
+                    db.printErr("\n[Open syscall] failed to open node");
                     break :blk 0;
                 };
 
@@ -125,12 +147,12 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
                 0 => db.printValue(arg0),
                 1 => db.printValueDec(arg0),
                 2 => db.printChar(@truncate(arg0)),
-                else => db.printErr("Syscall debug value: invalid mode (must be 0 or 1)"),
+                else => return sys_err.invalid_debug_value_mode,
             }
         },
-        else => return 0xdada,
+        else => return sys_err.unknown_syscall,
     }
-    return 0xdada;
+    return 0;
 }
 
 
@@ -146,13 +168,23 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
     const arg2: u64 = stack_frame.r11;
     const arg3: u64 = stack_frame.r12;
 
-    const value = handle_syscall(syscall,arg0,arg1,arg2,arg3) catch 0xdadadad;    
+    if (handle_syscall(syscall,arg0,arg1,arg2,arg3)) |result| {
+        //return value in r8
+        asm volatile (""
+            : //no output
+            : [value] "{r8}" (result), //put value in r8
+              [err] "{r9}" (0) //no error
+        );
 
-    //return value
-    asm volatile (""
-        : //no output
-        : [value] "{r8}" (value), //put value in r8
-    );
+    } else |err| {
+        db.print("\nhandler caught error");
+        //return error
+        asm volatile (""
+            : //no output
+            : [value] "{r8}" (0), //put no value in r8
+              [err] "{r9}" (@intFromError(err) + 1)
+        );
+    }
 }
 
 pub fn init() void {
