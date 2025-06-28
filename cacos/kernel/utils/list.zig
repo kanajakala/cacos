@@ -56,11 +56,6 @@ pub fn List(comptime T: type) type {
             for (0..n) |_| {
                 //check if we need to allocate a new page for the list
                 if (@rem(self.size, page_size) == 0) {
-                    db.printErr("\n-------------\nexpanding list\n");
-                    db.debug(" size", self.size, 1);
-                    db.debug(" nuumber of pages", self.n_pages, 1);
-                    db.debug(" page size", page_size, 1);
-                    db.printErr("\n-------------\n");
                     //checks
                     if (self.n_pages >= list_size) {
                         db.printErr("\nList full !: ");
@@ -74,9 +69,9 @@ pub fn List(comptime T: type) type {
                     const page: []u8 = try mem.alloc();
                     self.address_list[@divFloor(self.size, page_size)] = @as(*[page_size]T, @alignCast(@ptrCast(page)));
                     self.n_pages += 1;
-                    //db.printErr("\nALLOCATING NEW PAGE FOR LIST");
-                    //db.print("\nmemory overview: ");
-                    //db.memOverview();
+                    // db.printErr("\nALLOCATING NEW PAGE FOR LIST");
+                    // db.print("\nmemory overview: ");
+                    // db.memOverview();
                 }
                 self.size += 1;
             }

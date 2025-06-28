@@ -46,6 +46,7 @@ pub const Node = struct {
 
     pub fn create(name: []const u8, ftype: Ftype, parent: u16) !Node {
         const data = try List.init();
+
         const node = Node{ .id = count, .name = name, .data = data, .ftype = ftype, .parent = parent };
 
         try node_list.write(count, node);

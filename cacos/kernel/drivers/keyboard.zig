@@ -111,6 +111,7 @@ pub const KeyEvent = packed struct(u16) {
 };
 
 pub inline fn map(scancode: u8) KeyEvent {
+    //db.debug("scancode",scancode,1);
     return switch (scancode) {
         2, 130 => .{ .code = .key_1, .state = if (scancode >= 129) .released else .pressed, .char = if (!shifted) '1' else '!' },
         3, 131 => .{ .code = .key_2, .state = if (scancode >= 129) .released else .pressed, .char = if (!shifted) '2' else '@' },
@@ -158,7 +159,7 @@ pub inline fn map(scancode: u8) KeyEvent {
         43, 171 => .{ .code = .anti_slash, .state = if (scancode >= 129) .released else .pressed, .char = if (!shifted) '\\' else '|' },
         51, 179 => .{ .code = .comma, .state = if (scancode >= 129) .released else .pressed, .char = if (!shifted) ',' else '<' },
         52, 180 => .{ .code = .period, .state = if (scancode >= 129) .released else .pressed, .char = if (!shifted) '.' else '>' },
-        53, 183 => .{ .code = .slash, .state = if (scancode >= 129) .released else .pressed, .char = if (!shifted) '/' else '?' },
+        53, 0xb5 => .{ .code = .slash, .state = if (scancode >= 129) .released else .pressed, .char = if (!shifted) '/' else '?' },
 
         28, 156 => .{ .code = .enter, .state = if (scancode >= 129) .released else .pressed, .char = 0 },
         42, 170 => .{ .code = .shift, .state = if (scancode >= 129) .released else .pressed, .char = 0 },

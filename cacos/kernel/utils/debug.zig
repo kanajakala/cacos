@@ -203,17 +203,17 @@ pub fn memOverview() void {
     debug("number of pages total", mem.n_pages, 1);
     debug("number of pages used", mem.used_pages, 1);
     print("\npage overview:\n");
-    for (0..mem.n_pages) |i| {
-        const value = mem.pages[i];
-        if (value == 1) {
-            print("\nused page at:");
-
-            //color output in red
-            print("\u{001b}[34m");
-            printValueDec(i);
-            print("\u{001B}[0m");
-        }
-    }
+    // for (0..mem.n_pages) |i| {
+    //     const value = mem.pages[i];
+    //     if (value == 1) {
+    //         print("\nused page at:");
+    //
+    //         //color output in red
+    //         print("\u{001b}[34m");
+    //         printValueDec(i);
+    //         print("\u{001B}[0m");
+    //     }
+    // }
 }
 
 ///prints the current context

@@ -15,7 +15,21 @@ const Node = packed struct(u64) {
         if (buffer.len > size) return;
         _ = sc.syscall(sc.Syscalls.read_to_buffer, index, size, @intFromPtr(buffer.ptr), self.id);
     }
+
+    pub fn getChilds(self: Node) []u16 {
+            const Allocation = packed struct(u64) { address: u48, length: u16 }; //we assume the address and length fit in their respective integer representations
+                                                                                 //here the length will also be the number of children
+        const allocation: Allocation = @bitCast(sc.syscall(sc.Syscalls.get_childs, self.id, 0, 0, 0));
+        return @as([*]u16, @ptrFromInt(allocation.address))[0..allocation.length];
+    }
+
 };
+
+pub fn nameToBuffer(id: u16, buffer: []u8) u64 {
+    //this writes data to the buffer
+    //returns the length of the name
+    return sc.syscall(sc.Syscalls.node_name_to_buffer, id, @intFromPtr(buffer.ptr), buffer.len, 0);
+}
 
 pub fn open(name: []const u8) Node {
     const value = sc.syscall(sc.Syscalls.open, @intFromPtr(name.ptr), name.len, 0, 0);

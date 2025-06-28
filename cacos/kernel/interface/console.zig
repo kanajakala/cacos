@@ -78,6 +78,8 @@ pub fn printChar(char: u8, color: u32) !void {
 }
 
 pub fn print(string: []const u8) !void {
+    db.print("\nprinting string: ");
+    db.print(string);
     try cac_in.appendSlice(@constCast(string));
     for (string) |char| try printChar(char, text_color);
 }
@@ -163,9 +165,9 @@ pub fn init() !void {
     font.init();
     kb.init();
 
-    cac_in = try fs.Node.create("/sys/cac-in", fs.Ftype.text, 0);
-    cac_err = try fs.Node.create("/sys/cac-err", fs.Ftype.text, 0);
-    cac_keys = try fs.Node.create("/sys/cac_in", fs.Ftype.text, 0);
+    cac_in = try fs.Node.create("cac_in", fs.Ftype.text, 0);
+    cac_err = try fs.Node.create("cac_err", fs.Ftype.text, 0);
+    cac_keys = try fs.Node.create("cac_keys", fs.Ftype.text, 0);
 
     //draw background rectangle
     try dsp.fill(background);

@@ -16,11 +16,12 @@ pub const Syscalls = enum(u64) {
     read_to_buffer, //read to a buffer provided by the caller
     write, //write to a node
     write_from_buffer, //write from a buffer provided by the caller
-    getChilds, //get all the childs of a node in a memory page
+    get_childs, //get all the childs of a node in a memory page
+    node_name_to_buffer, //get the name of a node
 
     //memory:
     alloc, //allocate a page
-    valloc, //allocate n bytes at ann address
+    valloc, //allocate n bytes at an address
     free, //free a page
 
     //executables:

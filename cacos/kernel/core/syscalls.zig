@@ -22,7 +22,8 @@ pub const Syscalls = enum(u64) {
     read_to_buffer, //read to a buffer provided by the caller
     write, //write to a node
     write_from_buffer, //write from a buffer provided by the caller
-    getChilds, //get all the childs of a node in a memory page
+    get_childs, //get all the childs of a node in a memory page
+    node_name_to_buffer, //get the name of a node
 
     //memory:
     alloc, //allocate a page
@@ -50,35 +51,47 @@ pub const sys_err = error {
 fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64) sys_err!u64 {
 
     switch (syscall) {
+        //
+        //
+        //
+        //CONSOLE SYSTEM CALLS
+        //they are used to output text to the cacos console
+        //
+        //in this context:
+        // arg0 -> pointer to a string
+        // arg1 -> length of the string
         .print => {
             db.print("\n[SYSCALL] print");
-            //in this context:
-            // arg0 -> pointer to a string
-            // arg1 -> length of the string
             console.print(@as([*]u8, @ptrFromInt(arg0))[0..arg1]) catch {
-                db.printErr("[Print syscall] failed to print string, debugging context:");
+                db.printErr("[Print syscall] failed to print string");
             };
         },
+        //in this context:
+        // arg0 -> pointer to a string
+        // arg1 -> length of the string
         .print_err => {
             db.print("\n[SYSCALL] print error");
-            //in this context:
-            // arg0 -> pointer to a string
-            // arg1 -> length of the string
             console.printErr(@as([*]u8, @ptrFromInt(arg0))[0..arg1]) catch {
-                db.printErr("[Print err syscall]  failed to print string, debugging context:");
+                db.printErr("[Print err syscall]  failed to print string");
             };
         },
+        //in this context:
+        // arg0 -> a char
         .print_char => {
             db.print("\n[SYSCALL] print_char");
-            //in this context:
-            // arg0 -> a char
             console.printChar(@truncate(arg0), console.text_color) catch {};
         },
+        //
+        //
+        //
+        //FILESYSTEM CALLS:
+        //they are used to modify and read the cacos filesystem
+        //
+        //in this context:
+        // arg0 -> pointer to the name of the file
+        // arg1 -> length of the name
         .open => {
             db.print("\n[SYSCALL] open");
-            //in this context:
-            // arg0 -> pointer to the name of the file
-            // arg1 -> length of the name
 
             //this is an intermediary representation for the return
             //it then gets packed into an int to convey all the relevant information
@@ -100,21 +113,23 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
             const file = File{ .id = id, .ftype = @intFromEnum(Node.ftype), .size = @truncate(Node.data.size), .parent = Node.parent };
             return @as(u64, @bitCast(file));
         },
+        //
+        //in this context
+        // arg0 -> index in the file
+        // arg1 -> id of the node
         .read => {
             db.print("\n[SYSCALL] read");
-            //in this context
-            // arg0 -> index in the file
-            // arg1 -> id of the node
             const Node = fs.open(arg1) catch fs.root;
             return Node.data.read(arg0) catch 0;
         },
+        //
+        //in this context
+        // arg0 -> index in the file
+        // arg1 -> length of the data to  copy
+        // arg2 -> pointer to a buffer
+        // arg3 -> id of the node
         .read_to_buffer => {
             db.print("\n[SYSCALL] read to buffer");
-            //in this context
-            // arg0 -> index in the file
-            // arg1 -> length of the data to  copy
-            // arg2 -> pointer to a buffer
-            // arg3 -> id of the node
             const Node = fs.open(arg3) catch fs.root;
             const data = Node.data.readSlice(arg0, arg0 + arg1) catch {
                 db.printErr("\n[ERROR][SYSCALL] read to buffer: couldn't read slice");
@@ -124,25 +139,79 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
             @memcpy(buffer, data);
         },
         .write => return 0xcac,
+        .write_from_buffer => return 0xcac,
+        //
+        //in this context
+        // arg0 -> id of the node we need to get the children of
+        // TODO: optimize this as this is a common operation and is very slow
+        .get_childs => {
+            db.print("\n[SYSCALL] get children");
+            
+            //the ids of the nodes will be written to a memory page
+            //the id is u16 and so takes up two bytes of space
+            //we can have up to 4096 children by allocating two pages, which is plenty
+            //if there are more children they will simply not be included
+            const Allocation = packed struct(u64) { address: u48, length: u16 }; //we assume the address and length fit in their respective integer representations
+                                                                                 //here the length will also be the number of children
+
+            //we allocate a pages
+            const base_page: []u8 = mem.allocm(2) catch mem.mmap[0..4096*2];
+            //we convert the allocated slice to a slice of u16 to fit the file ids
+            const page: []u16 = @as([*]u16, @alignCast(@ptrCast(base_page.ptr)))[0..base_page.len];
+
+            //we check every file :O this is kinda slow but will do for now
+             var n_childs: usize = 0;
+            for (0..fs.node_list.size) |i| {
+                //we check if the node being tested has the right parent, is so we write it to the buffer
+                const node = fs.node_list.read(i) catch fs.root; 
+                if (node.parent == arg0 and node.id != 0) {
+                    page[n_childs] = node.id;
+                    n_childs += 1;
+                }
+            }
+            // db.debug("children page address at syscall time", @intFromPtr(page.ptr), 0);
+
+            return @bitCast(Allocation{.address = @truncate(@intFromPtr(page.ptr)), .length = @truncate(@min(page.len, n_childs))});
+        },
+        //
+        //in this context
+        // arg0 -> id of the node
+        // arg1 -> address of the name buffer
+        // arg2 -> length of the buffer
+        .node_name_to_buffer => {
+            db.print("\n[SYSCALL] get node name");
+            const node = fs.open(arg0) catch fs.root;
+            @memcpy(@as([*]u8, @ptrFromInt(arg1))[0..@min(arg2, node.name.len)], node.name[0..@min(arg2, node.name.len)]);
+            return node.name.len;
+        },
+        //
+        //MEMORY SYSTEM CALLS:
+        //they are used to allocate and free memory in various ways
+        //
+        //in this context
+        // arg0 -> number of bytes to allocate
         .alloc => {
             db.print("\n[SYSCALL] alloc");
-            //in this context
-            // arg0 -> number of bytes to allocate
             const Allocation = packed struct(u64) { address: u48, length: u16 }; //we assume the address and length fit in their respective integer representations
             const page = mem.allocm(std.math.divCeil(u64, arg0, 4096) catch 1) catch unreachable;
-            const allocation = Allocation{ .address = @truncate(@intFromPtr(page.ptr)), .length = @truncate(page.len) };
-            return @bitCast(allocation);
+            return @bitCast(Allocation{ .address = @truncate(@intFromPtr(page.ptr)), .length = @truncate(page.len) });
         },
+        //
+        //
+        //
+        //DEBUG SYSTEM CALLS
+        //they are used to output text to the debug console
+        //
+        //in this context:
+        // arg0 -> pointer to a string
+        // arg1 -> length of the string
         .debug => {
-            //in this context:
-            // arg0 -> pointer to a string
-            // arg1 -> length of the string
             db.print(@as([*]u8, @ptrFromInt(arg0))[0..arg1]);
         },
+        //in this context:
+        // arg0 -> value
+        // arg1 -> mode
         .debug_value => {
-            //in this context:
-            // arg0 -> value
-            // arg1 -> mode
             switch (arg1) {
                 0 => db.printValue(arg0),
                 1 => db.printValueDec(arg0),
@@ -173,7 +242,7 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
         asm volatile (""
             : //no output
             : [value] "{r8}" (result), //put value in r8
-              [err] "{r9}" (0) //no error
+            [err] "{r9}" (0) //no error
         );
 
     } else |err| {
@@ -182,7 +251,7 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
         asm volatile (""
             : //no output
             : [value] "{r8}" (0), //put no value in r8
-              [err] "{r9}" (@intFromError(err) + 1)
+            [err] "{r9}" (@intFromError(err) + 1)
         );
     }
 }
