@@ -28,18 +28,13 @@ pub const Syscalls = enum(u64) {
     debug_value, //debug ann integer value
 };
 
-fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
-    //Interrupts must end at some point
-    defer pic.primary.endInterrupt();
+pub const sys_err = error {
+    failed_to_print,
+    no_such_file,
+    index_overflow,
+};
 
-    //the return value will be passed to the caller
-    var value: u64 = 0;
-
-    const syscall: Syscalls = @enumFromInt(stack_frame.r8);
-    const arg0: u64 = stack_frame.r9;
-    const arg1: u64 = stack_frame.r10;
-    const arg2: u64 = stack_frame.r11;
-    const arg3: u64 = stack_frame.r12;
+fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64) !u64 {
 
     switch (syscall) {
         .print => {
@@ -71,17 +66,17 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
                 size: u16, //size of the node in bytes
                 parent: u16, //id of the parent of the node
             };
-            
+
             const name: []const u8 = @as([*]u8, @ptrFromInt(arg0))[0..arg1];
             const id: u16 = fs.idFromName(name) catch 
                 blk: {
                     db.printErr("\nOpen syscall: failed to open node");
                     break :blk 0;
                 };
-            
+
             const Node = fs.open(id) catch fs.root;
             const file = File{ .id = id, .ftype = @intFromEnum(Node.ftype), .size = @truncate(Node.data.size), .parent = Node.parent };
-            value = @as(u64, @bitCast(file));
+            return @as(u64, @bitCast(file));
         },
         .read => {
             db.print("\n[SYSCALL] read");
@@ -89,7 +84,7 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
             // arg0 -> index in the file
             // arg1 -> id of the node
             const Node = fs.open(arg1) catch fs.root;
-            value = Node.data.read(arg0) catch 0;
+            return Node.data.read(arg0) catch 0;
         },
         .read_to_buffer => {
             db.print("\n[SYSCALL] read to buffer");
@@ -106,7 +101,7 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
             const buffer = @as([*]u8, @ptrFromInt(arg2))[0..arg1];
             @memcpy(buffer, data);
         },
-        .write => value = 0xcac,
+        .write => return 0xcac,
         .alloc => {
             db.print("\n[SYSCALL] alloc");
             //in this context
@@ -114,7 +109,7 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
             const Allocation = packed struct(u64) { address: u48, length: u16 }; //we assume the address and length fit in their respective integer representations
             const page = mem.allocm(std.math.divCeil(u64, arg0, 4096) catch 1) catch unreachable;
             const allocation = Allocation{ .address = @truncate(@intFromPtr(page.ptr)), .length = @truncate(page.len) };
-            value = @bitCast(allocation);
+            return @bitCast(allocation);
         },
         .debug => {
             //in this context:
@@ -133,8 +128,25 @@ fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
                 else => db.printErr("Syscall debug value: invalid mode (must be 0 or 1)"),
             }
         },
-        else => value = 0xdada,
+        else => return 0xdada,
     }
+    return 0xdada;
+}
+
+
+fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
+    //Interrupts must end at some point
+    defer pic.primary.endInterrupt();
+
+    //the return value will be passed to the caller
+
+    const syscall: Syscalls = @enumFromInt(stack_frame.r8);
+    const arg0: u64 = stack_frame.r9;
+    const arg1: u64 = stack_frame.r10;
+    const arg2: u64 = stack_frame.r11;
+    const arg3: u64 = stack_frame.r12;
+
+    const value = handle_syscall(syscall,arg0,arg1,arg2,arg3) catch 0xdadadad;    
 
     //return value
     asm volatile (""
