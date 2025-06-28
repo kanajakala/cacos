@@ -56,6 +56,11 @@ pub fn List(comptime T: type) type {
             for (0..n) |_| {
                 //check if we need to allocate a new page for the list
                 if (@rem(self.size, page_size) == 0) {
+                    db.printErr("\n-------------\nexpanding list\n");
+                    db.debug(" size", self.size, 1);
+                    db.debug(" nuumber of pages", self.n_pages, 1);
+                    db.debug(" page size", page_size, 1);
+                    db.printErr("\n-------------\n");
                     //checks
                     if (self.n_pages >= list_size) {
                         db.printErr("\nList full !: ");
@@ -171,6 +176,7 @@ pub fn List(comptime T: type) type {
         pub fn clear(self: *Self) !void {
             //get the address of the page which needs to be written to
             self.size = 0;
+            self.n_pages = 0;
             for (0..self.n_pages) |i| {
                 const page = self.address_list[i];
                 try mem.free(&page.*);

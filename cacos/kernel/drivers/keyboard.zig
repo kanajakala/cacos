@@ -190,7 +190,7 @@ fn keyboard_handler(_: *isr.InterruptStackFrame) callconv(.C) void {
     if (key.state == KeyEvent.State.released and key.code == KeyEvent.Code.control) control = false;
 
     console.handle(key) catch |err| {
-        db.printErr("error in keyboard:");
+        db.printErr("\nerror in keyboard:\n");
         db.printErr(@errorName(err));
     };
 }

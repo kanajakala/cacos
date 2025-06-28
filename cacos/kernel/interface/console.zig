@@ -5,23 +5,7 @@ const fs = @import("../core/ramfs.zig");
 const mem = @import("../core/memory.zig");
 const elf = @import("../core/elf.zig");
 const db = @import("../utils/debug.zig");
-
-//the console is split into two parts:
-//-> one for the commands
-//-> one for the outputs
-// ╭console─────────────────────────────────────╮
-// │                 │                          │
-// │ > command       │ > Output of command 0!   │
-// │ > command2      │ > ERROR: no argument     │
-// │                 │                          │
-// │                 │                          │
-// │                 │                          │
-// │                 │                          │
-// │                 │                          │
-// │                 │                          │
-// │                 │                          │
-// │                 │                          │
-// ╰────────────────────────────────────────────╯
+const strings = @import("../utils/strings.zig");
 
 //appearance variables
 const ratio = 1; // must be a wole number, sets the separation
@@ -157,7 +141,12 @@ pub fn prompt() !void {
 
 pub fn exec() !void {
     //get the name of the process to execute
-    const name: []const u8 = try cac_in.data.readSlice(0, cac_in.data.size);
+    const command: []const u8 = try cac_in.data.readSlice(0, cac_in.data.size);
+    const name = strings.take(' ', command, strings.Directions.left);
+    db.print("\nname of the command: ");
+    db.print(name);
+    db.print("\ncontent of cac-in: ");
+    db.print(command);
     const executable = fs.idFromName(name) catch {
         try printErr("no such file!");
         return;
