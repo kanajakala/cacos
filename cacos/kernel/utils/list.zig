@@ -77,7 +77,7 @@ pub fn List(comptime T: type) type {
             }
         }
 
-        pub inline fn write(self: *Self, index: usize, data: T) !void {
+        pub fn write(self: *Self, index: usize, data: T) !void {
             //allocate space if the list is too short
             if (index >= self.size) {
                 try self.expand(index - self.size + 1);
@@ -90,7 +90,7 @@ pub fn List(comptime T: type) type {
         }
 
         ///put data at the end of the list
-        pub inline fn append(self: *Self, data: T) !void {
+        pub fn append(self: *Self, data: T) !void {
             try self.write(self.size, data);
         }
 
@@ -105,13 +105,13 @@ pub fn List(comptime T: type) type {
         ///copy data at index to dest
         ///NOTE: it can expand the list if needed
         ///NOTE: it will owerwrite what was written at dest
-        pub inline fn copy(self: *Self, source: usize, dest: usize) !void {
+        pub fn copy(self: *Self, source: usize, dest: usize) !void {
             try self.write(dest, try self.read(source));
         }
 
         ///copies data to a temporary page to avoid copy copy superposition issues
         ///it can expand the list
-        inline fn copyChunkBackwards(self: *Self, index: usize, width: usize, dest: usize) !void {
+        fn copyChunkBackwards(self: *Self, index: usize, width: usize, dest: usize) !void {
             //TODO: allow for bigger buffer sizes
             if (width >= page_size) return errors.list_copybackwards_overflow;
 

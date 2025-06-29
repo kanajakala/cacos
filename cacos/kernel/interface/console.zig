@@ -78,8 +78,6 @@ pub fn printChar(char: u8, color: u32) !void {
 }
 
 pub fn print(string: []const u8) !void {
-    db.print("\nprinting string: ");
-    db.print(string);
     try cac_in.appendSlice(@constCast(string));
     for (string) |char| try printChar(char, text_color);
 }

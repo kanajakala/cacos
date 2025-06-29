@@ -177,11 +177,10 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
         //in this context
         // arg0 -> id of the node
         // arg1 -> address of the name buffer
-        // arg2 -> length of the buffer
         .node_name_to_buffer => {
             db.print("\n[SYSCALL] get node name");
             const node = fs.open(arg0) catch fs.root;
-            @memcpy(@as([*]u8, @ptrFromInt(arg1))[0..@min(arg2, node.name.len)], node.name[0..@min(arg2, node.name.len)]);
+            @memcpy(@as([*]u8, @ptrFromInt(arg1))[0..node.name.len], node.name[0..node.name.len]);
             return node.name.len;
         },
         //

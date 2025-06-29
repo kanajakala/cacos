@@ -28,7 +28,7 @@ const Node = packed struct(u64) {
 pub fn nameToBuffer(id: u16, buffer: []u8) u64 {
     //this writes data to the buffer
     //returns the length of the name
-    return sc.syscall(sc.Syscalls.node_name_to_buffer, id, @intFromPtr(buffer.ptr), buffer.len, 0);
+    return sc.syscall(sc.Syscalls.node_name_to_buffer, id, @intFromPtr(buffer.ptr), 0, 0);
 }
 
 pub fn open(name: []const u8) Node {

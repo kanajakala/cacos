@@ -76,10 +76,10 @@ pub const Node = struct {
     }
 };
 
-pub inline fn idFromName(name: []const u8) !u16 {
+pub fn idFromName(name: []const u8) !u16 {
     //return a node corresponding to a name
     //we search through all the files and when we hit the right node we return it
-    for (0..n_nodes) |i| {
+    for (0..node_list.size) |i| {
         const current_node: Node = try node_list.read(i);
         if (strings.equal(current_node.name, name)) {
             return current_node.id;
