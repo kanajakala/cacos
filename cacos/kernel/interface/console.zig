@@ -168,7 +168,7 @@ pub fn init() !void {
     try dsp.fill(background);
 
     //load the test elf file
-    const motd = try fs.idFromName("motd");
+    const motd = try fs.idFromPath("/bin/motd");
     try elf.load(motd);
     try cac_in.data.clear(); //we need to clear the polluted cac_in
     try prompt(); //we print a prompt upoon entering the console

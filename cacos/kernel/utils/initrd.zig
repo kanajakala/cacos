@@ -66,10 +66,12 @@ pub fn unpack() !void {
         const name_full = find_name(@ptrCast(initrd[offset .. offset + 100]));
         const size: u32 = oct2bin(initrd[offset + 124 .. offset + 135]);
         const right: strings.Directions = strings.Directions.right;
+
+        //we don't need to load the kernel into the kernel
         if (strings.equal(name_full, "cacos.elf") or strings.equal(strings.take('/', name_full, right), "..") or strings.equal(strings.take('/', name_full, right), ".")) {
             offset += (((size + 511) / 512) + 1) * 512;
             continue;
-        } //we don't need to load the kernel into the kernel
+        }
         const data: []u8 = initrd[offset + 512 .. offset + 512 + size];
         const ftype = switch (initrd[156]) {
             5 => fs.Ftype.dir,
@@ -78,8 +80,7 @@ pub fn unpack() !void {
 
         const name = strings.take('/', name_full, right);
 
-
-        //then we create the corresponding file in the fs
+        //we create the corresponding file in the fs
         var node: fs.Node = try fs.Node.create(name, name_full, ftype);
 
         try node.appendSlice(data);

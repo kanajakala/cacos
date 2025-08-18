@@ -232,3 +232,28 @@ pub fn sysInfo() void {
     print("\nSytem information:");
     debug("number of cores", bootboot.numcores, 1);
 }
+
+pub fn printPath(path: []u16) void {
+    for (0..path.len) |i| {
+        const node = fs.open(path[i]) catch fs.root;
+        print(node.name);
+        print(">");
+    }
+}
+
+pub fn debugPath(path: []u16) void {
+    print("\npath length: ");
+    printValueDec(path.len);
+    print("\npath content: ");
+    for (0..path.len) |i| {
+        print("\n path id: ");
+        printValueDec(path[i]);
+        const node = fs.open(path[i]) catch fs.root;
+        print("\n -> name: ");
+        print(node.name);
+        print("\n -> id: ");
+        printValueDec(node.id);
+        print("\n -> path: ");
+        printPath(node.path);
+    }
+}

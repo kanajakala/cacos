@@ -104,7 +104,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
             };
 
             const name: []const u8 = @as([*]u8, @ptrFromInt(arg0))[0..arg1];
-            const id: u16 = fs.idFromName(name) catch 
+            const id: u16 = fs.idFromPath(name) catch 
                 blk: {
                     db.printErr("\n[Open syscall] failed to open node");
                     break :blk 0;
@@ -170,7 +170,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
                 //the tested node is a child if its path without the last node (it's name) is the same as the parent
                 const node = fs.node_list.read(i) catch fs.root; 
 
-                if (str.equal(str.cut('/', node.path, str.Directions.left), parent.path) and node.id != 0) {
+                if (str.equal(node.path, parent.path) and node.id != 0) {
                     page[n_childs] = node.id;
                     n_childs += 1;
                 }

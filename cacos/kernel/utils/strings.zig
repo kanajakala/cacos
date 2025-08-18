@@ -52,6 +52,25 @@ pub fn cut(cut_char: u8, string: []const u8, direction: Directions) []const u8 {
     }
 }
 
+///counts aa characters occurences in a string
+pub fn count(char: u8, string: []const u8) usize {
+    var counter: usize = 0;
+    for (string) |test_char| {
+        if (test_char == char) counter += 1;
+    }
+    return counter;
+}
+
+///strip a string from a character on the left and right
+pub fn strip(char: u8, string: []const u8) []const u8 {
+    var start: usize = 0;
+    var end: usize = string.len - 1;
+    //we start by the left side
+    while (string[start] == char) : (start += 1) {}
+    while (string[end] == char) : (end -= 1) {}
+    return string[start..end];
+}
+
 ///returns wether two strings are equal
 pub fn equal(string1: []const u8, string2: []const u8) bool {
     return std.mem.eql(u8, string1, string2);
