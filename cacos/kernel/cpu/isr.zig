@@ -54,9 +54,9 @@ pub const InterruptStackFrame = extern struct {
 
 /// Handle specific interrupt request
 /// taken from https://github.com/yhyadev/yos/blob/master/src/kernel/arch/x86_64/cpu.zig
-pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callconv(.C) void) void {
+pub fn handle(irq: u8, comptime handler: *const fn (*InterruptStackFrame) callconv(.c) void) void {
     const lambda = struct {
-        pub fn interruptRequestEntry() callconv(.Naked) void {
+        pub fn interruptRequestEntry() callconv(.naked) void {
             // Save the context on stack to be restored later
             asm volatile (
                 \\push %rbp
@@ -156,58 +156,58 @@ pub fn init() !void {
     pic.primary.enable(pic.cascade_irq);
 }
 
-fn handleDivisionError(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleDivisionError(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt  = .{} }) void {
     db.panic("ERROR: DivisionError\n");
 }
 
-fn handleDebug(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleDebug(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: Debug\n");
 }
 
-fn handleBreakpoint(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleBreakpoint(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: Breakpoint\n");
 }
 
-fn handleOverflow(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleOverflow(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: Overflow\n");
 }
 
-fn handleBoundRangeExceeded(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleBoundRangeExceeded(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: BoundRangeExceeded\n");
 }
 
-fn handleInvalidOpcode(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleInvalidOpcode(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: InvalidOpcode\n");
 }
 
-fn handleDeviceNotAvailable(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleDeviceNotAvailable(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: DeviceNotAvailable\n");
 }
 
-fn handleDoubleFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleDoubleFault(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: DoubleFault\n");
 }
 
-fn handleSegmentationFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleSegmentationFault(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: SegmentationFault\n");
 }
 
-fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleGeneralProtectionFault(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: GeneralProtectionFault\n");
 }
 
-fn handlePageFault(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handlePageFault(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: PageFault\n");
 }
 
-fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleAlignmentCheck(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: AlignmentCheck\n");
 }
 
-fn handleMachineCheck(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleMachineCheck(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: MachineCheck\n");
 }
 
-fn handleSIMDFloatingPointException(_: *InterruptStackFrame) callconv(.Interrupt) void {
+fn handleSIMDFloatingPointException(_: *InterruptStackFrame) callconv(.{ .x86_64_interrupt = .{} }) void {
     db.panic("ERROR: SIMDFloatingPointException\n");
 }

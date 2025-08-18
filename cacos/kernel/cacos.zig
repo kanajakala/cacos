@@ -21,7 +21,7 @@ fn init() !void {
 }
 
 //entry point
-export fn _start() callconv(.C) noreturn {
+export fn _start() noreturn {
     _ = init() catch |err| {
         //on error, print it
         db.printErr(@errorName(err));

@@ -217,7 +217,7 @@ pub fn memOverview() void {
 }
 
 ///prints the current context
-pub fn debugContextInterrupt(context: *isr.InterruptStackFrame) callconv(.Interrupt) void {
+pub fn debugContextInterrupt(context: *isr.InterruptStackFrame) callconv(.{ .x86_64_interrupt  = .{} }) void {
     print("\n------------------------------------------------------------------");
     print("\nDebugging context:");
     debugStruct(context.*);

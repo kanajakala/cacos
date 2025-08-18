@@ -178,7 +178,7 @@ pub inline fn map(scancode: u8) KeyEvent {
     };
 }
 
-fn keyboard_handler(_: *isr.InterruptStackFrame) callconv(.C) void {
+fn keyboard_handler(_: *isr.InterruptStackFrame) callconv(.c) void {
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
     //We get the key from the key input port and convert it to a keyEvent

@@ -4,7 +4,7 @@ const console = @import("libs/lib-console.zig");
 const mem = @import("libs/lib-memory.zig");
 
 ///get all the files in a directory
-export fn _start() callconv(.C) void {
+export fn _start() void {
     //the directory name is in cac_in
     const cac_in = fs.open("cac_in");
 
