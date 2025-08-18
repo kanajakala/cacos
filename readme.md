@@ -75,8 +75,9 @@ you will need the following dependencies:
 * [zig 14](https://ziglang.org/download/)
 * [qemu-system-x86_6](https://www.qemu.org/download/#linux)
 * [git](https://git-scm.com/)
+* zip (for building bootboot)
 
-running the following the following command will compile everything for you and run the os:  
+running the following the following command will download and compile dependencies, compile the OS code for you and run it:  
 `zig build run`
 
 you can customize the build process by running specific steps:

@@ -46,12 +46,14 @@ pub fn build(b: *std.Build) void {
     //Compile the kernel to an elf file
     const kernel = b.addExecutable(.{
         .name = "cacos.elf",
-        .root_source_file = b.path("cacos/kernel/cacos.zig"),
-        .target = target,
-        .optimize = kernel_optimize,
-        .code_model = .kernel,
-        .pic = true,
-        .strip = true,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("cacos/kernel/cacos.zig"),
+            .optimize = kernel_optimize,
+            .target = target,
+            .code_model = .kernel,
+            .pic = true,
+            .strip = true,
+        }),
     });
 
     kernel.setLinkerScript(b.path("cacos/link.ld"));
@@ -74,7 +76,7 @@ pub fn build(b: *std.Build) void {
     };
     defer apps_dir.close();
 
-    const compile_apps_step = b.step("compile-apps", "Build all the apps");
+    const compile_apps_step = b.step("compile-apps", "Build the apps");
     compile_apps_step.dependOn(compile_step);
 
     var iterator = apps_dir.iterate();

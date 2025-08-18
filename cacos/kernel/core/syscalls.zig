@@ -5,6 +5,7 @@ const isr = @import("../cpu/isr.zig");
 const pic = @import("../cpu/pic.zig");
 const mem = @import("../core/memory.zig");
 const console = @import("../interface/console.zig");
+const str = @import("../utils/strings.zig");
 const std = @import("std");
 
 //this is an enum describing all possible syscalls
@@ -88,7 +89,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
         //they are used to modify and read the cacos filesystem
         //
         //in this context:
-        // arg0 -> pointer to the name of the file
+        // arg0 -> pointer to the path of the file
         // arg1 -> length of the name
         .open => {
             db.print("\n[SYSCALL] open");
@@ -110,7 +111,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
                 };
 
             const Node = fs.open(id) catch fs.root;
-            const file = File{ .id = id, .ftype = @intFromEnum(Node.ftype), .size = @truncate(Node.data.size), .parent = Node.parent };
+            const file = File{ .id = id, .ftype = @intFromEnum(Node.ftype), .size = @truncate(Node.data.size), .parent = 0 };
             return @as(u64, @bitCast(file));
         },
         //
@@ -159,12 +160,17 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
             //we convert the allocated slice to a slice of u16 to fit the file ids
             const page: []u16 = @as([*]u16, @alignCast(@ptrCast(base_page.ptr)))[0..base_page.len];
 
+            //the node we get the children of
+            const parent = fs.open(arg0) catch fs.root;
+
             //we check every file :O this is kinda slow but will do for now
              var n_childs: usize = 0;
             for (0..fs.node_list.size) |i| {
                 //we check if the node being tested has the right parent, is so we write it to the buffer
+                //the tested node is a child if its path without the last node (it's name) is the same as the parent
                 const node = fs.node_list.read(i) catch fs.root; 
-                if (node.parent == arg0 and node.id != 0) {
+
+                if (str.equal(str.cut('/', node.path, str.Directions.left), parent.path) and node.id != 0) {
                     page[n_childs] = node.id;
                     n_childs += 1;
                 }
@@ -224,7 +230,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
 }
 
 
-fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.C) void {
+fn handler(stack_frame: *isr.InterruptStackFrame) callconv(.c) void {
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
 

@@ -4,7 +4,7 @@ const console = @import("libs/lib-console.zig");
 const mem = @import("libs/lib-memory.zig");
 
 //entry point
-export fn _start() callconv(.C) void {
+export fn _start() void {
     //open the motd.txt file
     const node = fs.open("motd.txt");
 

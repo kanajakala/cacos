@@ -62,6 +62,6 @@ pub inline fn hang() noreturn {
 }
 
 pub fn jump(address: u64) void {
-    const func: *const fn () callconv(.C) void = @ptrFromInt(address);
+    const func: *const fn () callconv(.c) void = @ptrFromInt(address);
     func();
 }

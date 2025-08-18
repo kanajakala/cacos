@@ -44,7 +44,7 @@ pub fn sleep(time: usize) void {
     sleep_ticks(time * ticks_per_second);
 }
 
-fn time_handler(_: *isr.InterruptStackFrame) callconv(.C) void {
+fn time_handler(_: *isr.InterruptStackFrame) callconv(.c) void {
     //Interrupts must end at some point
     defer pic.primary.endInterrupt();
     ticks += 1;

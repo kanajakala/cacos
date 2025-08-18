@@ -160,9 +160,9 @@ pub fn init() !void {
     font.init();
     kb.init();
 
-    cac_in = try fs.Node.create("cac_in", fs.Ftype.text, 0);
-    cac_err = try fs.Node.create("cac_err", fs.Ftype.text, 0);
-    cac_keys = try fs.Node.create("cac_keys", fs.Ftype.text, 0);
+    cac_in = try fs.Node.create("cac_in", "/stream/cac_in", fs.Ftype.text);
+    cac_err = try fs.Node.create("cac_err", "/stream/cac_err", fs.Ftype.text);
+    cac_keys = try fs.Node.create("cac_keys", "/stream/cac_keys", fs.Ftype.text);
 
     //draw background rectangle
     try dsp.fill(background);

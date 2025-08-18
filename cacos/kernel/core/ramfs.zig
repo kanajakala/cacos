@@ -40,14 +40,14 @@ pub const Ftype = enum(u8) {
 pub const Node = struct {
     id: u16, //the id of the node, is garantied to be unique
     name: []const u8,
+    path: []const u8,
     data: List, //the data stored in the node
     ftype: Ftype, //the type of the node
-    parent: u16, //the parent of the node in the filesystem tree, for root the parent is null
 
-    pub fn create(name: []const u8, ftype: Ftype, parent: u16) !Node {
+    pub fn create(name: []const u8, path: []const u8, ftype: Ftype) !Node {
         const data = try List.init();
 
-        const node = Node{ .id = count, .name = name, .data = data, .ftype = ftype, .parent = parent };
+        const node = Node{ .id = count, .name = name, .path = path, .data = data, .ftype = ftype };
 
         try node_list.write(count, node);
 
@@ -76,8 +76,8 @@ pub const Node = struct {
     }
 };
 
+///return an id corresponding to a name
 pub fn idFromName(name: []const u8) !u16 {
-    //return a node corresponding to a name
     //we search through all the files and when we hit the right node we return it
     for (0..node_list.size) |i| {
         const current_node: Node = try node_list.read(i);
@@ -88,8 +88,28 @@ pub fn idFromName(name: []const u8) !u16 {
     return errors.nodeNotFound;
 }
 
+const path_errors = error {
+    invalid_path,
+};
+
+
+///check if a pth is valid
+///we first check if the root is correct
+///then we descend the path and ensure all nodes are in this order
+///if the path is correct nothing is returned
+///else an error is returned
+pub fn checkPath(path: []const u8) !void {
+    _ = path;
+ return;    
+}
+
+///return the id of a file corresponding to a path
+pub fn idFromPath(path: []const u8) !u16 {
+    try checkPath(path);
+} 
+
+///return a node corresponding to an id
 pub fn open(id: usize) !Node {
-    //return a node corresponding to an id
     //we search through all the files and when we hit the right node we return it
     for (0..n_nodes) |i| {
         const current_node: Node = try node_list.read(i);
@@ -106,5 +126,5 @@ pub fn init() !void {
     //we initialize the node list
     node_list = try NodeList.init();
 
-    root = try Node.create("/", Ftype.dir, 0);
+    root = try Node.create("/", "/", Ftype.dir);
 }

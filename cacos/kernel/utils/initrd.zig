@@ -76,14 +76,11 @@ pub fn unpack() !void {
             else => fs.Ftype.text,
         };
 
-        const parent_name = strings.take('/', strings.cut('/', name_full, right), right); //we remove the name of the file and take the first name
-
         const name = strings.take('/', name_full, right);
 
-        const parent_id = fs.idFromName(parent_name) catch 0;
 
         //then we create the corresponding file in the fs
-        var node: fs.Node = try fs.Node.create(name, ftype, parent_id);
+        var node: fs.Node = try fs.Node.create(name, name_full, ftype);
 
         try node.appendSlice(data);
 
