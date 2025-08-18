@@ -6,7 +6,7 @@ const mem = @import("libs/lib-memory.zig");
 //entry point
 export fn _start() void {
     //open the motd.txt file
-    const node = fs.open("motd.txt");
+    const node = fs.open("/assets/motd");
 
     //we create a buffer, read into it and then print it in one go (two syscalls)
     const buffer: []u8 = mem.alloc(node.size); //we allocate as many bytes as needed

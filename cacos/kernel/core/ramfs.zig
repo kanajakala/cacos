@@ -4,6 +4,7 @@ const mem = @import("memory.zig");
 const List = @import("../utils/list.zig").List(u8);
 const NodeList = @import("../utils/list.zig").List(Node);
 const strings = @import("../utils/strings.zig");
+const std = @import("std");
 //TODO: remove later
 const db = @import("../utils/debug.zig");
 
@@ -40,12 +41,21 @@ pub const Ftype = enum(u8) {
 pub const Node = struct {
     id: u16, //the id of the node, is garantied to be unique
     name: []const u8,
-    path: []const u8,
+    path: []u16, //the path is the ids of all the nodes starting from the root up to the file
+                 //the id of the file itself is **INCLUDED**
     data: List, //the data stored in the node
     ftype: Ftype, //the type of the node
 
-    pub fn create(name: []const u8, path: []const u8, ftype: Ftype) !Node {
+    pub fn create(name: []const u8, string_path: []const u8, ftype: Ftype) !Node {
         const data = try List.init();
+
+        var path_buffer: [512]u16 = undefined;
+
+        try pathFromString(string_path[1..], root, 0, &path_buffer);
+
+        const path = path_buffer[0..strings.count('/', string_path)];
+
+        db.debugPath(path);
 
         const node = Node{ .id = count, .name = name, .path = path, .data = data, .ftype = ftype };
 
@@ -74,39 +84,11 @@ pub const Node = struct {
     pub fn update(self: Node) !void {
         try node_list.write(self.id, self);
     }
-};
 
-///return an id corresponding to a name
-pub fn idFromName(name: []const u8) !u16 {
-    //we search through all the files and when we hit the right node we return it
-    for (0..node_list.size) |i| {
-        const current_node: Node = try node_list.read(i);
-        if (strings.equal(current_node.name, name)) {
-            return current_node.id;
-        }
+    pub fn getParent(self: *Node) u16 {
+        return self.path[self.path.len - 1];
     }
-    return errors.nodeNotFound;
-}
-
-const path_errors = error {
-    invalid_path,
 };
-
-
-///check if a pth is valid
-///we first check if the root is correct
-///then we descend the path and ensure all nodes are in this order
-///if the path is correct nothing is returned
-///else an error is returned
-pub fn checkPath(path: []const u8) !void {
-    _ = path;
- return;    
-}
-
-///return the id of a file corresponding to a path
-pub fn idFromPath(path: []const u8) !u16 {
-    try checkPath(path);
-} 
 
 ///return a node corresponding to an id
 pub fn open(id: usize) !Node {
@@ -126,5 +108,5 @@ pub fn init() !void {
     //we initialize the node list
     node_list = try NodeList.init();
 
-    root = try Node.create("/", "/", Ftype.dir);
+    root = try Node.create("/", "", Ftype.dir);
 }
