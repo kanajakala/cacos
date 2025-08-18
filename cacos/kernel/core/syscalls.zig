@@ -27,7 +27,7 @@ pub const Syscalls = enum(u64) {
 
     //memory:
     alloc, //allocate a page
-    valloc, //allocate n bytes at ann address
+    valloc, //allocate n bytes at an address
     free, //free a page
 
     //executables:

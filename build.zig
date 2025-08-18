@@ -74,7 +74,7 @@ pub fn build(b: *std.Build) void {
     };
     defer apps_dir.close();
 
-    const compile_apps_step = b.step("compile-apps", "Build the apps");
+    const compile_apps_step = b.step("compile-apps", "Build all the apps");
     compile_apps_step.dependOn(compile_step);
 
     var iterator = apps_dir.iterate();
@@ -84,7 +84,7 @@ pub fn build(b: *std.Build) void {
             const app_path = b.fmt("cacos/apps/{s}", .{entry.name});
 
             const app = b.addExecutable(.{
-                .name = b.fmt("{s}.elf", .{app_name}),
+                .name = b.fmt("{s}", .{app_name}),
                 .root_source_file = b.path(app_path),
                 .target = target,
                 .optimize = kernel_optimize,

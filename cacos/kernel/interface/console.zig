@@ -115,7 +115,7 @@ pub fn handle(key: kb.KeyEvent) !void {
             kb.KeyEvent.Code.enter => {
                 try newLine();
                 if (cac_in.data.size > 0) try exec(); //execute the command which was typed if there was something typed
-                            try prompt();
+                try prompt();
 
                 //clear the different data streams
                 try cac_in.data.clear();
@@ -137,16 +137,13 @@ pub fn prompt() !void {
     try newLine();
     try printColor(" CaCOS", 0x00ff00);
     try printColor("> ", 0x00ffff);
+    try cac_in.data.clear();
 }
 
 pub fn exec() !void {
     //get the name of the process to execute
     const command: []const u8 = try cac_in.data.readSlice(0, cac_in.data.size);
     const name = strings.take(' ', command, strings.Directions.left);
-    db.print("\nname of the command: ");
-    db.print(name);
-    db.print("\ncontent of cac-in: ");
-    db.print(command);
     const executable = fs.idFromName(name) catch {
         try printErr("no such file!");
         return;
@@ -171,7 +168,8 @@ pub fn init() !void {
     try dsp.fill(background);
 
     //load the test elf file
-    const motd = try fs.idFromName("motd.elf");
+    const motd = try fs.idFromName("motd");
     try elf.load(motd);
     try cac_in.data.clear(); //we need to clear the polluted cac_in
+    try prompt(); //we print a prompt upoon entering the console
 }
