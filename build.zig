@@ -87,12 +87,14 @@ pub fn build(b: *std.Build) void {
 
             const app = b.addExecutable(.{
                 .name = b.fmt("{s}", .{app_name}),
-                .root_source_file = b.path(app_path),
-                .target = target,
-                .optimize = kernel_optimize,
-                .code_model = .small,
-                .pic = true,
-                .strip = true,
+                .root_module = b.createModule(.{
+                    .root_source_file = b.path(app_path),
+                    .optimize = kernel_optimize,
+                    .target = target,
+                    .code_model = .small,
+                    .pic = true,
+                    .strip = true,
+                }),
             });
 
             compile_apps_step.dependOn(&b.addInstallArtifact(app, .{
