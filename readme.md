@@ -11,75 +11,75 @@ Here are all the steps of the development of the os.
 
 ### Boot loader
 
-[x] implement the bootboot boot protocol
+- [x] implement the bootboot boot protocol
 
-[x] automate bootboot installation and image creation
+- [x] automate bootboot installation and image creation
 
 ### Core functionality
 
-[x] frame-buffer
-    [x] basic functions
-    [x] text display
+- [x] frame-buffer  
+    - [x] basic functions  
+    - [x] text display  
 
-[x] memory
-    [x] page allocation and tracking
-    [x] memory freeing
+- [x] memory  
+    - [x] page allocation and tracking  
+    - [x] memory freeing  
 
-[x] system
-    [x] interrupt descriptor table (IDT) setup
-    [x] global descriptor table (GDT) setup
-    [x] interrupt service routine (ISR) setup
+- [x] system
+    - [x] interrupt descriptor table (IDT) setup
+    - [x] global descriptor table (GDT) setup
+    - [x] interrupt service routine (ISR) setup
 
 ### advanced functionality
 
-[x] Keyboard driver
-
-[_] Filesystem
-    [x] basic ramfs and file structures
-    [x] basic filesystem functions (*create*, *delete*, *read*, ...)
-    [x] path handling
-    [_] filesystem on disk
-
-[x] Elf file loading
-    [x] parse elf file
-    [x] load and execute elf file
-
-[x] system calls
-    [x] call kernel code from apps
-    [x] pass arguments and return errors
-    
-[x] error marshalling, through kernel and apps
-
-[x] console
-    [x] execute commands
-    [x] standard text streams
+- [x] Keyboard driver
+  
+- [ ] Filesystem  
+    - [x] basic ramfs and file structures  
+    - [x] basic filesystem functions (*create*, *delete*, *read*, ...)  
+    - [ ] path handling  
+    - [ ] filesystem on disk  
+  
+- [x] Elf file loading  
+    - [x] parse elf file  
+    - [x] load and execute elf file  
+     
+- [x] system calls  
+    - [x] call kernel code from apps  
+    - [x] pass arguments and return errors  
+     
+- [x] error marshalling, through kernel and apps  
+     
+- [x] console  
+    - [x] execute commands  
+    - [x] standard text streams  
 
 ### apps
 
-[x] write simple apps leveraging elf loading and system calls
+- [x] write simple apps leveraging elf loading and system calls
 
-[x] write a standard library providing basic functionality (*memory*, *filesystem*, ...)
+- [x] write a standard library providing basic functionality (*memory*, *filesystem*, ...)
 
-[x] build a complete set of utils, akin to busybox (*filesystem utils*, *text manipulation*, ...)
+- [x] build a complete set of utils, akin to busybox (*filesystem utils*, *text manipulation*, ...)
 
 ### Beyond
 
-[_] threads and multi tasking
-    [_] write a scheduler
-    [_] context switches and multitasking
-    [_] multi threading
+- [ ] threads and multi tasking  
+    - [ ] write a scheduler  
+    - [ ] context switches and multitasking  
+    - [ ] multi threading  
 
-[_] PCI driver
+- [ ] PCI driver
 
-[_] support for hardware accelerated graphics
+- [ ] support for hardware accelerated graphics
 
-[_] mouse driver and support
+- [ ] mouse driver and support
 
-[_] complete graphical interface
+- [ ] complete graphical interface
 
-[_] networking
+- [ ] networking
 
-[_] porting linux binaries and utils
+- [ ] porting linux binaries and utils
 
 # Running the OS
 
