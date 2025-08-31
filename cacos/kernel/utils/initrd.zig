@@ -1,4 +1,5 @@
-const fs = @import("../core/ramfs.zig");
+const ramfs = @import("../core/ramfs.zig");
+const fs = @import("../core/fs.zig");
 const db = @import("../utils/debug.zig");
 const time = @import("../cpu/time.zig");
 const cpu = @import("../cpu/cpu.zig");
@@ -74,14 +75,16 @@ pub fn unpack() !void {
         }
         const data: []u8 = initrd[offset + 512 .. offset + 512 + size];
         const ftype = switch (initrd[156]) {
-            5 => fs.Ftype.dir,
-            else => fs.Ftype.text,
+            5 => ramfs.Ftype.dir,
+            else => ramfs.Ftype.text,
         };
 
         const name = strings.take('/', name_full, right);
 
+        const path = try fs.pathFromString(name_full);
+
         //we create the corresponding file in the fs
-        var node: fs.Node = try fs.Node.create(name, name_full, ftype);
+        var node: ramfs.Node = try ramfs.Node.create(name, path, ftype);
 
         try node.appendSlice(data);
 

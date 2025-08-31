@@ -1,5 +1,6 @@
 ////This is used for the apps to interface with the kernel
-const fs = @import("../core/ramfs.zig");
+const ramfs = @import("../core/ramfs.zig");
+const fs = @import("../core/fs.zig");
 const db = @import("../utils/debug.zig");
 const isr = @import("../cpu/isr.zig");
 const pic = @import("../cpu/pic.zig");
@@ -110,7 +111,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
                     break :blk 0;
                 };
 
-            const Node = fs.open(id) catch fs.root;
+            const Node = ramfs.open(id) catch ramfs.root;
             const file = File{ .id = id, .ftype = @intFromEnum(Node.ftype), .size = @truncate(Node.data.size), .parent = 0 };
             return @as(u64, @bitCast(file));
         },
@@ -120,7 +121,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
         // arg1 -> id of the node
         .read => {
             db.print("\n[SYSCALL] read");
-            const Node = fs.open(arg1) catch fs.root;
+            const Node = ramfs.open(arg1) catch ramfs.root;
             return Node.data.read(arg0) catch 0;
         },
         //
@@ -131,7 +132,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
         // arg3 -> id of the node
         .read_to_buffer => {
             db.print("\n[SYSCALL] read to buffer");
-            const Node = fs.open(arg3) catch fs.root;
+            const Node = ramfs.open(arg3) catch ramfs.root;
             const data = Node.data.readSlice(arg0, arg0 + arg1) catch {
                 db.printErr("\n[ERROR][SYSCALL] read to buffer: couldn't read slice");
                 unreachable;
@@ -161,14 +162,14 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
             const page: []u16 = @as([*]u16, @alignCast(@ptrCast(base_page.ptr)))[0..base_page.len];
 
             //the node we get the children of
-            const parent = fs.open(arg0) catch fs.root;
+            const parent = ramfs.open(arg0) catch ramfs.root;
 
             //we check every file :O this is kinda slow but will do for now
              var n_childs: usize = 0;
-            for (0..fs.node_list.size) |i| {
+            for (0..ramfs.node_list.size) |i| {
                 //we check if the node being tested has the right parent, is so we write it to the buffer
                 //the tested node is a child if its path without the last node (it's name) is the same as the parent
-                const node = fs.node_list.read(i) catch fs.root; 
+                const node = ramfs.node_list.read(i) catch ramfs.root; 
 
                 if (str.equal(node.path, parent.path) and node.id != 0) {
                     page[n_childs] = node.id;
@@ -185,7 +186,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
         // arg1 -> address of the name buffer
         .node_name_to_buffer => {
             db.print("\n[SYSCALL] get node name");
-            const node = fs.open(arg0) catch fs.root;
+            const node = ramfs.open(arg0) catch ramfs.root;
             @memcpy(@as([*]u8, @ptrFromInt(arg1))[0..node.name.len], node.name[0..node.name.len]);
             return node.name.len;
         },

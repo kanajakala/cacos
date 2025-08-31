@@ -46,16 +46,8 @@ pub const Node = struct {
     data: List, //the data stored in the node
     ftype: Ftype, //the type of the node
 
-    pub fn create(name: []const u8, string_path: []const u8, ftype: Ftype) !Node {
+    pub fn create(name: []const u8, path: []u16, ftype: Ftype) !Node {
         const data = try List.init();
-
-        var path_buffer: [512]u16 = undefined;
-
-        try pathFromString(string_path[1..], root, 0, &path_buffer);
-
-        const path = path_buffer[0..strings.count('/', string_path)];
-
-        db.debugPath(path);
 
         const node = Node{ .id = count, .name = name, .path = path, .data = data, .ftype = ftype };
 
@@ -107,6 +99,7 @@ pub fn init() !void {
 
     //we initialize the node list
     node_list = try NodeList.init();
-
-    root = try Node.create("/", "", Ftype.dir);
+    
+    var root_path: [1]u16 = .{0};
+    root = try Node.create("/", root_path[0..], Ftype.dir);
 }
