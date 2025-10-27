@@ -39,59 +39,52 @@ const path_errors = error {
 
 ///returns a path from a string (eg: "/bin/misc/motd" to [0, 3, 12])
 pub fn pathFromString(string_path: []const u8) ![]u16 {
+    db.print("\n entering filesystem path creation:");
 
-    //first the path haas to be correct
-    try checkPath(string_path);
-    db.print("\npath: ");
+    db.print("\nreceived path: ");
     db.print(string_path);
 
     //we then strip unnecessary separators from the path strings
-    var stripped_string_path: []const u8 = strings.strip('>', string_path);
+    var stripped_string_path: []const u8 = strings.strip('/', string_path);
     db.print("\nstripped path: ");
     db.print(stripped_string_path);
 
     //we have to get the number of tokens in the string
     //eaach token corresponds to a node in the path
-    const n_tokens = strings.count('>', stripped_string_path) + 1;
+    const n_tokens = strings.count('/', stripped_string_path) + 1;
+    db.debug("number of tokens",n_tokens,0);
 
     //check for overflow
     if (n_tokens >= 2048) return path_errors.string_path_too_many_tokens;
 
-    db.print("\nallocating page for path");
     const buffer: *[2048]u16 = @alignCast(@ptrCast(try mem.alloc()));
 
-    db.print("\nstarting reading tokens");
     for (0..n_tokens) |i| {
         //we read the first token and then remove it for the next iteration
-        const token = strings.take('>', stripped_string_path, strings.Directions.right);
-        db.print("\ntoken: ");
+        //stripped_string_path = strings.strip('/', stripped_string_path);
+        const token = strings.take_right('/', stripped_string_path);
+        db.print("\n  token:  ");
         db.print(token);
-        stripped_string_path = strings.cut('>', stripped_string_path, strings.Directions.right);
-        db.print("\ncut string: ");
+
+        stripped_string_path = strings.cut_right('/', stripped_string_path);
+        db.print("\n  cut string:  ");
         db.print(stripped_string_path);
 
-        const id = try idFromName(token);
-        db.debug("id", id, 1);
+        const id = idFromName(token) catch 0;
 
         buffer[i] = id;
     }
 
+    db.print("\nDone preparing path, got: \n  ");
+    db.debugPath(buffer[0..n_tokens]);
+    db.print("\nreceived path: \n  ");
+    db.print(string_path);
     return buffer[0..n_tokens];
-}
-
-///check if a path is valid
-///we first check if the root is correct
-///then we descend the path and ensure all nodes are in this order
-///if the path is correct nothing is returned
-///else an error is returned
-pub fn checkPath(path: []const u8) !void {
-    _ = path;
-    return;    
 }
 
 ///return the id of a file corresponding to a path
 pub fn idFromPath(string_path: []const u8) !u16 {
-    try pathFromString(path);
+    _ = try pathFromString(string_path);
     return 0;
     // var path_buffer: [512]u16 = undefined;
     //

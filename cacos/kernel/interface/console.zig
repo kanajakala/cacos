@@ -1,7 +1,8 @@
 const dsp = @import("../core/display.zig");
 const kb = @import("../drivers/keyboard.zig");
 const font = @import("../interface/font.zig");
-const fs = @import("../core/ramfs.zig");
+const ramfs = @import("../core/ramfs.zig");
+const fs = @import("../core/fs.zig");
 const mem = @import("../core/memory.zig");
 const elf = @import("../core/elf.zig");
 const db = @import("../utils/debug.zig");
@@ -15,9 +16,10 @@ const border = 20; //the size of the border on the outside of the screen
 pub const text_color: u32 = 0xffeeff;
 pub const background: u32 = 0x280800;
 
-var cac_in: fs.Node = undefined;
-var cac_err: fs.Node = undefined;
-var cac_keys: fs.Node = undefined;
+var stream_dir: ramfs.Node = undefined;
+var cac_in: ramfs.Node = undefined;
+var cac_err: ramfs.Node = undefined;
+var cac_keys: ramfs.Node = undefined;
 
 const Cursor = packed struct {
     x: u64,
@@ -143,7 +145,7 @@ pub fn prompt() !void {
 pub fn exec() !void {
     //get the name of the process to execute
     const command: []const u8 = try cac_in.data.readSlice(0, cac_in.data.size);
-    const name = strings.take(' ', command, strings.Directions.left);
+    const name = strings.take_left(' ', command);
     const executable = fs.idFromName(name) catch {
         try printErr("no such file!");
         return;
@@ -160,14 +162,17 @@ pub fn init() !void {
     font.init();
     kb.init();
 
-    cac_in = try fs.Node.create("cac_in", "/stream/cac_in", fs.Ftype.text);
-    cac_err = try fs.Node.create("cac_err", "/stream/cac_err", fs.Ftype.text);
-    cac_keys = try fs.Node.create("cac_keys", "/stream/cac_keys", fs.Ftype.text);
+    db.print("Creating stream\n");
+    stream_dir = try ramfs.Node.create("stream", try fs.pathFromString("/"), ramfs.Ftype.dir);
+    cac_in = try ramfs.Node.create("cac_in", try fs.pathFromString("/stream"), ramfs.Ftype.text);
+    cac_err = try ramfs.Node.create("cac_err", try fs.pathFromString("/stream"), ramfs.Ftype.text);
+    cac_keys = try ramfs.Node.create("cac_keys", try fs.pathFromString("/stream"), ramfs.Ftype.text);
 
     //draw background rectangle
     try dsp.fill(background);
 
     //load the test elf file
+    db.print("Trying to find motd\n");
     const motd = try fs.idFromPath("/bin/motd");
     try elf.load(motd);
     try cac_in.data.clear(); //we need to clear the polluted cac_in

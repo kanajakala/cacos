@@ -19,8 +19,6 @@ pub var node_list: NodeList = undefined;
 pub var n_nodes: usize = 0; //the number of nodes in the filesystem
 pub var count: u16 = 0; //counts all created files in the filesystem
 
-pub var current_directory = 0; //changed by apps through system calls
-
 pub const errors = error{
     outsideBounds,
     nodeNotFound,

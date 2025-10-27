@@ -167,11 +167,17 @@ pub fn debugList(list: List, format: u1) void {
 pub fn debugNode(node: fs.Node) void {
     print("\n----Information about ");
     print(node.name);
-    print("in intself----");
+    print(" ----");
     debug(" -> size", node.data.size, 1);
     debug(" -> address of the Node", @intFromPtr(&node), 0);
     debug(" -> address of the data list", @intFromPtr(&node.data), 0);
-    debug(" -> address of the name string", @intFromPtr(node.name.ptr), 0);
+    print("\n -> path ids: \n   ");
+
+    for (node.path) |i| {
+        print("/");
+        printValueDec(i);
+    }
+
     print("\n -> data:");
     print("\u{001b}[34m");
     debugList(node.data, 1);
@@ -237,7 +243,7 @@ pub fn printPath(path: []u16) void {
     for (0..path.len) |i| {
         const node = fs.open(path[i]) catch fs.root;
         print(node.name);
-        print(">");
+        print("/");
     }
 }
 
@@ -245,8 +251,9 @@ pub fn debugPath(path: []u16) void {
     print("\npath length: ");
     printValueDec(path.len);
     print("\npath content: ");
+    printPath(path);
     for (0..path.len) |i| {
-        print("\n path id: ");
+        print("\n node: ");
         printValueDec(path[i]);
         const node = fs.open(path[i]) catch fs.root;
         print("\n -> name: ");

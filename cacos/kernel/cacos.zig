@@ -6,6 +6,7 @@ const isr = @import("cpu/isr.zig");
 const time = @import("cpu/time.zig");
 const db = @import("utils/debug.zig");
 const initrd = @import("utils/initrd.zig");
+const tests = @import("utils/tests.zig");
 
 // imported virtual addresses, see linker script
 extern var environment: [4096]u8; // configuration, UTF-8 text key=value pairs
@@ -17,6 +18,7 @@ fn init() !void {
     try ramfs.init();
     try initrd.unpack();
     syscalls.init();
+    tests.run_tests();
     try console.init();
 }
 

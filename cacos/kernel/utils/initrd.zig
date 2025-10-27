@@ -14,6 +14,9 @@ pub const errors = error{
     noNameFound,
 };
 
+const right: strings.Directions = strings.Directions.right;
+const left: strings.Directions = strings.Directions.left;
+
 //the initrd is in tar format
 //we need to unpack it
 
@@ -66,10 +69,9 @@ pub fn unpack() !void {
         //we need to get the data of the current file
         const name_full = find_name(@ptrCast(initrd[offset .. offset + 100]));
         const size: u32 = oct2bin(initrd[offset + 124 .. offset + 135]);
-        const right: strings.Directions = strings.Directions.right;
 
         //we don't need to load the kernel into the kernel
-        if (strings.equal(name_full, "cacos.elf") or strings.equal(strings.take('/', name_full, right), "..") or strings.equal(strings.take('/', name_full, right), ".")) {
+        if (strings.equal(name_full, "cacos.elf") or strings.equal(strings.take_right('/', name_full), "..") or strings.equal(strings.take_right('/', name_full), ".")) {
             offset += (((size + 511) / 512) + 1) * 512;
             continue;
         }
@@ -79,14 +81,23 @@ pub fn unpack() !void {
             else => ramfs.Ftype.text,
         };
 
-        const name = strings.take('/', name_full, right);
+        const name = strings.take_right('/', name_full);
 
-        const path = try fs.pathFromString(name_full);
+        db.print("\n\nINITRD path from string");
+        const path_string = strings.cut_left('/',name_full);
+        db.print("\nfull name: ");
+        db.print(name_full);
+        db.print("\npath string: ");
+        db.print(path_string);
+
+        const path = try fs.pathFromString(path_string);
 
         //we create the corresponding file in the fs
         var node: ramfs.Node = try ramfs.Node.create(name, path, ftype);
 
         try node.appendSlice(data);
+
+        db.debugNode(node);
 
         //we go to the next file
         offset += (((size + 511) / 512) + 1) * 512;

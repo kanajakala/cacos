@@ -171,7 +171,7 @@ fn handle_syscall(syscall: Syscalls, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
                 //the tested node is a child if its path without the last node (it's name) is the same as the parent
                 const node = ramfs.node_list.read(i) catch ramfs.root; 
 
-                if (str.equal(node.path, parent.path) and node.id != 0) {
+                if (std.mem.eql(u16, node.path, parent.path) and node.id != 0) {
                     page[n_childs] = node.id;
                     n_childs += 1;
                 }
